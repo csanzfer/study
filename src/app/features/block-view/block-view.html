@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <!-- Quick topic creation (ready for TipTap & .docx in Phase 1) -->
+    <!-- Quick topic creation -->
     <form
       (ngSubmit)="addTopic()"
       class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
@@ -64,7 +64,8 @@
         </button>
       </div>
       <p class="mt-2.5 text-xs text-slate-500 dark:text-slate-400">
-        Los temas se guardan al instante en IndexedDB. En la <strong>Fase 1</strong> añadiremos el editor TipTap, la importación de Word (<code>.docx</code>) y los mapas mentales automáticos.
+        Haz clic en cualquier tema para abrir su vista de estudio. Arrastra desde el icono
+        <span class="font-medium text-slate-700 dark:text-slate-300">⋮⋮</span> para reordenar el temario.
       </p>
     </form>
 
@@ -73,48 +74,175 @@
       <div class="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
         <mat-icon class="!h-10 !w-10 !text-[40px] text-slate-400">folder_open</mat-icon>
         <p class="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-          Aún no hay temas en {{ currentBlock.code }}
+          @if (isFiltered()) {
+            No hay temas que coincidan con tu búsqueda en {{ currentBlock.code }}
+          } @else {
+            Aún no hay temas en {{ currentBlock.code }}
+          }
         </p>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Crea el primero arriba para comprobar la persistencia local y el sistema de backups.
+          @if (isFiltered()) {
+            Prueba a limpiar el filtro de búsqueda en la barra superior.
+          } @else {
+            Crea el primero arriba para empezar a estructurar tu temario TAI.
+          }
         </p>
       </div>
     } @else {
-      <div class="space-y-3">
+      <div
+        cdkDropList
+        [cdkDropListDisabled]="isFiltered()"
+        (cdkDropListDropped)="onDrop($event)"
+        class="space-y-3"
+      >
         @for (topic of topics(); track topic.id) {
-          <div class="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center dark:border-slate-800 dark:bg-slate-900">
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-400">#{{ topic.order }}</span>
-                <h2 class="truncate text-base font-semibold text-slate-900 dark:text-white">
-                  {{ topic.title }}
-                </h2>
-                <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  {{ statusLabels[topic.status] }}
-                </span>
-              </div>
+          <div
+            cdkDrag
+            [cdkDragDisabled]="isFiltered() || editingTopicId() === topic.id"
+            class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
+          >
+            <div
+              *cdkDragPlaceholder
+              class="h-20 rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/50 dark:border-blue-600 dark:bg-blue-950/30"
+            ></div>
 
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span>Actualizado: {{ topic.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
-                @for (tag of topic.tags; track tag) {
-                  <span class="rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-                    #{{ tag }}
-                  </span>
-                }
-              </div>
-            </div>
+            @if (editingTopicId() === topic.id) {
+              <!-- Inline quick edit -->
+              <form (ngSubmit)="saveEdit(topic)" class="space-y-3">
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-12">
+                  <div class="md:col-span-5">
+                    <label class="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Título del tema
+                    </label>
+                    <input
+                      type="text"
+                      name="editTitle"
+                      [ngModel]="editTitle()"
+                      (ngModelChange)="editTitle.set($event)"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                  </div>
+                  <div class="md:col-span-4">
+                    <label class="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Etiquetas (separadas por coma)
+                    </label>
+                    <input
+                      type="text"
+                      name="editTags"
+                      [ngModel]="editTags()"
+                      (ngModelChange)="editTags.set($event)"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                  </div>
+                  <div class="md:col-span-3">
+                    <label class="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Estado
+                    </label>
+                    <select
+                      name="editStatus"
+                      [ngModel]="editStatus()"
+                      (ngModelChange)="editStatus.set($event)"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                      @for (status of statusList; track status) {
+                        <option [value]="status">{{ statusLabels[status] }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
 
-            <div class="flex shrink-0 items-center gap-1">
-              <button
-                mat-icon-button
-                type="button"
-                aria-label="Eliminar tema"
-                (click)="removeTopic(topic)"
-                class="!text-slate-400 hover:!text-red-500"
-              >
-                <mat-icon>delete_outline</mat-icon>
-              </button>
-            </div>
+                <div class="flex justify-end gap-2">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="!rounded-xl"
+                    (click)="cancelEdit()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    mat-flat-button
+                    type="submit"
+                    [disabled]="!editTitle().trim()"
+                    class="!rounded-xl"
+                  >
+                    <mat-icon>check</mat-icon>
+                    Guardar cambios
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <!-- Normal card view -->
+              <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div class="flex min-w-0 items-start gap-2.5">
+                  <button
+                    type="button"
+                    cdkDragHandle
+                    [disabled]="isFiltered()"
+                    [matTooltip]="isFiltered() ? 'Limpia la búsqueda para reordenar' : 'Arrastrar para reordenar'"
+                    aria-label="Arrastrar para reordenar tema"
+                    class="mt-0.5 flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                  >
+                    <mat-icon class="!h-5 !w-5 !text-[20px]">drag_indicator</mat-icon>
+                  </button>
+
+                  <a
+                    [routerLink]="['/blocks', blockId(), 'topics', topic.id]"
+                    class="group min-w-0 flex-1"
+                  >
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="text-xs font-semibold text-slate-400">#{{ topic.order }}</span>
+                      <h2 class="truncate text-base font-semibold text-slate-900 transition group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                        {{ topic.title }}
+                      </h2>
+                      <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        {{ statusLabels[topic.status] }}
+                      </span>
+                    </div>
+
+                    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span>Actualizado: {{ topic.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                      @for (tag of topic.tags; track tag) {
+                        <span class="rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                          #{{ tag }}
+                        </span>
+                      }
+                    </div>
+                  </a>
+                </div>
+
+                <div class="flex shrink-0 items-center justify-end gap-1">
+                  <a
+                    mat-stroked-button
+                    [routerLink]="['/blocks', blockId(), 'topics', topic.id]"
+                    class="!rounded-xl !text-xs"
+                  >
+                    <mat-icon class="!text-[18px]">open_in_new</mat-icon>
+                    Abrir
+                  </a>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Editar metadatos del tema"
+                    matTooltip="Editar título, etiquetas o estado"
+                    (click)="startEdit(topic)"
+                    class="!text-slate-400 hover:!text-blue-600 dark:hover:!text-blue-400"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Eliminar tema"
+                    matTooltip="Eliminar tema"
+                    (click)="removeTopic(topic)"
+                    class="!text-slate-400 hover:!text-red-500"
+                  >
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>

@@ -8,6 +8,7 @@ export interface StudyRepository {
   getTopics(blockId?: TaiBlockId): Promise<Topic[]>;
   getTopicById(id: string): Promise<Topic | undefined>;
   saveTopic(topic: Topic): Promise<void>;
+  saveTopics(topics: Topic[]): Promise<void>;
   deleteTopic(id: string): Promise<void>;
   replaceAllData(blocks: TaiBlock[], topics: Topic[]): Promise<void>;
 }
@@ -43,6 +44,15 @@ export class IndexedDbStudyRepository implements StudyRepository {
 
   async saveTopic(topic: Topic): Promise<void> {
     await this.db.topics.put(topic);
+  }
+
+  async saveTopics(topics: Topic[]): Promise<void> {
+    if (topics.length === 0) {
+      return;
+    }
+    await this.db.transaction('rw', this.db.topics, async () => {
+      await this.db.topics.bulkPut(topics);
+    });
   }
 
   async deleteTopic(id: string): Promise<void> {

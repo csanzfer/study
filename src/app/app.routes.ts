@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./features/block-view/block-view').then((m) => m.BlockView),
   },
   {
+    path: 'blocks/:blockId/topics/:topicId',
+    loadComponent: () =>
+      import('./features/notes/topic-detail/topic-detail').then((m) => m.TopicDetail),
+  },
+  {
     path: 'schemas',
     loadComponent: () =>
       import('./features/coming-soon/coming-soon').then((m) => m.ComingSoon),

@@ -33,7 +33,17 @@ class MockStudyRepository implements StudyRepository {
     return this.topics.find((t) => t.id === id);
   }
   async saveTopic(topic: Topic): Promise<void> {
-    this.topics.push(topic);
+    const idx = this.topics.findIndex((t) => t.id === topic.id);
+    if (idx >= 0) {
+      this.topics[idx] = topic;
+    } else {
+      this.topics.push(topic);
+    }
+  }
+  async saveTopics(topics: Topic[]): Promise<void> {
+    for (const topic of topics) {
+      await this.saveTopic(topic);
+    }
   }
   async deleteTopic(id: string): Promise<void> {
     this.topics = this.topics.filter((t) => t.id !== id);

@@ -1,0 +1,229 @@
+@if (topic(); as currentTopic) {
+  <section class="space-y-5">
+    <!-- Breadcrumb -->
+    <nav class="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <a routerLink="/dashboard" class="hover:text-blue-600 dark:hover:text-blue-400">Panel</a>
+      <mat-icon class="!h-4 !w-4 !text-[16px]">chevron_right</mat-icon>
+      @if (block(); as currentBlock) {
+        <a
+          [routerLink]="['/blocks', currentBlock.id]"
+          class="inline-flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400"
+        >
+          <span
+            class="inline-block h-2 w-2 rounded-full"
+            [style.background-color]="currentBlock.color"
+          ></span>
+          {{ currentBlock.code }}
+        </a>
+        <mat-icon class="!h-4 !w-4 !text-[16px]">chevron_right</mat-icon>
+      }
+      <span class="truncate text-slate-700 dark:text-slate-200">
+        #{{ currentTopic.order }} {{ currentTopic.title }}
+      </span>
+    </nav>
+
+    <!-- Topic Header Card -->
+    <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 flex-1 space-y-3">
+          <!-- Inline Editable Title -->
+          <div class="flex items-center gap-2">
+            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              #{{ currentTopic.order }}
+            </span>
+            <input
+              type="text"
+              aria-label="Título del tema"
+              [ngModel]="titleDraft()"
+              (ngModelChange)="titleDraft.set($event)"
+              (blur)="saveTitle()"
+              (keydown.enter)="$any($event.target).blur()"
+              class="w-full rounded-xl border border-transparent bg-transparent px-2 py-1 text-xl font-bold text-slate-900 outline-none transition hover:border-slate-200 focus:border-blue-500 focus:bg-slate-50 dark:text-white dark:hover:border-slate-700 dark:focus:bg-slate-800"
+            />
+          </div>
+
+          <!-- Metadata row: status, updatedAt, tags -->
+          <div class="flex flex-wrap items-center gap-2.5 text-xs">
+            <select
+              aria-label="Estado del tema"
+              [ngModel]="currentTopic.status"
+              (ngModelChange)="onStatusChange($event)"
+              class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              @for (status of statusList; track status) {
+                <option [value]="status">{{ statusLabels[status] }}</option>
+              }
+            </select>
+
+            <span class="text-slate-400">•</span>
+            <span class="text-slate-500 dark:text-slate-400">
+              Actualizado: {{ currentTopic.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+
+          <!-- Tag chips -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            @for (tag of currentTopic.tags; track tag) {
+              <span class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                #{{ tag }}
+                <button
+                  type="button"
+                  aria-label="Quitar etiqueta"
+                  (click)="removeTag(tag)"
+                  class="flex h-4 w-4 items-center justify-center rounded-full hover:bg-blue-200/70 dark:hover:bg-blue-900"
+                >
+                  <mat-icon class="!h-3 !w-3 !text-[12px]">close</mat-icon>
+                </button>
+              </span>
+            }
+
+            <form (ngSubmit)="addTag()" class="inline-flex items-center">
+              <input
+                type="text"
+                name="newTag"
+                [ngModel]="newTagInput()"
+                (ngModelChange)="newTagInput.set($event)"
+                placeholder="+ Añadir etiqueta..."
+                class="w-36 rounded-lg border border-dashed border-slate-300 bg-transparent px-2.5 py-1 text-xs text-slate-700 outline-none focus:border-blue-500 focus:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:focus:bg-slate-800"
+              />
+            </form>
+          </div>
+        </div>
+
+        <!-- View Mode Switcher & Actions -->
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          <div
+            class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800"
+            role="tablist"
+            aria-label="Modo de vista del tema"
+          >
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="viewMode() === 'note'"
+              (click)="setViewMode('note')"
+              class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition"
+              [class.bg-white]="viewMode() === 'note'"
+              [class.text-slate-900]="viewMode() === 'note'"
+              [class.shadow-xs]="viewMode() === 'note'"
+              [class.dark:bg-slate-900]="viewMode() === 'note'"
+              [class.dark:text-white]="viewMode() === 'note'"
+              [class.text-slate-500]="viewMode() !== 'note'"
+              [class.dark:text-slate-400]="viewMode() !== 'note'"
+            >
+              <mat-icon class="!h-4 !w-4 !text-[16px]">edit_note</mat-icon>
+              Apunte
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="viewMode() === 'schema'"
+              (click)="setViewMode('schema')"
+              class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition"
+              [class.bg-white]="viewMode() === 'schema'"
+              [class.text-slate-900]="viewMode() === 'schema'"
+              [class.shadow-xs]="viewMode() === 'schema'"
+              [class.dark:bg-slate-900]="viewMode() === 'schema'"
+              [class.dark:text-white]="viewMode() === 'schema'"
+              [class.text-slate-500]="viewMode() !== 'schema'"
+              [class.dark:text-slate-400]="viewMode() !== 'schema'"
+            >
+              <mat-icon class="!h-4 !w-4 !text-[16px]">account_tree</mat-icon>
+              Esquema
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="viewMode() === 'split'"
+              (click)="setViewMode('split')"
+              class="hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition lg:inline-flex"
+              [class.bg-white]="viewMode() === 'split'"
+              [class.text-slate-900]="viewMode() === 'split'"
+              [class.shadow-xs]="viewMode() === 'split'"
+              [class.dark:bg-slate-900]="viewMode() === 'split'"
+              [class.dark:text-white]="viewMode() === 'split'"
+              [class.text-slate-500]="viewMode() !== 'split'"
+              [class.dark:text-slate-400]="viewMode() !== 'split'"
+            >
+              <mat-icon class="!h-4 !w-4 !text-[16px]">vertical_split</mat-icon>
+              Dividida
+            </button>
+          </div>
+
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Eliminar tema"
+            matTooltip="Eliminar tema"
+            (click)="deleteTopic()"
+            class="!text-slate-400 hover:!text-red-500"
+          >
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace Area (Prepared for TipTap in 1.2 and Markmap in 1.4) -->
+    <div
+      class="grid gap-5"
+      [class.lg:grid-cols-2]="viewMode() === 'split'"
+    >
+      @if (viewMode() === 'note' || viewMode() === 'split') {
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <mat-icon class="!h-5 !w-5 !text-[20px] text-blue-600 dark:text-blue-400">description</mat-icon>
+              Editor de apuntes
+            </div>
+            <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+              Hito 1.2 · TipTap
+            </span>
+          </div>
+
+          <div class="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center dark:border-slate-700 dark:bg-slate-800/40">
+            <mat-icon class="!h-10 !w-10 !text-[40px] text-slate-400">edit_note</mat-icon>
+            <p class="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Contenedor listo para el editor TipTap
+            </p>
+            <p class="mx-auto mt-1 max-w-md text-xs text-slate-500 dark:text-slate-400">
+              En el siguiente hito (1.2) integraremos aquí TipTap con encabezados H1–H4, tablas, checklists, bloques de código, callouts «Ojo examen» y autoguardado.
+            </p>
+          </div>
+        </div>
+      }
+
+      @if (viewMode() === 'schema' || viewMode() === 'split') {
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <mat-icon class="!h-5 !w-5 !text-[20px] text-emerald-600 dark:text-emerald-400">account_tree</mat-icon>
+              Mapa mental automático
+            </div>
+            <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Hito 1.4 · Markmap
+            </span>
+          </div>
+
+          <div class="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center dark:border-slate-700 dark:bg-slate-800/40">
+            <mat-icon class="!h-10 !w-10 !text-[40px] text-slate-400">account_tree</mat-icon>
+            <p class="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Contenedor listo para el visor Markmap
+            </p>
+            <p class="mx-auto mt-1 max-w-md text-xs text-slate-500 dark:text-slate-400">
+              Aquí se generará automáticamente el mapa mental interactivo a partir de los títulos y listas de tus apuntes (o desde tu esquema resumido propio).
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
+    <mat-icon class="!h-10 !w-10 !text-[40px] text-slate-400">find_in_page</mat-icon>
+    <p class="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">Tema no encontrado.</p>
+    <a [routerLink]="['/blocks', blockId()]" mat-stroked-button class="mt-4 !rounded-xl">
+      Volver al bloque
+    </a>
+  </div>
+}

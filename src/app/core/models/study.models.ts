@@ -7,6 +7,14 @@ export type TopicStatus =
   | 'memorizing'
   | 'mastered';
 
+export const TOPIC_STATUS_LIST: TopicStatus[] = [
+  'pending',
+  'first_round',
+  'outlined',
+  'memorizing',
+  'mastered',
+];
+
 export const TOPIC_STATUS_LABELS: Record<TopicStatus, string> = {
   pending: 'Sin empezar',
   first_round: '1ª vuelta',
@@ -49,6 +57,17 @@ export interface CreateTopicInput {
   status?: TopicStatus;
   contentJson?: unknown;
   plainText?: string;
+}
+
+export interface UpdateTopicPatch {
+  title?: string;
+  status?: TopicStatus;
+  roundCount?: number;
+  tags?: string[];
+  contentJson?: unknown;
+  plainText?: string;
+  customOutlineMd?: string;
+  lastReviewedAt?: string;
 }
 
 export interface BackupPayload {
