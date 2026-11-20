@@ -20,6 +20,14 @@ export const routes: Routes = [
     path: 'blocks/:blockId/topics/:topicId',
     loadComponent: () =>
       import('./features/notes/topic-detail/topic-detail').then((m) => m.TopicDetail),
+    canDeactivate: [
+      async (component: unknown) => {
+        const { topicDetailCanDeactivateGuard } = await import(
+          './features/notes/topic-detail/topic-detail'
+        );
+        return (topicDetailCanDeactivateGuard as (c: unknown) => Promise<boolean>)(component);
+      },
+    ],
   },
   {
     path: 'schemas',

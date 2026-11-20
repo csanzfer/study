@@ -1,0 +1,190 @@
+<div class="note-editor-shell overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+  <!-- Sticky Toolbar -->
+  <div
+    class="sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50/95 px-3 py-2 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/95"
+    role="toolbar"
+    aria-label="Herramientas de formato de apuntes"
+  >
+    <!-- Headings -->
+    <div class="flex items-center gap-0.5 pr-1.5 border-r border-slate-200 dark:border-slate-700">
+      @for (level of [1, 2, 3, 4]; track level) {
+        <button
+          type="button"
+          (click)="toggleHeading($any(level))"
+          [matTooltip]="'Encabezado H' + level"
+          class="toolbar-btn px-2 text-xs font-bold"
+          [class.is-active]="isActive('heading', { level })"
+        >
+          H{{ level }}
+        </button>
+      }
+    </div>
+
+    <!-- Inline Formatting -->
+    <div class="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-slate-700">
+      <button
+        type="button"
+        (click)="toggleBold()"
+        matTooltip="Negrita (Ctrl+B)"
+        aria-label="Negrita"
+        class="toolbar-btn"
+        [class.is-active]="isActive('bold')"
+      >
+        <mat-icon>format_bold</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleItalic()"
+        matTooltip="Cursiva (Ctrl+I)"
+        aria-label="Cursiva"
+        class="toolbar-btn"
+        [class.is-active]="isActive('italic')"
+      >
+        <mat-icon>format_italic</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleUnderline()"
+        matTooltip="Subrayado (Ctrl+U)"
+        aria-label="Subrayado"
+        class="toolbar-btn"
+        [class.is-active]="isActive('underline')"
+      >
+        <mat-icon>format_underlined</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleCode()"
+        matTooltip="Código en línea"
+        aria-label="Código en línea"
+        class="toolbar-btn"
+        [class.is-active]="isActive('code')"
+      >
+        <mat-icon>code</mat-icon>
+      </button>
+    </div>
+
+    <!-- Lists -->
+    <div class="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-slate-700">
+      <button
+        type="button"
+        (click)="toggleBulletList()"
+        matTooltip="Lista con viñetas"
+        aria-label="Lista con viñetas"
+        class="toolbar-btn"
+        [class.is-active]="isActive('bulletList')"
+      >
+        <mat-icon>format_list_bulleted</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleOrderedList()"
+        matTooltip="Lista numerada"
+        aria-label="Lista numerada"
+        class="toolbar-btn"
+        [class.is-active]="isActive('orderedList')"
+      >
+        <mat-icon>format_list_numbered</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleTaskList()"
+        matTooltip="Checklist"
+        aria-label="Checklist"
+        class="toolbar-btn"
+        [class.is-active]="isActive('taskList')"
+      >
+        <mat-icon>checklist</mat-icon>
+      </button>
+    </div>
+
+    <!-- Blocks & Exam Callout -->
+    <div class="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-slate-700">
+      <button
+        type="button"
+        (click)="toggleCodeBlock()"
+        matTooltip="Bloque de código"
+        aria-label="Bloque de código"
+        class="toolbar-btn"
+        [class.is-active]="isActive('codeBlock')"
+      >
+        <mat-icon>terminal</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleBlockquote()"
+        matTooltip="Cita"
+        aria-label="Cita"
+        class="toolbar-btn"
+        [class.is-active]="isActive('blockquote')"
+      >
+        <mat-icon>format_quote</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="insertTable()"
+        matTooltip="Insertar tabla 3×3"
+        aria-label="Insertar tabla"
+        class="toolbar-btn"
+        [class.is-active]="isInTable()"
+      >
+        <mat-icon>table_chart</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="toggleExamCallout()"
+        matTooltip="Bloque «Ojo examen» (Ctrl+Shift+E)"
+        class="toolbar-btn toolbar-btn-callout gap-1 px-2 text-xs font-semibold"
+        [class.is-active]="isActive('examCallout')"
+      >
+        <mat-icon class="!h-4 !w-4 !text-[16px]">warning_amber</mat-icon>
+        <span class="hidden sm:inline">Ojo examen</span>
+      </button>
+    </div>
+
+    <!-- Undo / Redo -->
+    <div class="flex items-center gap-0.5 pl-1">
+      <button
+        type="button"
+        (click)="undo()"
+        [disabled]="!canUndo()"
+        matTooltip="Deshacer (Ctrl+Z)"
+        aria-label="Deshacer"
+        class="toolbar-btn"
+      >
+        <mat-icon>undo</mat-icon>
+      </button>
+      <button
+        type="button"
+        (click)="redo()"
+        [disabled]="!canRedo()"
+        matTooltip="Rehacer (Ctrl+Shift+Z)"
+        aria-label="Rehacer"
+        class="toolbar-btn"
+      >
+        <mat-icon>redo</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Contextual Table Toolbar -->
+  @if (isInTable()) {
+    <div class="flex flex-wrap items-center gap-1.5 border-b border-blue-100 bg-blue-50/70 px-3 py-1.5 text-xs dark:border-blue-900/60 dark:bg-blue-950/40">
+      <span class="font-semibold text-blue-700 dark:text-blue-300">Tabla:</span>
+      <button type="button" (click)="addRowAfter()" class="table-action-btn">+ Fila</button>
+      <button type="button" (click)="deleteRow()" class="table-action-btn">- Fila</button>
+      <button type="button" (click)="addColumnAfter()" class="table-action-btn">+ Columna</button>
+      <button type="button" (click)="deleteColumn()" class="table-action-btn">- Columna</button>
+      <button
+        type="button"
+        (click)="deleteTable()"
+        class="table-action-btn !text-red-600 hover:!bg-red-100 dark:!text-red-400 dark:hover:!bg-red-950/60"
+      >
+        Eliminar tabla
+      </button>
+    </div>
+  }
+
+  <!-- Editor Host -->
+  <div #editorHost class="min-h-[420px] px-5 py-5 sm:px-7 sm:py-6"></div>
+</div>
