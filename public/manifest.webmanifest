@@ -1,0 +1,19 @@
+{
+  "name": "TAI Study — Oposiciones TAI",
+  "short_name": "TAI Study",
+  "description": "Aplicación local-first de apuntes, esquemas, planificación y tests para oposiciones TAI.",
+  "theme_color": "#2563eb",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icons/tai-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

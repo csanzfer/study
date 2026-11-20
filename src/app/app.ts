@@ -1,12 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { AppShell } from './shared/components/app-shell/app-shell';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
+  imports: [AppShell],
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
-export class App {
-  protected readonly title = signal('tai-study');
-}
+export class App { }

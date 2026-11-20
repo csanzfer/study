@@ -1,0 +1,128 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { DatePipe } from '@angular/common';
+import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { map } from 'rxjs';
+import { BackupService } from '../../../core/services/backup.service';
+import { StudyStoreService } from '../../../core/services/study-store.service';
+import { ThemeService } from '../../../core/services/theme.service';
+
+interface ToolNavItem {
+  label: string;
+  route: string;
+  icon: string;
+  phaseBadge: string;
+}
+
+@Component({
+  selector: 'app-shell',
+  imports: [
+    DatePipe,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    MatButtonModule,
+    MatDividerModule,
+    MatIconModule,
+    MatMenuModule,
+    MatSidenavModule,
+    MatSnackBarModule,
+    MatToolbarModule,
+    MatTooltipModule,
+  ],
+  templateUrl: './app-shell.html',
+  styleUrl: './app-shell.scss',
+})
+export class AppShell {
+  protected readonly store = inject(StudyStoreService);
+  protected readonly theme = inject(ThemeService);
+  protected readonly backup = inject(BackupService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  protected readonly drawer = viewChild<MatSidenav>('drawer');
+  protected readonly backupFileInput = viewChild<ElementRef<HTMLInputElement>>('backupFileInput');
+
+  protected readonly isHandset = toSignal(
+    this.breakpointObserver
+      .observe('(max-width: 1023px)')
+      .pipe(map((result) => result.matches)),
+    { initialValue: false },
+  );
+
+  protected readonly isDark = computed(() => this.theme.mode() === 'dark');
+
+  protected readonly upcomingTools: ToolNavItem[] = [
+    { label: 'Esquemas', route: '/schemas', icon: 'account_tree', phaseBadge: 'F1' },
+    { label: 'Planificador', route: '/planner', icon: 'view_kanban', phaseBadge: 'F2' },
+    { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz', phaseBadge: 'F3' },
+    { label: 'Flashcards', route: '/flashcards', icon: 'style', phaseBadge: 'F4' },
+  ];
+
+  protected closeDrawerOnMobile(): void {
+    if (this.isHandset()) {
+      void this.drawer()?.close();
+    }
+  }
+
+  protected onSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.store.searchQuery.set(input.value);
+  }
+
+  protected clearSearch(): void {
+    this.store.searchQuery.set('');
+  }
+
+  protected async exportBackup(): Promise<void> {
+    try {
+      const payload = await this.backup.downloadBackup();
+      this.snackBar.open(
+        `Backup exportado (${payload.topics.length} temas).`,
+        'Cerrar',
+        { duration: 3500 },
+      );
+    } catch {
+      this.snackBar.open('No se pudo exportar la copia de seguridad.', 'Cerrar', {
+        duration: 4000,
+      });
+    }
+  }
+
+  protected triggerImportBackup(): void {
+    this.backupFileInput()?.nativeElement.click();
+  }
+
+  protected async onBackupFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const result = await this.backup.importBackupFile(file);
+      await this.store.refresh();
+      this.snackBar.open(
+        `Backup restaurado: ${result.blocksCount} bloques y ${result.topicsCount} temas.`,
+        'Cerrar',
+        { duration: 4000 },
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error al importar el archivo de backup.';
+      this.snackBar.open(message, 'Cerrar', { duration: 5000 });
+    }
+  }
+}
