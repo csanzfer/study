@@ -15,12 +15,7 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Content, Editor, JSONContent } from '@tiptap/core';
-import { Placeholder } from '@tiptap/extension-placeholder';
-import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
-import { TaskItem } from '@tiptap/extension-task-item';
-import { TaskList } from '@tiptap/extension-task-list';
-import StarterKit from '@tiptap/starter-kit';
-import { ExamCallout } from './extensions/exam-callout.extension';
+import { createNoteEditorExtensions } from './note-editor.extensions';
 
 export interface NoteEditorChange {
   contentJson: JSONContent;
@@ -93,27 +88,7 @@ export class NoteEditor {
 
     this.editor = new Editor({
       element: this.editorHost().nativeElement,
-      extensions: [
-        StarterKit.configure({
-          heading: {
-            levels: [1, 2, 3, 4],
-          },
-        }),
-        Placeholder.configure({
-          placeholder: this.placeholder(),
-        }),
-        Table.configure({
-          resizable: false,
-        }),
-        TableRow,
-        TableHeader,
-        TableCell,
-        TaskList,
-        TaskItem.configure({
-          nested: true,
-        }),
-        ExamCallout,
-      ],
+      extensions: createNoteEditorExtensions(this.placeholder()),
       content: initial,
       editorProps: {
         attributes: {
@@ -138,11 +113,17 @@ export class NoteEditor {
     this.stateTick.update((tick) => tick + 1);
   }
 
-  setExternalContent(content: Content): void {
+  setExternalContent(content: Content, emitUpdate = false): void {
     if (!this.editor) {
       return;
     }
-    this.editor.commands.setContent(content, { emitUpdate: true });
+    this.isApplyingExternalContent = !emitUpdate;
+    try {
+      this.editor.commands.setContent(content, { emitUpdate });
+      this.stateTick.update((tick) => tick + 1);
+    } finally {
+      this.isApplyingExternalContent = false;
+    }
   }
 
   private applyContentSilently(content: unknown): void {

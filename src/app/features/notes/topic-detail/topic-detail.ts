@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,6 +21,12 @@ import {
   ConfirmDialogData,
 } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { NoteEditor, NoteEditorChange } from '../editor/note-editor';
+import {
+  NoteImportDialog,
+  NoteImportDialogData,
+  NoteImportDialogResult,
+} from '../import-dialog/note-import-dialog';
+import { NoteImportService } from '../services/note-import.service';
 
 export type TopicViewMode = 'note' | 'schema' | 'split';
 export type SaveState = 'saved' | 'unsaved' | 'saving';
@@ -48,6 +54,8 @@ export class TopicDetail {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly importService = inject(NoteImportService);
+  private readonly noteEditor = viewChild(NoteEditor);
   protected readonly store = inject(StudyStoreService);
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
@@ -210,6 +218,57 @@ export class TopicDetail {
 
   protected setViewMode(mode: TopicViewMode): void {
     this.viewMode.set(mode);
+  }
+
+  protected async openImportDialog(): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    await this.flushPendingSave();
+
+    const dialogRef = this.dialog.open<
+      NoteImportDialog,
+      NoteImportDialogData,
+      NoteImportDialogResult
+    >(NoteImportDialog, {
+      width: '680px',
+      maxWidth: '95vw',
+      data: {
+        mode: 'insert-into-topic',
+        topicTitle: current.title,
+      },
+    });
+
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (!result || result.mode !== 'insert-into-topic') {
+      return;
+    }
+
+    const latest = this.topic() ?? current;
+    const next =
+      result.insertMode === 'append'
+        ? this.importService.mergeTipTapDocuments(latest.contentJson, result.item.contentJson)
+        : {
+            contentJson: result.item.contentJson,
+            plainText: result.item.plainText,
+          };
+
+    await this.store.updateTopic(latest.id, {
+      contentJson: next.contentJson,
+      plainText: next.plainText,
+    });
+
+    this.noteEditor()?.setExternalContent(next.contentJson);
+    this.saveState.set('saved');
+    this.snackBar.open(
+      result.insertMode === 'replace'
+        ? 'Contenido del tema reemplazado.'
+        : 'Contenido añadido al final del tema.',
+      'Cerrar',
+      { duration: 2500 },
+    );
   }
 
   protected async deleteTopic(): Promise<void> {

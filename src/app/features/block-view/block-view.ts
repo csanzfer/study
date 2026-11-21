@@ -29,6 +29,11 @@ import {
   ConfirmDialog,
   ConfirmDialogData,
 } from '../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  NoteImportDialog,
+  NoteImportDialogData,
+  NoteImportDialogResult,
+} from '../notes/import-dialog/note-import-dialog';
 
 @Component({
   selector: 'app-block-view',
@@ -105,6 +110,46 @@ export class BlockView {
     this.newTopicTitle.set('');
     this.newTopicTags.set('');
     this.snackBar.open('Tema creado y guardado en IndexedDB.', 'Cerrar', { duration: 2500 });
+  }
+
+  protected async openImportDialog(): Promise<void> {
+    const currentBlock = this.block();
+    const dialogRef = this.dialog.open<
+      NoteImportDialog,
+      NoteImportDialogData,
+      NoteImportDialogResult
+    >(NoteImportDialog, {
+      width: '680px',
+      maxWidth: '95vw',
+      data: {
+        mode: 'create-topics',
+        blockLabel: currentBlock?.code,
+      },
+    });
+
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (!result || result.mode !== 'create-topics' || result.items.length === 0) {
+      return;
+    }
+
+    for (const item of result.items) {
+      await this.store.createTopic({
+        blockId: this.blockId(),
+        title: item.title,
+        tags: item.tags,
+        contentJson: item.contentJson,
+        plainText: item.plainText,
+      });
+    }
+
+    const count = result.items.length;
+    this.snackBar.open(
+      count === 1
+        ? `Tema "${result.items[0].title}" importado correctamente.`
+        : `${count} temas importados correctamente.`,
+      'Cerrar',
+      { duration: 3000 },
+    );
   }
 
   protected startEdit(topic: Topic): void {

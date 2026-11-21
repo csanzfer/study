@@ -173,6 +173,17 @@
           </div>
 
           <button
+            mat-stroked-button
+            type="button"
+            (click)="openImportDialog()"
+            matTooltip="Importar archivo .docx o .md en este tema"
+            class="!rounded-xl !text-xs"
+          >
+            <mat-icon class="!text-[18px]">upload_file</mat-icon>
+            Importar
+          </button>
+
+          <button
             mat-icon-button
             type="button"
             aria-label="Eliminar tema"
