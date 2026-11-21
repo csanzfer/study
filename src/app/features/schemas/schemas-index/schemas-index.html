@@ -124,7 +124,11 @@
                   {{ item.blockCode }} · #{{ item.topic.order }}
                 </span>
 
-                @if (item.outline.hasStructure) {
+                @if (item.isCustom) {
+                  <span class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                    Propio
+                  </span>
+                } @else if (item.outline.hasStructure) {
                   <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                     {{ item.outline.headingCount }}T · {{ item.outline.itemCount }}E
                   </span>
@@ -172,16 +176,10 @@
             </div>
 
             <div class="flex items-center gap-2">
-              @if (current.outline.hasStructure) {
-                <button
-                  mat-icon-button
-                  type="button"
-                  aria-label="Centrar mapa mental"
-                  matTooltip="Centrar mapa"
-                  (click)="fitMap()"
-                >
-                  <mat-icon>center_focus_strong</mat-icon>
-                </button>
+              @if (current.isCustom) {
+                <span class="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                  Esquema propio
+                </span>
               }
               <a
                 [routerLink]="['/blocks', current.topic.blockId, 'topics', current.topic.id]"
@@ -195,7 +193,11 @@
           </div>
 
           <app-markmap-viewer
-            [markdown]="current.outline.markdown"
+            [markdown]="current.markdown"
+            [exportTitle]="current.topic.title"
+            [showDepthSelector]="!current.isCustom"
+            [depth]="outlineDepth()"
+            (depthChange)="outlineDepth.set($event)"
             minHeight="560px"
             emptyTitle="Este tema aún no tiene encabezados ni listas"
             emptyHint="Abre el tema y redacta o importa tus apuntes con títulos (H1–H4) o listas para generar su mapa mental automáticamente."

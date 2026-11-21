@@ -19,6 +19,17 @@
   --markmap-circle-open-bg: #0f172a;
 }
 
+.tai-markmap-shell.tai-markmap-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background-color: #f8fafc;
+}
+
+.tai-markmap-shell.tai-markmap-dark.tai-markmap-fullscreen {
+  background-color: #020617;
+}
+
 .tai-markmap-svg {
   color: var(--markmap-text-color);
   cursor: grab;

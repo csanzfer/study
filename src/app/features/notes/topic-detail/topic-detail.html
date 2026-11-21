@@ -212,39 +212,129 @@
 
       @if (viewMode() === 'schema' || viewMode() === 'split') {
         <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <!-- Schema Header & Source Toggle -->
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
             <div class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
               <mat-icon class="!h-5 !w-5 !text-[20px] text-emerald-600 dark:text-emerald-400">account_tree</mat-icon>
-              Mapa mental automático
-            </div>
-
-            <div class="flex items-center gap-2">
-              @if (outline().hasStructure) {
-                <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  {{ outline().headingCount }} títulos · {{ outline().itemCount }} elementos
-                </span>
-                <button
-                  mat-icon-button
-                  type="button"
-                  aria-label="Centrar mapa mental"
-                  matTooltip="Centrar mapa"
-                  (click)="fitSchema()"
-                  class="!h-8 !w-8 !p-1"
-                >
-                  <mat-icon class="!h-5 !w-5 !text-[20px]">center_focus_strong</mat-icon>
-                </button>
-              } @else {
-                <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  Sin estructura aún
+              <span>{{ schemaSource() === 'custom' ? 'Esquema propio' : 'Mapa mental automático' }}</span>
+              @if (schemaSource() === 'auto' && outline().hasStructure) {
+                <span class="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 sm:inline-flex dark:bg-emerald-950/60 dark:text-emerald-300">
+                  {{ outline().headingCount }}T · {{ outline().itemCount }}E
                 </span>
               }
             </div>
+
+            <div
+              class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800"
+              role="tablist"
+              aria-label="Fuente del esquema"
+            >
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="schemaSource() === 'auto'"
+                (click)="setSchemaSource('auto')"
+                class="rounded-lg px-2.5 py-1 text-xs font-medium transition"
+                [class.bg-white]="schemaSource() === 'auto'"
+                [class.text-slate-900]="schemaSource() === 'auto'"
+                [class.shadow-xs]="schemaSource() === 'auto'"
+                [class.dark:bg-slate-900]="schemaSource() === 'auto'"
+                [class.dark:text-white]="schemaSource() === 'auto'"
+                [class.text-slate-500]="schemaSource() !== 'auto'"
+                [class.dark:text-slate-400]="schemaSource() !== 'auto'"
+              >
+                Automático
+              </button>
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="schemaSource() === 'custom'"
+                (click)="setSchemaSource('custom')"
+                class="rounded-lg px-2.5 py-1 text-xs font-medium transition"
+                [class.bg-white]="schemaSource() === 'custom'"
+                [class.text-slate-900]="schemaSource() === 'custom'"
+                [class.shadow-xs]="schemaSource() === 'custom'"
+                [class.dark:bg-slate-900]="schemaSource() === 'custom'"
+                [class.dark:text-white]="schemaSource() === 'custom'"
+                [class.text-slate-500]="schemaSource() !== 'custom'"
+                [class.dark:text-slate-400]="schemaSource() !== 'custom'"
+              >
+                Esquema propio
+              </button>
+            </div>
           </div>
 
-          <app-markmap-viewer
-            [markdown]="outline().markdown"
-            [minHeight]="viewMode() === 'split' ? '560px' : '620px'"
-          />
+          @if (schemaSource() === 'custom') {
+            <div
+              class="grid gap-4"
+              [class.lg:grid-cols-12]="viewMode() === 'schema'"
+            >
+              <!-- Custom Markdown Editor -->
+              <div
+                class="flex flex-col gap-2"
+                [class.lg:col-span-5]="viewMode() === 'schema'"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-xs font-medium text-slate-600 dark:text-slate-300">
+                    Markdown del esquema (sin modificar tu apunte)
+                  </span>
+                  <button
+                    type="button"
+                    (click)="copyAutoOutlineToCustom()"
+                    [disabled]="!outline().hasStructure"
+                    class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  >
+                    <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">content_copy</mat-icon>
+                    Copiar estructura del apunte
+                  </button>
+                </div>
+
+                @if (!customOutlineDraft().trim() && outline().hasStructure) {
+                  <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+                    <span>¿No quieres empezar de cero?</span>
+                    <button
+                      type="button"
+                      (click)="copyAutoOutlineToCustom()"
+                      class="rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-blue-700"
+                    >
+                      Copiar estructura actual del apunte
+                    </button>
+                  </div>
+                }
+
+                <textarea
+                  aria-label="Editor Markdown de esquema propio"
+                  [ngModel]="customOutlineDraft()"
+                  (ngModelChange)="onCustomOutlineChange($event)"
+                  (keydown)="onCustomOutlineKeydown($event)"
+                  [rows]="viewMode() === 'split' ? 10 : 22"
+                  placeholder="# Título del tema&#10;## Rama principal&#10;- Punto clave&#10;  - Subdetalle&#10;- ⚠️ Ojo examen: plazo de 10 días"
+                  class="w-full flex-1 resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:bg-slate-900"
+                ></textarea>
+              </div>
+
+              <!-- Markmap Preview -->
+              <div [class.lg:col-span-7]="viewMode() === 'schema'">
+                <app-markmap-viewer
+                  [markdown]="activeSchemaMarkdown()"
+                  [exportTitle]="currentTopic.title"
+                  [showDepthSelector]="false"
+                  [minHeight]="viewMode() === 'split' ? '420px' : '560px'"
+                  emptyTitle="Tu esquema propio está vacío"
+                  emptyHint="Escribe títulos (#, ##) y listas en Markdown o pulsa «Copiar estructura actual del apunte» para empezar."
+                />
+              </div>
+            </div>
+          } @else {
+            <app-markmap-viewer
+              [markdown]="activeSchemaMarkdown()"
+              [exportTitle]="currentTopic.title"
+              [showDepthSelector]="true"
+              [depth]="outlineDepth()"
+              (depthChange)="setOutlineDepth($event)"
+              [minHeight]="viewMode() === 'split' ? '560px' : '620px'"
+            />
+          }
         </div>
       }
     </div>

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,7 +10,11 @@ import {
   Topic,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
-import { OutlineResult, tiptapJsonToOutlineMarkdown } from '../../../shared/utils/tiptap-outline.util';
+import {
+  OutlineDepth,
+  OutlineResult,
+  tiptapJsonToOutlineMarkdown,
+} from '../../../shared/utils/tiptap-outline.util';
 import { MarkmapViewer } from '../components/markmap-viewer/markmap-viewer';
 
 interface SchemaTopicItem {
@@ -18,6 +22,9 @@ interface SchemaTopicItem {
   blockCode: string;
   blockColor: string;
   outline: OutlineResult;
+  markdown: string;
+  hasSchema: boolean;
+  isCustom: boolean;
 }
 
 @Component({
@@ -34,12 +41,12 @@ interface SchemaTopicItem {
 })
 export class SchemasIndex {
   protected readonly store = inject(StudyStoreService);
-  private readonly viewer = viewChild(MarkmapViewer);
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
   protected readonly selectedBlockId = signal<TaiBlockId | 'ALL'>('ALL');
   protected readonly filterText = signal('');
   protected readonly selectedTopicId = signal<string | null>(null);
+  protected readonly outlineDepth = signal<OutlineDepth>('full');
 
   protected readonly blockLookup = computed(() => {
     const map = new Map<TaiBlockId, { code: string; color: string }>();
@@ -53,6 +60,7 @@ export class SchemasIndex {
     const blockFilter = this.selectedBlockId();
     const query = this.filterText().trim().toLowerCase();
     const blocks = this.blockLookup();
+    const depth = this.outlineDepth();
 
     return this.store
       .topics()
@@ -76,21 +84,27 @@ export class SchemasIndex {
       })
       .map((topic) => {
         const block = blocks.get(topic.blockId);
+        const customMd = topic.customOutlineMd?.trim() ?? '';
+        const isCustom = customMd.length > 0;
         const outline = tiptapJsonToOutlineMarkdown(topic.contentJson, {
-          depth: 'full',
+          depth,
           rootTitle: topic.title,
         });
+        const markdown = isCustom ? customMd : outline.markdown;
         return {
           topic,
           blockCode: block?.code ?? topic.blockId,
           blockColor: block?.color ?? '#3b82f6',
           outline,
+          markdown,
+          hasSchema: markdown.trim().length > 0,
+          isCustom,
         };
       });
   });
 
   protected readonly structuredCount = computed(
-    () => this.filteredItems().filter((item) => item.outline.hasStructure).length,
+    () => this.filteredItems().filter((item) => item.hasSchema).length,
   );
 
   protected readonly activeItem = computed<SchemaTopicItem | null>(() => {
@@ -107,7 +121,7 @@ export class SchemasIndex {
       }
     }
 
-    return items.find((item) => item.outline.hasStructure) ?? items[0];
+    return items.find((item) => item.hasSchema) ?? items[0];
   });
 
   constructor() {
@@ -125,9 +139,5 @@ export class SchemasIndex {
 
   protected selectTopic(topicId: string): void {
     this.selectedTopicId.set(topicId);
-  }
-
-  protected fitMap(): void {
-    this.viewer()?.fit();
   }
 }
