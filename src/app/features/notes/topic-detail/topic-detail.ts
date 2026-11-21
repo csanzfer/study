@@ -20,6 +20,8 @@ import {
   ConfirmDialog,
   ConfirmDialogData,
 } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { tiptapJsonToOutlineMarkdown } from '../../../shared/utils/tiptap-outline.util';
+import { MarkmapViewer } from '../../schemas/components/markmap-viewer/markmap-viewer';
 import { NoteEditor, NoteEditorChange } from '../editor/note-editor';
 import {
   NoteImportDialog,
@@ -44,6 +46,7 @@ const AUTOSAVE_DEBOUNCE_MS = 800;
     MatIconModule,
     MatSnackBarModule,
     MatTooltipModule,
+    MarkmapViewer,
     NoteEditor,
   ],
   templateUrl: './topic-detail.html',
@@ -56,6 +59,7 @@ export class TopicDetail {
   private readonly destroyRef = inject(DestroyRef);
   private readonly importService = inject(NoteImportService);
   private readonly noteEditor = viewChild(NoteEditor);
+  private readonly markmapViewer = viewChild(MarkmapViewer);
   protected readonly store = inject(StudyStoreService);
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
@@ -65,7 +69,9 @@ export class TopicDetail {
   protected readonly titleDraft = signal('');
   protected readonly newTagInput = signal('');
   protected readonly saveState = signal<SaveState>('saved');
+  protected readonly liveContentJson = signal<unknown>(null);
 
+  private syncedTopicId = '';
   private pendingSaveTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingChange: { topicId: string; change: NoteEditorChange } | null = null;
   private activeSavePromise: Promise<void> | null = null;
@@ -85,12 +91,25 @@ export class TopicDetail {
 
   protected readonly block = computed(() => this.store.getBlockById(this.blockId()));
   protected readonly topic = computed(() => this.store.getTopicById(this.topicId()));
+  protected readonly outline = computed(() =>
+    tiptapJsonToOutlineMarkdown(this.liveContentJson(), {
+      depth: 'full',
+      rootTitle: this.topic()?.title ?? '',
+    }),
+  );
 
   constructor() {
     effect(() => {
       const current = this.topic();
       if (current) {
         this.titleDraft.set(current.title);
+        if (this.syncedTopicId !== current.id || !this.pendingChange) {
+          this.syncedTopicId = current.id;
+          this.liveContentJson.set(current.contentJson ?? null);
+        }
+      } else {
+        this.syncedTopicId = '';
+        this.liveContentJson.set(null);
       }
     });
 
@@ -105,6 +124,7 @@ export class TopicDetail {
       return;
     }
 
+    this.liveContentJson.set(change.contentJson);
     this.pendingChange = { topicId: current.id, change };
     this.saveState.set('unsaved');
 
@@ -220,6 +240,10 @@ export class TopicDetail {
     this.viewMode.set(mode);
   }
 
+  protected fitSchema(): void {
+    this.markmapViewer()?.fit();
+  }
+
   protected async openImportDialog(): Promise<void> {
     const current = this.topic();
     if (!current) {
@@ -260,6 +284,7 @@ export class TopicDetail {
       plainText: next.plainText,
     });
 
+    this.liveContentJson.set(next.contentJson);
     this.noteEditor()?.setExternalContent(next.contentJson);
     this.saveState.set('saved');
     this.snackBar.open(

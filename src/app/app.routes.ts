@@ -32,14 +32,7 @@ export const routes: Routes = [
   {
     path: 'schemas',
     loadComponent: () =>
-      import('./features/coming-soon/coming-soon').then((m) => m.ComingSoon),
-    data: {
-      title: 'Esquemas automáticos (Markmap)',
-      phase: 'Fase 1',
-      icon: 'account_tree',
-      description:
-        'Visualización interactiva de mapas mentales generados automáticamente desde los títulos y listas de tus apuntes.',
-    },
+      import('./features/schemas/schemas-index/schemas-index').then((m) => m.SchemasIndex),
   },
   {
     path: 'planner',
