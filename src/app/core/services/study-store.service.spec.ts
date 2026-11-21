@@ -93,6 +93,18 @@ describe('StudyStoreService', () => {
     expect(ordered.map((t) => t.order)).toEqual([1, 2, 3]);
   });
 
+  it('should ignore unknown or duplicate ids when reordering topics without leaving gaps', async () => {
+    const t1 = await store.createTopic({ blockId: 'B2', title: 'CPU' });
+    const t2 = await store.createTopic({ blockId: 'B2', title: 'Memoria' });
+    const t3 = await store.createTopic({ blockId: 'B2', title: 'Buses' });
+
+    await store.reorderTopics('B2', ['unknown-id', t3.id, t3.id, t1.id]);
+
+    const ordered = store.getTopicsForBlock('B2');
+    expect(ordered.map((t) => t.id)).toEqual([t3.id, t1.id, t2.id]);
+    expect(ordered.map((t) => t.order)).toEqual([1, 2, 3]);
+  });
+
   it('should reindex remaining topics after deletion', async () => {
     const t1 = await store.createTopic({ blockId: 'B3', title: 'POO' });
     const t2 = await store.createTopic({ blockId: 'B3', title: 'SQL' });

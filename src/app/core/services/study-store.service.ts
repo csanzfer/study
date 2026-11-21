@@ -153,19 +153,19 @@ export class StudyStoreService {
     const topicMap = new Map(blockTopics.map((topic) => [topic.id, topic]));
     const updatedTopics: Topic[] = [];
 
-    orderedTopicIds.forEach((id, index) => {
+    let nextOrder = 1;
+    for (const id of orderedTopicIds) {
       const topic = topicMap.get(id);
       if (topic) {
-        const nextOrder = index + 1;
         if (topic.order !== nextOrder) {
           updatedTopics.push({ ...topic, order: nextOrder });
         }
         topicMap.delete(id);
+        nextOrder++;
       }
-    });
+    }
 
     // Preserve any topic not present in orderedTopicIds at the end
-    let nextOrder = orderedTopicIds.length + 1;
     for (const remaining of topicMap.values()) {
       if (remaining.order !== nextOrder) {
         updatedTopics.push({ ...remaining, order: nextOrder });

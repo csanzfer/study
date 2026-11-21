@@ -76,6 +76,7 @@ export class TopicDetail {
   protected readonly customOutlineDraft = signal('');
 
   private syncedTopicId = '';
+  private syncedTitle = '';
   private pendingSaveTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingChange: { topicId: string; patch: UpdateTopicPatch } | null = null;
   private activeSavePromise: Promise<void> | null = null;
@@ -93,8 +94,10 @@ export class TopicDetail {
   protected readonly blockId = computed(() => this.params().blockId);
   protected readonly topicId = computed(() => this.params().topicId);
 
-  protected readonly block = computed(() => this.store.getBlockById(this.blockId()));
   protected readonly topic = computed(() => this.store.getTopicById(this.topicId()));
+  protected readonly block = computed(() =>
+    this.store.getBlockById(this.topic()?.blockId ?? this.blockId()),
+  );
   protected readonly outline = computed(() =>
     tiptapJsonToOutlineMarkdown(this.liveContentJson(), {
       depth: this.outlineDepth(),
@@ -109,20 +112,31 @@ export class TopicDetail {
     effect(() => {
       const current = this.topic();
       if (current) {
-        this.titleDraft.set(current.title);
         const isNewTopic = this.syncedTopicId !== current.id;
         if (isNewTopic) {
+          if (this.pendingChange && this.pendingChange.topicId !== current.id) {
+            void this.flushPendingSave();
+          }
           this.syncedTopicId = current.id;
+          this.syncedTitle = current.title;
+          this.titleDraft.set(current.title);
           this.liveContentJson.set(current.contentJson ?? null);
           const savedCustom = current.customOutlineMd ?? '';
           this.customOutlineDraft.set(savedCustom);
           this.schemaSource.set(savedCustom.trim().length > 0 ? 'custom' : 'auto');
-        } else if (!this.pendingChange) {
-          this.liveContentJson.set(current.contentJson ?? null);
-          this.customOutlineDraft.set(current.customOutlineMd ?? '');
+        } else {
+          if (current.title !== this.syncedTitle) {
+            this.syncedTitle = current.title;
+            this.titleDraft.set(current.title);
+          }
+          if (!this.pendingChange) {
+            this.liveContentJson.set(current.contentJson ?? null);
+            this.customOutlineDraft.set(current.customOutlineMd ?? '');
+          }
         }
       } else {
         this.syncedTopicId = '';
+        this.syncedTitle = '';
         this.liveContentJson.set(null);
         this.customOutlineDraft.set('');
       }
@@ -196,6 +210,10 @@ export class TopicDetail {
   }
 
   private queueAutosave(topicId: string, patch: UpdateTopicPatch): void {
+    if (this.pendingChange && this.pendingChange.topicId !== topicId) {
+      void this.flushPendingSave();
+    }
+
     if (this.pendingChange && this.pendingChange.topicId === topicId) {
       this.pendingChange = {
         topicId,
@@ -240,6 +258,22 @@ export class TopicDetail {
         if (!this.pendingChange) {
           this.saveState.set('saved');
         }
+      })
+      .catch(() => {
+        if (!this.pendingChange) {
+          this.pendingChange = { topicId, patch };
+        } else if (this.pendingChange.topicId === topicId) {
+          this.pendingChange = {
+            topicId,
+            patch: { ...patch, ...this.pendingChange.patch },
+          };
+        }
+        this.saveState.set('unsaved');
+        this.snackBar.open(
+          'No se pudieron guardar los cambios en IndexedDB. Vuelve a intentarlo.',
+          'Cerrar',
+          { duration: 3500 },
+        );
       });
 
     this.activeSavePromise = saveTask;

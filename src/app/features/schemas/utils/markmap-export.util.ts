@@ -59,6 +59,10 @@ export function buildStandaloneSvgString(
   const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
   styleEl.textContent = `
     svg {
+      --markmap-text-color: ${textColor};
+      --markmap-code-bg: ${codeBg};
+      --markmap-code-color: ${codeColor};
+      --markmap-circle-open-bg: ${circleBg};
       background: ${bgColor};
       color: ${textColor};
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -92,7 +96,7 @@ export function buildStandaloneSvgString(
   bgRect.setAttribute('fill', bgColor);
 
   clone.insertBefore(bgRect, clone.firstChild);
-  clone.insertBefore(styleEl, clone.firstChild);
+  clone.appendChild(styleEl);
 
   const serializer = new XMLSerializer();
   const svgString = serializer.serializeToString(clone);

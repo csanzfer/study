@@ -17,6 +17,7 @@ class MockStudyRepository implements StudyRepository {
       tags: ['leyes'],
       contentJson: { type: 'doc', content: [] },
       plainText: 'Título preliminar',
+      customOutlineMd: '# Constitución\n## Título Preliminar\n- Art. 1',
       createdAt: '2026-11-20T12:00:00.000Z',
       updatedAt: '2026-11-20T12:00:00.000Z',
     },
@@ -77,10 +78,11 @@ describe('BackupService', () => {
     expect(payload.topics.length).toBe(1);
   });
 
-  it('should parse and validate a valid backup JSON string', async () => {
+  it('should parse and validate a valid backup JSON string preserving customOutlineMd', async () => {
     const payload = await service.createBackupPayload();
     const parsed = service.parseBackupJson(JSON.stringify(payload));
     expect(parsed.topics[0].title).toBe('Constitución Española');
+    expect(parsed.topics[0].customOutlineMd).toBe('# Constitución\n## Título Preliminar\n- Art. 1');
   });
 
   it('should reject an invalid backup JSON', () => {

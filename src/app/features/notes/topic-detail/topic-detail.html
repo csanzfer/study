@@ -205,7 +205,7 @@
       @if (viewMode() === 'note' || viewMode() === 'split') {
         <app-note-editor
           [topicId]="currentTopic.id"
-          [initialContent]="currentTopic.contentJson"
+          [initialContent]="liveContentJson()"
           (contentChange)="onEditorContentChange($event)"
         />
       }
