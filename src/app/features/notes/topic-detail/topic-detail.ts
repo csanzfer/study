@@ -16,6 +16,7 @@ import {
   TopicStatus,
   UpdateTopicPatch,
 } from '../../../core/models/study.models';
+import { PomodoroService } from '../../../core/services/pomodoro.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
   ConfirmDialog,
@@ -62,6 +63,7 @@ export class TopicDetail {
   private readonly importService = inject(NoteImportService);
   private readonly noteEditor = viewChild(NoteEditor);
   protected readonly store = inject(StudyStoreService);
+  private readonly pomodoro = inject(PomodoroService);
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
   protected readonly statusList = TOPIC_STATUS_LIST;
@@ -312,7 +314,57 @@ export class TopicDetail {
       return;
     }
 
-    await this.store.updateTopic(current.id, { status });
+    const result = await this.store.moveTopicStatus(current.id, status);
+    if (result?.roundIncremented) {
+      this.snackBar.open(
+        `Tema dominado · Vuelta #${result.topic.roundCount} registrada.`,
+        'Cerrar',
+        { duration: 3000 },
+      );
+    }
+  }
+
+  protected async logExtraRound(): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    const updated = await this.store.logTopicReview(current.id, true);
+    if (updated) {
+      this.snackBar.open(`Vuelta #${updated.roundCount} registrada hoy.`, 'Cerrar', {
+        duration: 2400,
+      });
+    }
+  }
+
+  protected startPomodoroForCurrentTopic(): void {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    let message: string;
+    if (this.pomodoro.phase() === 'focus' && this.pomodoro.status() === 'running') {
+      if (this.pomodoro.selectedTopicId() === current.id) {
+        message = `El Pomodoro ya está activo para "${current.title}".`;
+      } else {
+        this.pomodoro.selectTopic(current.id);
+        message = `Pomodoro vinculado ahora a "${current.title}".`;
+      }
+    } else {
+      if (this.pomodoro.phase() !== 'focus') {
+        this.pomodoro.setPhase('focus');
+      }
+      this.pomodoro.start(current.id);
+      message = `Pomodoro iniciado para "${current.title}".`;
+    }
+
+    this.snackBar.open(message, 'Ver panel', {
+      duration: 3000,
+    }).onAction().subscribe(() => {
+      void this.router.navigate(['/planner'], { queryParams: { tab: 'pomodoro' } });
+    });
   }
 
   protected async addTag(): Promise<void> {
@@ -389,9 +441,9 @@ export class TopicDetail {
       result.insertMode === 'append'
         ? this.importService.mergeTipTapDocuments(latest.contentJson, result.item.contentJson)
         : {
-            contentJson: result.item.contentJson,
-            plainText: result.item.plainText,
-          };
+          contentJson: result.item.contentJson,
+          plainText: result.item.plainText,
+        };
 
     await this.store.updateTopic(latest.id, {
       contentJson: next.contentJson,

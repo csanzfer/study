@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { BackupService } from '../../../core/services/backup.service';
+import { PomodoroService } from '../../../core/services/pomodoro.service';
 import { SearchService } from '../../../core/services/search.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -53,6 +54,7 @@ export class AppShell {
   protected readonly store = inject(StudyStoreService);
   protected readonly theme = inject(ThemeService);
   protected readonly backup = inject(BackupService);
+  protected readonly pomodoro = inject(PomodoroService);
   private readonly searchService = inject(SearchService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -78,7 +80,7 @@ export class AppShell {
 
   protected readonly upcomingTools: ToolNavItem[] = [
     { label: 'Esquemas', route: '/schemas', icon: 'account_tree' },
-    { label: 'Planificador', route: '/planner', icon: 'view_kanban', phaseBadge: 'F2' },
+    { label: 'Planificador', route: '/planner', icon: 'view_kanban' },
     { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz', phaseBadge: 'F3' },
     { label: 'Flashcards', route: '/flashcards', icon: 'style', phaseBadge: 'F4' },
   ];

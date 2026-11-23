@@ -1,0 +1,94 @@
+name: PR CI & Gemini Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ci:
+    name: Build, Tests & Architecture Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check AGENTS.md conventions
+        run: |
+          set -e
+          if grep -rnE "\*ngIf|\*ngFor|\*ngSwitch|@NgModule|HttpClient" src/app/; then
+            echo "::error::Se detectaron patrones prohibidos por AGENTS.md (*ngIf/*ngFor/*ngSwitch, @NgModule o HttpClient)."
+            exit 1
+          fi
+
+          DEXIE_IMPORTS=$(grep -rn "from 'dexie'" src/app/ | grep -v "src/app/core/db/" || true)
+          if [ -n "$DEXIE_IMPORTS" ]; then
+            echo "$DEXIE_IMPORTS"
+            echo "::error::Solo src/app/core/db/ puede importar Dexie directamente."
+            exit 1
+          fi
+
+      - name: Run unit tests
+        env:
+          CI: true
+          NG_CLI_ANALYTICS: false
+        run: npx ng test --watch=false
+
+      - name: Build application (development)
+        env:
+          CI: true
+          NG_CLI_ANALYTICS: false
+        run: npx ng build --configuration development
+
+  gemini-review:
+    name: Gemini AI PR Review
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Generate PR diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git diff --stat "$BASE_SHA" "$HEAD_SHA" -- . ':(exclude)package-lock.json' > /tmp/pr-stat.txt
+          git diff "$BASE_SHA" "$HEAD_SHA" -- . ':(exclude)package-lock.json' > /tmp/pr-diff.patch
+
+      - name: Run Gemini PR reviewer
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          DIFF_STAT_PATH: /tmp/pr-stat.txt
+          DIFF_PATCH_PATH: /tmp/pr-diff.patch
+        run: node .github/scripts/gemini-pr-review.mjs

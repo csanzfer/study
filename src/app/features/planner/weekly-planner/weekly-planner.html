@@ -1,0 +1,282 @@
+<div class="space-y-4">
+  <!-- Week Header & Progress -->
+  <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-2">
+      <button
+        mat-icon-button
+        type="button"
+        (click)="prevWeek()"
+        aria-label="Semana anterior"
+        matTooltip="Semana anterior"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <div class="min-w-[190px] text-center">
+        <p class="text-sm font-bold text-slate-900 dark:text-white">
+          {{ weekRangeLabel() }}
+        </p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          {{ isCurrentWeek() ? 'Semana actual' : 'Planificación semanal' }}
+        </p>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        (click)="nextWeek()"
+        aria-label="Semana siguiente"
+        matTooltip="Semana siguiente"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      @if (!isCurrentWeek()) {
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="goToCurrentWeek()"
+          class="!h-8 !rounded-xl !text-xs"
+        >
+          Hoy
+        </button>
+      }
+    </div>
+
+    <!-- Progress bar -->
+    <div class="flex items-center gap-3 sm:min-w-[240px]">
+      <div class="flex-1">
+        <div class="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span>Progreso semanal</span>
+          <span class="font-bold">{{ weeklyStats().completed }} / {{ weeklyStats().total }}</span>
+        </div>
+        <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div
+            class="h-full rounded-full bg-emerald-500 transition-all duration-300"
+            [style.width.%]="weeklyStats().percent"
+          ></div>
+        </div>
+      </div>
+      <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+        {{ weeklyStats().percent }}%
+      </span>
+    </div>
+  </div>
+
+  <!-- 7-Day Grid -->
+  <div
+    cdkDropListGroup
+    class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7"
+  >
+    @for (day of weekDays(); track day.dayOfWeek) {
+      @let dayItems = itemsByDay()[day.dayOfWeek];
+      <section
+        class="flex min-h-[260px] flex-col rounded-2xl border p-3 transition"
+        [class.border-blue-400]="day.isToday"
+        [class.bg-blue-50/40]="day.isToday"
+        [class.dark:border-blue-700]="day.isToday"
+        [class.dark:bg-blue-950/20]="day.isToday"
+        [class.border-slate-200]="!day.isToday"
+        [class.bg-white]="!day.isToday"
+        [class.dark:border-slate-800]="!day.isToday"
+        [class.dark:bg-slate-900]="!day.isToday"
+      >
+        <!-- Day Header -->
+        <div class="mb-3 flex items-center justify-between gap-1 border-b border-slate-100 pb-2 dark:border-slate-800">
+          <div class="flex items-center gap-1.5">
+            <span
+              class="text-xs font-bold uppercase tracking-wider"
+              [class.text-blue-700]="day.isToday"
+              [class.dark:text-blue-300]="day.isToday"
+              [class.text-slate-700]="!day.isToday"
+              [class.dark:text-slate-200]="!day.isToday"
+            >
+              {{ day.shortLabel }}
+            </span>
+            <span
+              class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+              [class.bg-blue-600]="day.isToday"
+              [class.text-white]="day.isToday"
+              [class.text-slate-500]="!day.isToday"
+              [class.dark:text-slate-400]="!day.isToday"
+            >
+              {{ day.dayNumber }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            (click)="openAddForm(day.dayOfWeek)"
+            [attr.aria-label]="'Añadir tema al ' + day.fullLabel"
+            [matTooltip]="'Añadir tema al ' + day.fullLabel"
+            class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-400"
+          >
+            <mat-icon class="!h-4 !w-4 !text-[18px]">
+              {{ addingToDay() === day.dayOfWeek ? 'close' : 'add' }}
+            </mat-icon>
+          </button>
+        </div>
+
+        <!-- Inline Quick Add Form -->
+        @if (addingToDay() === day.dayOfWeek) {
+          <div class="mb-3 space-y-2 rounded-xl border border-blue-200 bg-blue-50/70 p-2.5 dark:border-blue-900/60 dark:bg-blue-950/40">
+            @if (store.totalTopics() === 0) {
+              <p class="text-[11px] text-slate-600 dark:text-slate-300">
+                Crea algún tema primero en un bloque para planificarlo.
+              </p>
+            } @else {
+              <select
+                aria-label="Filtrar bloque"
+                [ngModel]="pickerBlockFilter()"
+                (ngModelChange)="onPickerBlockChange($event)"
+                class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="ALL">Todos los bloques</option>
+                @for (block of store.blocks(); track block.id) {
+                  <option [value]="block.id">{{ block.code }} · {{ block.shortTitle }}</option>
+                }
+              </select>
+
+              <select
+                aria-label="Seleccionar tema"
+                [ngModel]="pickerTopicId()"
+                (ngModelChange)="pickerTopicId.set($event)"
+                class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              >
+                @for (topic of pickerTopics(); track topic.id) {
+                  <option [value]="topic.id">[{{ topic.blockId }}] {{ topic.title }}</option>
+                }
+              </select>
+
+              <div class="flex items-center justify-between gap-2">
+                <label class="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+                  <span>Pomodoros:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
+                    [ngModel]="pickerTargetPomodoros()"
+                    (ngModelChange)="pickerTargetPomodoros.set($event)"
+                    class="w-12 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-center text-[11px] dark:border-slate-700 dark:bg-slate-900"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  (click)="addTopicToDay(day.dayOfWeek)"
+                  [disabled]="!pickerTopicId()"
+                  class="rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40"
+                >
+                  Añadir
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Drop Zone -->
+        <div
+          cdkDropList
+          [cdkDropListData]="dayItems"
+          (cdkDropListDropped)="onDrop($event, day.dayOfWeek)"
+          class="flex flex-1 flex-col gap-2"
+        >
+          @for (item of dayItems; track item.id) {
+            <article
+              cdkDrag
+              [cdkDragData]="item"
+              class="group cursor-grab rounded-xl border p-2.5 shadow-2xs transition-colors active:cursor-grabbing"
+              [class.border-emerald-200]="item.completed"
+              [class.bg-emerald-50/50]="item.completed"
+              [class.dark:border-emerald-900/60]="item.completed"
+              [class.dark:bg-emerald-950/30]="item.completed"
+              [class.border-slate-200]="!item.completed"
+              [class.bg-slate-50/60]="!item.completed"
+              [class.dark:border-slate-800]="!item.completed"
+              [class.dark:bg-slate-800/60]="!item.completed"
+            >
+              <div
+                *cdkDragPlaceholder
+                class="h-16 rounded-xl border-2 border-dashed border-blue-400/70 bg-blue-50/40 dark:bg-blue-950/30"
+              ></div>
+
+              <div class="flex items-start gap-2">
+                <button
+                  type="button"
+                  (click)="toggleItem(item)"
+                  [attr.aria-label]="item.completed ? 'Marcar como pendiente' : 'Marcar como completado'"
+                  class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition"
+                  [class.border-emerald-500]="item.completed"
+                  [class.bg-emerald-500]="item.completed"
+                  [class.text-white]="item.completed"
+                  [class.border-slate-300]="!item.completed"
+                  [class.bg-white]="!item.completed"
+                  [class.dark:border-slate-600]="!item.completed"
+                  [class.dark:bg-slate-900]="!item.completed"
+                >
+                  @if (item.completed) {
+                    <mat-icon class="!h-3 !w-3 !text-[12px]">check</mat-icon>
+                  }
+                </button>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="h-2 w-2 shrink-0 rounded-full"
+                      [style.background-color]="getBlockColor(item.blockId)"
+                    ></span>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      {{ item.blockId }}
+                    </span>
+                    @if (item.targetPomodoros) {
+                      <span class="text-[10px] text-slate-400">
+                        · {{ item.targetPomodoros }}🍅
+                      </span>
+                    }
+                  </div>
+
+                  <a
+                    [routerLink]="['/blocks', item.blockId, 'topics', item.topicId]"
+                    class="mt-0.5 block text-xs font-semibold leading-snug transition hover:text-blue-600 dark:hover:text-blue-400"
+                    [class.line-through]="item.completed"
+                    [class.text-slate-400]="item.completed"
+                    [class.dark:text-slate-500]="item.completed"
+                    [class.text-slate-800]="!item.completed"
+                    [class.dark:text-slate-100]="!item.completed"
+                  >
+                    {{ getTopicTitle(item) }}
+                  </a>
+                </div>
+              </div>
+
+              <div class="mt-2 flex items-center justify-end gap-1 opacity-75 transition group-hover:opacity-100">
+                <button
+                  type="button"
+                  (click)="launchPomodoro(item)"
+                  matTooltip="Estudiar con Pomodoro"
+                  aria-label="Estudiar con Pomodoro"
+                  class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400"
+                >
+                  <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">timer</mat-icon>
+                </button>
+                <button
+                  type="button"
+                  (click)="removeItem(item)"
+                  matTooltip="Quitar del día"
+                  aria-label="Quitar del día"
+                  class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+                >
+                  <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">delete_outline</mat-icon>
+                </button>
+              </div>
+            </article>
+          } @empty {
+            <div class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200/80 p-3 text-center text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+              Sin objetivos
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>
