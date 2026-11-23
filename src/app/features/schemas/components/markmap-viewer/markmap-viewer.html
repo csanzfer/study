@@ -1,0 +1,186 @@
+<div
+  #shellEl
+  class="tai-markmap-shell flex w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/70"
+  [class.tai-markmap-dark]="isDark()"
+  [class.tai-markmap-fullscreen]="isFullscreen()"
+>
+  @if (showToolbar()) {
+    <div
+      class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/95"
+    >
+      <!-- Depth + Active Recall -->
+      <div class="flex flex-wrap items-center gap-2">
+        @if (showDepthSelector()) {
+          <select
+            aria-label="Profundidad del esquema"
+            [ngModel]="depth()"
+            (ngModelChange)="onDepthSelect($event)"
+            class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            @for (option of depthOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        }
+
+        <div
+          class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800"
+          role="group"
+          aria-label="Modo memoria activa"
+        >
+          <button
+            type="button"
+            [disabled]="!hasContent()"
+            (click)="setFoldMode('fold-level-1')"
+            matTooltip="Memoria activa: plegar todo a nivel 1"
+            class="rounded-md px-2 py-1 text-[11px] font-medium transition disabled:opacity-40"
+            [class.bg-white]="activeFoldMode() === 'fold-level-1'"
+            [class.text-slate-900]="activeFoldMode() === 'fold-level-1'"
+            [class.shadow-xs]="activeFoldMode() === 'fold-level-1'"
+            [class.dark:bg-slate-900]="activeFoldMode() === 'fold-level-1'"
+            [class.dark:text-white]="activeFoldMode() === 'fold-level-1'"
+            [class.text-slate-600]="activeFoldMode() !== 'fold-level-1'"
+            [class.dark:text-slate-300]="activeFoldMode() !== 'fold-level-1'"
+          >
+            Nivel 1
+          </button>
+          <button
+            type="button"
+            [disabled]="!hasContent()"
+            (click)="setFoldMode('fold-level-2')"
+            matTooltip="Memoria activa: plegar subramas (nivel 2)"
+            class="rounded-md px-2 py-1 text-[11px] font-medium transition disabled:opacity-40"
+            [class.bg-white]="activeFoldMode() === 'fold-level-2'"
+            [class.text-slate-900]="activeFoldMode() === 'fold-level-2'"
+            [class.shadow-xs]="activeFoldMode() === 'fold-level-2'"
+            [class.dark:bg-slate-900]="activeFoldMode() === 'fold-level-2'"
+            [class.dark:text-white]="activeFoldMode() === 'fold-level-2'"
+            [class.text-slate-600]="activeFoldMode() !== 'fold-level-2'"
+            [class.dark:text-slate-300]="activeFoldMode() !== 'fold-level-2'"
+          >
+            Nivel 2
+          </button>
+          <button
+            type="button"
+            [disabled]="!hasContent()"
+            (click)="setFoldMode('expand-all')"
+            matTooltip="Expandir todas las ramas"
+            class="rounded-md px-2 py-1 text-[11px] font-medium transition disabled:opacity-40"
+            [class.bg-white]="activeFoldMode() === 'expand-all'"
+            [class.text-slate-900]="activeFoldMode() === 'expand-all'"
+            [class.shadow-xs]="activeFoldMode() === 'expand-all'"
+            [class.dark:bg-slate-900]="activeFoldMode() === 'expand-all'"
+            [class.dark:text-white]="activeFoldMode() === 'expand-all'"
+            [class.text-slate-600]="activeFoldMode() !== 'expand-all'"
+            [class.dark:text-slate-300]="activeFoldMode() !== 'expand-all'"
+          >
+            Expandir
+          </button>
+        </div>
+      </div>
+
+      <!-- Zoom, Fit, Fullscreen, Export -->
+      <div class="flex flex-wrap items-center gap-1">
+        <button
+          type="button"
+          [disabled]="!hasContent()"
+          (click)="zoomOut()"
+          aria-label="Alejar mapa"
+          matTooltip="Alejar (Zoom -)"
+          class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[18px]">zoom_out</mat-icon>
+        </button>
+        <button
+          type="button"
+          [disabled]="!hasContent()"
+          (click)="zoomIn()"
+          aria-label="Acercar mapa"
+          matTooltip="Acercar (Zoom +)"
+          class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[18px]">zoom_in</mat-icon>
+        </button>
+        <button
+          type="button"
+          [disabled]="!hasContent()"
+          (click)="fit()"
+          aria-label="Centrar mapa"
+          matTooltip="Centrar (Fit)"
+          class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[18px]">center_focus_strong</mat-icon>
+        </button>
+
+        <span class="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-700"></span>
+
+        <button
+          type="button"
+          [disabled]="!hasContent()"
+          (click)="exportSvg()"
+          matTooltip="Exportar esquema como archivo .svg"
+          class="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          SVG
+        </button>
+        <button
+          type="button"
+          [disabled]="!hasContent() || isExportingPng()"
+          (click)="exportPng()"
+          matTooltip="Exportar esquema como imagen .png (alta resolución 2x)"
+          class="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          {{ isExportingPng() ? '...' : 'PNG' }}
+        </button>
+
+        <span class="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-700"></span>
+
+        <button
+          type="button"
+          (click)="toggleFullscreen()"
+          [attr.aria-label]="isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
+          [matTooltip]="isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
+          class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[18px]">
+            {{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}
+          </mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+
+  <div
+    #container
+    class="relative w-full flex-1 overflow-hidden"
+    [style.min-height]="isFullscreen() ? '0' : minHeight()"
+  >
+    <svg
+      #svgEl
+      class="tai-markmap-svg block h-full w-full"
+      [class.hidden]="!hasContent()"
+      [style.min-height]="isFullscreen() ? '100%' : minHeight()"
+      role="img"
+      aria-label="Mapa mental interactivo"
+    ></svg>
+
+    @if (!hasContent()) {
+      <div
+        class="flex h-full flex-col items-center justify-center px-6 py-12 text-center"
+        [style.min-height]="isFullscreen() ? '100%' : minHeight()"
+      >
+        <div
+          class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-200/70 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+        >
+          <mat-icon class="!h-6 !w-6 !text-[24px]">account_tree</mat-icon>
+        </div>
+        <p class="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {{ emptyTitle() }}
+        </p>
+        <p class="mt-1 max-w-md text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          {{ emptyHint() }}
+        </p>
+      </div>
+    }
+  </div>
+</div>

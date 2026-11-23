@@ -1,0 +1,209 @@
+<section class="space-y-5">
+  <!-- Header -->
+  <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-emerald-600 dark:text-emerald-400">account_tree</mat-icon>
+          <h1 class="text-xl font-bold text-slate-900 dark:text-white">
+            Esquemas automáticos (Markmap)
+          </h1>
+        </div>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Repasa visualmente la estructura de tus temas generada automáticamente desde tus apuntes.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+          {{ structuredCount() }} con esquema
+        </span>
+        <span class="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {{ filteredItems().length }} temas mostrados
+        </span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          (click)="selectBlock('ALL')"
+          class="rounded-xl px-3 py-1.5 text-xs font-medium transition"
+          [class.bg-slate-900]="selectedBlockId() === 'ALL'"
+          [class.text-white]="selectedBlockId() === 'ALL'"
+          [class.dark:bg-white]="selectedBlockId() === 'ALL'"
+          [class.dark:text-slate-900]="selectedBlockId() === 'ALL'"
+          [class.bg-slate-100]="selectedBlockId() !== 'ALL'"
+          [class.text-slate-600]="selectedBlockId() !== 'ALL'"
+          [class.dark:bg-slate-800]="selectedBlockId() !== 'ALL'"
+          [class.dark:text-slate-300]="selectedBlockId() !== 'ALL'"
+        >
+          Todos
+        </button>
+
+        @for (block of store.blocks(); track block.id) {
+          <button
+            type="button"
+            (click)="selectBlock(block.id)"
+            class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition"
+            [class.bg-slate-900]="selectedBlockId() === block.id"
+            [class.text-white]="selectedBlockId() === block.id"
+            [class.dark:bg-white]="selectedBlockId() === block.id"
+            [class.dark:text-slate-900]="selectedBlockId() === block.id"
+            [class.bg-slate-100]="selectedBlockId() !== block.id"
+            [class.text-slate-600]="selectedBlockId() !== block.id"
+            [class.dark:bg-slate-800]="selectedBlockId() !== block.id"
+            [class.dark:text-slate-300]="selectedBlockId() !== block.id"
+          >
+            <span
+              class="inline-block h-2 w-2 rounded-full"
+              [style.background-color]="block.color"
+            ></span>
+            {{ block.code }}
+          </button>
+        }
+      </div>
+
+      <div class="relative w-full sm:w-64">
+        <mat-icon class="pointer-events-none absolute top-1/2 left-2.5 !h-4 !w-4 -translate-y-1/2 !text-[16px] text-slate-400">
+          search
+        </mat-icon>
+        <input
+          type="text"
+          aria-label="Filtrar esquemas por título o etiqueta"
+          [ngModel]="filterText()"
+          (ngModelChange)="filterText.set($event)"
+          placeholder="Filtrar tema o etiqueta..."
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-3 pl-8 text-xs text-slate-700 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-900"
+        />
+      </div>
+    </div>
+  </header>
+
+  @if (filteredItems().length === 0) {
+    <div class="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
+      <mat-icon class="!h-10 !w-10 !text-[40px] text-slate-400">account_tree</mat-icon>
+      <p class="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        No hay temas que coincidan con el filtro
+      </p>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Crea o importa un tema en cualquiera de los bloques para generar su mapa mental automáticamente.
+      </p>
+      <a routerLink="/blocks/B1" mat-stroked-button class="mt-4 !rounded-xl">
+        Ir al Bloque I
+      </a>
+    </div>
+  } @else {
+    <div class="grid gap-5 lg:grid-cols-12">
+      <!-- Topic selector list -->
+      <aside class="space-y-2 lg:col-span-4">
+        <div class="max-h-[640px] space-y-2 overflow-y-auto pr-1">
+          @for (item of filteredItems(); track item.topic.id) {
+            <button
+              type="button"
+              (click)="selectTopic(item.topic.id)"
+              class="w-full rounded-2xl border p-3.5 text-left transition"
+              [class.border-blue-500]="activeItem()?.topic?.id === item.topic.id"
+              [class.bg-blue-50/60]="activeItem()?.topic?.id === item.topic.id"
+              [class.dark:border-blue-400]="activeItem()?.topic?.id === item.topic.id"
+              [class.dark:bg-blue-950/30]="activeItem()?.topic?.id === item.topic.id"
+              [class.border-slate-200]="activeItem()?.topic?.id !== item.topic.id"
+              [class.bg-white]="activeItem()?.topic?.id !== item.topic.id"
+              [class.hover:border-slate-300]="activeItem()?.topic?.id !== item.topic.id"
+              [class.dark:border-slate-800]="activeItem()?.topic?.id !== item.topic.id"
+              [class.dark:bg-slate-900]="activeItem()?.topic?.id !== item.topic.id"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span
+                    class="inline-block h-2 w-2 rounded-full"
+                    [style.background-color]="item.blockColor"
+                  ></span>
+                  {{ item.blockCode }} · #{{ item.topic.order }}
+                </span>
+
+                @if (item.isCustom) {
+                  <span class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                    Propio
+                  </span>
+                } @else if (item.outline.hasStructure) {
+                  <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    {{ item.outline.headingCount }}T · {{ item.outline.itemCount }}E
+                  </span>
+                } @else {
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                    Sin esquema
+                  </span>
+                }
+              </div>
+
+              <p class="mt-1.5 line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white">
+                {{ item.topic.title }}
+              </p>
+
+              <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {{ statusLabels[item.topic.status] }}
+                </span>
+                @for (tag of item.topic.tags.slice(0, 2); track tag) {
+                  <span class="rounded-md bg-blue-50 px-2 py-0.5 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                    #{{ tag }}
+                  </span>
+                }
+              </div>
+            </button>
+          }
+        </div>
+      </aside>
+
+      <!-- Active Markmap Preview -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8 dark:border-slate-800 dark:bg-slate-900">
+        @if (activeItem(); as current) {
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span
+                  class="inline-block h-2 w-2 rounded-full"
+                  [style.background-color]="current.blockColor"
+                ></span>
+                <span>{{ current.blockCode }} · Tema #{{ current.topic.order }}</span>
+              </div>
+              <h2 class="truncate text-base font-bold text-slate-900 dark:text-white">
+                {{ current.topic.title }}
+              </h2>
+            </div>
+
+            <div class="flex items-center gap-2">
+              @if (current.isCustom) {
+                <span class="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                  Esquema propio
+                </span>
+              }
+              <a
+                [routerLink]="['/blocks', current.topic.blockId, 'topics', current.topic.id]"
+                mat-stroked-button
+                class="!rounded-xl !text-xs"
+              >
+                <mat-icon class="!text-[18px]">open_in_new</mat-icon>
+                Abrir tema
+              </a>
+            </div>
+          </div>
+
+          <app-markmap-viewer
+            [markdown]="current.markdown"
+            [exportTitle]="current.topic.title"
+            [showDepthSelector]="!current.isCustom"
+            [depth]="outlineDepth()"
+            (depthChange)="outlineDepth.set($event)"
+            minHeight="560px"
+            emptyTitle="Este tema aún no tiene encabezados ni listas"
+            emptyHint="Abre el tema y redacta o importa tus apuntes con títulos (H1–H4) o listas para generar su mapa mental automáticamente."
+          />
+        }
+      </div>
+    </div>
+  }
+</section>

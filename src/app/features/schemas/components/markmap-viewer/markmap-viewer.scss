@@ -1,0 +1,63 @@
+.tai-markmap-shell {
+  --markmap-text-color: #0f172a;
+  --markmap-code-bg: #e2e8f0;
+  --markmap-code-color: #0f172a;
+  --markmap-highlight-bg: #fef08a;
+  --markmap-a-color: #2563eb;
+  --markmap-a-hover-color: #1d4ed8;
+  --markmap-circle-open-bg: #ffffff;
+  --markmap-font: 500 14px / 1.45 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.tai-markmap-shell.tai-markmap-dark {
+  --markmap-text-color: #e2e8f0;
+  --markmap-code-bg: #1e293b;
+  --markmap-code-color: #f8fafc;
+  --markmap-highlight-bg: #854d0e;
+  --markmap-a-color: #60a5fa;
+  --markmap-a-hover-color: #93c5fd;
+  --markmap-circle-open-bg: #0f172a;
+}
+
+.tai-markmap-shell.tai-markmap-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background-color: #f8fafc;
+}
+
+.tai-markmap-shell.tai-markmap-dark.tai-markmap-fullscreen {
+  background-color: #020617;
+}
+
+.tai-markmap-svg {
+  color: var(--markmap-text-color);
+  cursor: grab;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  .markmap-foreign {
+    color: var(--markmap-text-color);
+    font: var(--markmap-font);
+  }
+
+  .markmap-foreign strong {
+    font-weight: 700;
+  }
+
+  .markmap-foreign code {
+    background-color: var(--markmap-code-bg);
+    color: var(--markmap-code-color);
+    border-radius: 4px;
+    padding: 0.08rem 0.3rem;
+    font-size: 0.85em;
+  }
+
+  .markmap-node > circle {
+    cursor: pointer;
+    stroke-width: 2;
+  }
+}

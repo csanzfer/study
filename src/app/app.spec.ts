@@ -38,6 +38,12 @@ class InMemoryStudyRepository implements StudyRepository {
     }
   }
 
+  async saveTopics(topics: Topic[]): Promise<void> {
+    for (const topic of topics) {
+      await this.saveTopic(topic);
+    }
+  }
+
   async deleteTopic(id: string): Promise<void> {
     this.topics = this.topics.filter((t) => t.id !== id);
   }

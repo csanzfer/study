@@ -1,0 +1,350 @@
+@if (topic(); as currentTopic) {
+  <section class="space-y-5">
+    <!-- Breadcrumb -->
+    <nav class="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <a routerLink="/dashboard" class="hover:text-blue-600 dark:hover:text-blue-400">Panel</a>
+      <mat-icon class="!h-4 !w-4 !text-[16px]">chevron_right</mat-icon>
+      @if (block(); as currentBlock) {
+        <a
+          [routerLink]="['/blocks', currentBlock.id]"
+          class="inline-flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400"
+        >
+          <span
+            class="inline-block h-2 w-2 rounded-full"
+            [style.background-color]="currentBlock.color"
+          ></span>
+          {{ currentBlock.code }}
+        </a>
+        <mat-icon class="!h-4 !w-4 !text-[16px]">chevron_right</mat-icon>
+      }
+      <span class="truncate text-slate-700 dark:text-slate-200">
+        #{{ currentTopic.order }} {{ currentTopic.title }}
+      </span>
+    </nav>
+
+    <!-- Topic Header Card -->
+    <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 flex-1 space-y-3">
+          <!-- Inline Editable Title -->
+          <div class="flex items-center gap-2">
+            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              #{{ currentTopic.order }}
+            </span>
+            <input
+              type="text"
+              aria-label="Título del tema"
+              [ngModel]="titleDraft()"
+              (ngModelChange)="titleDraft.set($event)"
+              (blur)="saveTitle()"
+              (keydown.enter)="$any($event.target).blur()"
+              class="w-full rounded-xl border border-transparent bg-transparent px-2 py-1 text-xl font-bold text-slate-900 outline-none transition hover:border-slate-200 focus:border-blue-500 focus:bg-slate-50 dark:text-white dark:hover:border-slate-700 dark:focus:bg-slate-800"
+            />
+          </div>
+
+          <!-- Metadata row: status, autosave indicator, updatedAt -->
+          <div class="flex flex-wrap items-center gap-2.5 text-xs">
+            <select
+              aria-label="Estado del tema"
+              [ngModel]="currentTopic.status"
+              (ngModelChange)="onStatusChange($event)"
+              class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              @for (status of statusList; track status) {
+                <option [value]="status">{{ statusLabels[status] }}</option>
+              }
+            </select>
+
+            <!-- Autosave Status Pill -->
+            @switch (saveState()) {
+              @case ('saved') {
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                  <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">cloud_done</mat-icon>
+                  Guardado
+                </span>
+              }
+              @case ('saving') {
+                <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                  <mat-icon class="!h-3.5 !w-3.5 !text-[14px] animate-spin">sync</mat-icon>
+                  Guardando...
+                </span>
+              }
+              @case ('unsaved') {
+                <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                  <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">edit</mat-icon>
+                  Cambios sin guardar
+                </span>
+              }
+            }
+
+            <span class="text-slate-400">•</span>
+            <span class="text-slate-500 dark:text-slate-400">
+              Actualizado: {{ currentTopic.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+
+          <!-- Tag chips -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            @for (tag of currentTopic.tags; track tag) {
+              <span class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                #{{ tag }}
+                <button
+                  type="button"
+                  aria-label="Quitar etiqueta"
+                  (click)="removeTag(tag)"
+                  class="flex h-4 w-4 items-center justify-center rounded-full hover:bg-blue-200/70 dark:hover:bg-blue-900"
+                >
+                  <mat-icon class="!h-3 !w-3 !text-[12px]">close</mat-icon>
+                </button>
+              </span>
+            }
+
+            <form (ngSubmit)="addTag()" class="inline-flex items-center">
+              <input
+                type="text"
+                name="newTag"
+                [ngModel]="newTagInput()"
+                (ngModelChange)="newTagInput.set($event)"
+                placeholder="+ Añadir etiqueta..."
+                class="w-36 rounded-lg border border-dashed border-slate-300 bg-transparent px-2.5 py-1 text-xs text-slate-700 outline-none focus:border-blue-500 focus:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:focus:bg-slate-800"
+              />
+            </form>
+          </div>
+        </div>
+
+        <!-- View Mode Switcher & Actions -->
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          <div
+            class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800"
+            role="tablist"
+            aria-label="Modo de vista del tema"
+          >
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="viewMode() === 'note'"
+              (click)="setViewMode('note')"
+              class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition"
+              [class.bg-white]="viewMode() === 'note'"
+              [class.text-slate-900]="viewMode() === 'note'"
+              [class.shadow-xs]="viewMode() === 'note'"
+              [class.dark:bg-slate-900]="viewMode() === 'note'"
+              [class.dark:text-white]="viewMode() === 'note'"
+              [class.text-slate-500]="viewMode() !== 'note'"
+              [class.dark:text-slate-400]="viewMode() !== 'note'"
+            >
+              <mat-icon class="!h-4 !w-4 !text-[16px]">edit_note</mat-icon>
+              Apunte
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="viewMode() === 'schema'"
+              (click)="setViewMode('schema')"
+              class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition"
+              [class.bg-white]="viewMode() === 'schema'"
+              [class.text-slate-900]="viewMode() === 'schema'"
+              [class.shadow-xs]="viewMode() === 'schema'"
+              [class.dark:bg-slate-900]="viewMode() === 'schema'"
+              [class.dark:text-white]="viewMode() === 'schema'"
+              [class.text-slate-500]="viewMode() !== 'schema'"
+              [class.dark:text-slate-400]="viewMode() !== 'schema'"
+            >
+              <mat-icon class="!h-4 !w-4 !text-[16px]">account_tree</mat-icon>
+              Esquema
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="viewMode() === 'split'"
+              (click)="setViewMode('split')"
+              class="hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition lg:inline-flex"
+              [class.bg-white]="viewMode() === 'split'"
+              [class.text-slate-900]="viewMode() === 'split'"
+              [class.shadow-xs]="viewMode() === 'split'"
+              [class.dark:bg-slate-900]="viewMode() === 'split'"
+              [class.dark:text-white]="viewMode() === 'split'"
+              [class.text-slate-500]="viewMode() !== 'split'"
+              [class.dark:text-slate-400]="viewMode() !== 'split'"
+            >
+              <mat-icon class="!h-4 !w-4 !text-[16px]">vertical_split</mat-icon>
+              Dividida
+            </button>
+          </div>
+
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="openImportDialog()"
+            matTooltip="Importar archivo .docx o .md en este tema"
+            class="!rounded-xl !text-xs"
+          >
+            <mat-icon class="!text-[18px]">upload_file</mat-icon>
+            Importar
+          </button>
+
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Eliminar tema"
+            matTooltip="Eliminar tema"
+            (click)="deleteTopic()"
+            class="!text-slate-400 hover:!text-red-500"
+          >
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace Area -->
+    <div
+      class="grid gap-5"
+      [class.lg:grid-cols-2]="viewMode() === 'split'"
+    >
+      @if (viewMode() === 'note' || viewMode() === 'split') {
+        <app-note-editor
+          [topicId]="currentTopic.id"
+          [initialContent]="liveContentJson()"
+          (contentChange)="onEditorContentChange($event)"
+        />
+      }
+
+      @if (viewMode() === 'schema' || viewMode() === 'split') {
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <!-- Schema Header & Source Toggle -->
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <mat-icon class="!h-5 !w-5 !text-[20px] text-emerald-600 dark:text-emerald-400">account_tree</mat-icon>
+              <span>{{ schemaSource() === 'custom' ? 'Esquema propio' : 'Mapa mental automático' }}</span>
+              @if (schemaSource() === 'auto' && outline().hasStructure) {
+                <span class="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 sm:inline-flex dark:bg-emerald-950/60 dark:text-emerald-300">
+                  {{ outline().headingCount }}T · {{ outline().itemCount }}E
+                </span>
+              }
+            </div>
+
+            <div
+              class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800"
+              role="tablist"
+              aria-label="Fuente del esquema"
+            >
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="schemaSource() === 'auto'"
+                (click)="setSchemaSource('auto')"
+                class="rounded-lg px-2.5 py-1 text-xs font-medium transition"
+                [class.bg-white]="schemaSource() === 'auto'"
+                [class.text-slate-900]="schemaSource() === 'auto'"
+                [class.shadow-xs]="schemaSource() === 'auto'"
+                [class.dark:bg-slate-900]="schemaSource() === 'auto'"
+                [class.dark:text-white]="schemaSource() === 'auto'"
+                [class.text-slate-500]="schemaSource() !== 'auto'"
+                [class.dark:text-slate-400]="schemaSource() !== 'auto'"
+              >
+                Automático
+              </button>
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="schemaSource() === 'custom'"
+                (click)="setSchemaSource('custom')"
+                class="rounded-lg px-2.5 py-1 text-xs font-medium transition"
+                [class.bg-white]="schemaSource() === 'custom'"
+                [class.text-slate-900]="schemaSource() === 'custom'"
+                [class.shadow-xs]="schemaSource() === 'custom'"
+                [class.dark:bg-slate-900]="schemaSource() === 'custom'"
+                [class.dark:text-white]="schemaSource() === 'custom'"
+                [class.text-slate-500]="schemaSource() !== 'custom'"
+                [class.dark:text-slate-400]="schemaSource() !== 'custom'"
+              >
+                Esquema propio
+              </button>
+            </div>
+          </div>
+
+          @if (schemaSource() === 'custom') {
+            <div
+              class="grid gap-4"
+              [class.lg:grid-cols-12]="viewMode() === 'schema'"
+            >
+              <!-- Custom Markdown Editor -->
+              <div
+                class="flex flex-col gap-2"
+                [class.lg:col-span-5]="viewMode() === 'schema'"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-xs font-medium text-slate-600 dark:text-slate-300">
+                    Markdown del esquema (sin modificar tu apunte)
+                  </span>
+                  <button
+                    type="button"
+                    (click)="copyAutoOutlineToCustom()"
+                    [disabled]="!outline().hasStructure"
+                    class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  >
+                    <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">content_copy</mat-icon>
+                    Copiar estructura del apunte
+                  </button>
+                </div>
+
+                @if (!customOutlineDraft().trim() && outline().hasStructure) {
+                  <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+                    <span>¿No quieres empezar de cero?</span>
+                    <button
+                      type="button"
+                      (click)="copyAutoOutlineToCustom()"
+                      class="rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-blue-700"
+                    >
+                      Copiar estructura actual del apunte
+                    </button>
+                  </div>
+                }
+
+                <textarea
+                  aria-label="Editor Markdown de esquema propio"
+                  [ngModel]="customOutlineDraft()"
+                  (ngModelChange)="onCustomOutlineChange($event)"
+                  (keydown)="onCustomOutlineKeydown($event)"
+                  [rows]="viewMode() === 'split' ? 10 : 22"
+                  placeholder="# Título del tema&#10;## Rama principal&#10;- Punto clave&#10;  - Subdetalle&#10;- ⚠️ Ojo examen: plazo de 10 días"
+                  class="w-full flex-1 resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:bg-slate-900"
+                ></textarea>
+              </div>
+
+              <!-- Markmap Preview -->
+              <div [class.lg:col-span-7]="viewMode() === 'schema'">
+                <app-markmap-viewer
+                  [markdown]="activeSchemaMarkdown()"
+                  [exportTitle]="currentTopic.title"
+                  [showDepthSelector]="false"
+                  [minHeight]="viewMode() === 'split' ? '420px' : '560px'"
+                  emptyTitle="Tu esquema propio está vacío"
+                  emptyHint="Escribe títulos (#, ##) y listas en Markdown o pulsa «Copiar estructura actual del apunte» para empezar."
+                />
+              </div>
+            </div>
+          } @else {
+            <app-markmap-viewer
+              [markdown]="activeSchemaMarkdown()"
+              [exportTitle]="currentTopic.title"
+              [showDepthSelector]="true"
+              [depth]="outlineDepth()"
+              (depthChange)="setOutlineDepth($event)"
+              [minHeight]="viewMode() === 'split' ? '560px' : '620px'"
+            />
+          }
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
+    <mat-icon class="!h-10 !w-10 !text-[40px] text-slate-400">find_in_page</mat-icon>
+    <p class="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">Tema no encontrado.</p>
+    <a [routerLink]="['/blocks', blockId()]" mat-stroked-button class="mt-4 !rounded-xl">
+      Volver al bloque
+    </a>
+  </div>
+}

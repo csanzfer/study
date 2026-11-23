@@ -17,16 +17,22 @@ export const routes: Routes = [
       import('./features/block-view/block-view').then((m) => m.BlockView),
   },
   {
+    path: 'blocks/:blockId/topics/:topicId',
+    loadComponent: () =>
+      import('./features/notes/topic-detail/topic-detail').then((m) => m.TopicDetail),
+    canDeactivate: [
+      async (component: unknown) => {
+        const { topicDetailCanDeactivateGuard } = await import(
+          './features/notes/topic-detail/topic-detail'
+        );
+        return (topicDetailCanDeactivateGuard as (c: unknown) => Promise<boolean>)(component);
+      },
+    ],
+  },
+  {
     path: 'schemas',
     loadComponent: () =>
-      import('./features/coming-soon/coming-soon').then((m) => m.ComingSoon),
-    data: {
-      title: 'Esquemas automáticos (Markmap)',
-      phase: 'Fase 1',
-      icon: 'account_tree',
-      description:
-        'Visualización interactiva de mapas mentales generados automáticamente desde los títulos y listas de tus apuntes.',
-    },
+      import('./features/schemas/schemas-index/schemas-index').then((m) => m.SchemasIndex),
   },
   {
     path: 'planner',

@@ -4,6 +4,7 @@ import {
   TaiBlock,
   TaiBlockId,
   Topic,
+  UpdateTopicPatch,
 } from '../models/study.models';
 import { STUDY_REPOSITORY } from '../repositories/study.repository';
 
@@ -82,6 +83,10 @@ export class StudyStoreService {
     return this.blocks().find((block) => block.id === blockId);
   }
 
+  getTopicById(id: string): Topic | undefined {
+    return this.topics().find((topic) => topic.id === id);
+  }
+
   getTopicsForBlock(blockId: TaiBlockId): Topic[] {
     return this.topics()
       .filter((topic) => topic.blockId === blockId)
@@ -115,8 +120,86 @@ export class StudyStoreService {
     return topic;
   }
 
+  async updateTopic(id: string, patch: UpdateTopicPatch): Promise<Topic | undefined> {
+    const existing = this.getTopicById(id) ?? (await this.repository.getTopicById(id));
+    if (!existing) {
+      return undefined;
+    }
+
+    const nextTitle =
+      patch.title !== undefined ? patch.title.trim() || existing.title : existing.title;
+    const nextTags =
+      patch.tags !== undefined
+        ? Array.from(new Set(patch.tags.map((tag) => tag.trim()).filter(Boolean)))
+        : existing.tags;
+
+    const updated: Topic = {
+      ...existing,
+      ...patch,
+      title: nextTitle,
+      tags: nextTags,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.repository.saveTopic(updated);
+    this.topics.update((items) =>
+      items.map((item) => (item.id === id ? updated : item)),
+    );
+    return updated;
+  }
+
+  async reorderTopics(blockId: TaiBlockId, orderedTopicIds: string[]): Promise<void> {
+    const blockTopics = this.getTopicsForBlock(blockId);
+    const topicMap = new Map(blockTopics.map((topic) => [topic.id, topic]));
+    const updatedTopics: Topic[] = [];
+
+    let nextOrder = 1;
+    for (const id of orderedTopicIds) {
+      const topic = topicMap.get(id);
+      if (topic) {
+        if (topic.order !== nextOrder) {
+          updatedTopics.push({ ...topic, order: nextOrder });
+        }
+        topicMap.delete(id);
+        nextOrder++;
+      }
+    }
+
+    // Preserve any topic not present in orderedTopicIds at the end
+    for (const remaining of topicMap.values()) {
+      if (remaining.order !== nextOrder) {
+        updatedTopics.push({ ...remaining, order: nextOrder });
+      }
+      nextOrder++;
+    }
+
+    if (updatedTopics.length === 0) {
+      return;
+    }
+
+    await this.repository.saveTopics(updatedTopics);
+    const updatedMap = new Map(updatedTopics.map((topic) => [topic.id, topic]));
+    this.topics.update((items) =>
+      items
+        .map((item) => updatedMap.get(item.id) ?? item)
+        .sort((a, b) => a.blockId.localeCompare(b.blockId) || a.order - b.order),
+    );
+  }
+
   async deleteTopic(id: string): Promise<void> {
+    const existing = this.getTopicById(id);
     await this.repository.deleteTopic(id);
+
+    if (existing) {
+      const remaining = this.getTopicsForBlock(existing.blockId).filter((t) => t.id !== id);
+      const reindexed = remaining
+        .map((topic, index) => (topic.order !== index + 1 ? { ...topic, order: index + 1 } : null))
+        .filter((topic): topic is Topic => topic !== null);
+      if (reindexed.length > 0) {
+        await this.repository.saveTopics(reindexed);
+      }
+    }
+
     await this.refresh();
   }
 
