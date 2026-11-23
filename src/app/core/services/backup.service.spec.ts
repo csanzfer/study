@@ -209,4 +209,32 @@ describe('BackupService', () => {
     expect((await repo.getStudySessions())[0].durationMinutes).toBe(25);
     expect((await repo.getWeeklyPlanItems())[0].weekStartDate).toBe('2026-11-23');
   });
+
+  it('should reject malformed studySessions and weeklyPlanItems in v2 backups', async () => {
+    const base = await service.createBackupPayload();
+
+    const invalidSessionPayload = {
+      ...base,
+      studySessions: [{ ...base.studySessions![0], durationMinutes: 0 }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidSessionPayload))).toThrow();
+
+    const missingEndedAtPayload = {
+      ...base,
+      studySessions: [{ ...base.studySessions![0], endedAt: undefined }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingEndedAtPayload))).toThrow();
+
+    const invalidPlanOrderPayload = {
+      ...base,
+      weeklyPlanItems: [{ ...base.weeklyPlanItems![0], order: undefined }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidPlanOrderPayload))).toThrow();
+
+    const nonIntegerDayPayload = {
+      ...base,
+      weeklyPlanItems: [{ ...base.weeklyPlanItems![0], dayOfWeek: 1.5 }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(nonIntegerDayPayload))).toThrow();
+  });
 });

@@ -52,7 +52,6 @@ export class PomodoroPanel {
   protected readonly manualTopicId = signal('');
   protected readonly manualDuration = signal(30);
   protected readonly manualType = signal<StudySessionType>('reading');
-  protected readonly manualNotes = signal('');
 
   protected readonly blockMap = computed(() => {
     const map = new Map<TaiBlockId, TaiBlock>();
@@ -171,20 +170,20 @@ export class PomodoroPanel {
 
   protected async submitManualSession(): Promise<void> {
     const topic = this.topicMap().get(this.manualTopicId());
-    const duration = Math.max(1, Math.round(Number(this.manualDuration()) || 0));
-    if (!topic || duration < 1) {
+    const rawDuration = Number(this.manualDuration());
+    if (!topic || !Number.isFinite(rawDuration) || rawDuration < 1) {
       return;
     }
+
+    const duration = Math.min(600, Math.round(rawDuration));
 
     await this.store.addStudySession({
       topicId: topic.id,
       blockId: topic.blockId,
       durationMinutes: duration,
       type: this.manualType(),
-      notes: this.manualNotes(),
     });
 
-    this.manualNotes.set('');
     this.showManualLog.set(false);
     this.snackBar.open(
       `Sesión manual registrada: ${this.formatDuration(duration)} en "${topic.title}".`,

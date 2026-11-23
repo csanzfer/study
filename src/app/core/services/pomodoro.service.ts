@@ -192,7 +192,15 @@ export class PomodoroService {
 
     this.clearInterval();
     this.targetEndMs = null;
+    this.status.set('idle');
     const session = await this.recordFocusSession(elapsedMinutes);
+    if (!session) {
+      this.snackBar.open(
+        `Enfoque finalizado (${elapsedMinutes} min). Selecciona un tema para guardar métricas.`,
+        'Cerrar',
+        { duration: 3500 },
+      );
+    }
     this.advanceToNextPhaseAfterFocus();
     return session;
   }
@@ -204,9 +212,7 @@ export class PomodoroService {
     this.elapsedSecondsBeforePause = 0;
 
     if (this.phase() === 'focus') {
-      const nextCycles = this.completedFocusCycles() + 1;
-      const isLong = nextCycles % this.settings().cyclesBeforeLongBreak === 0;
-      this.setPhase(isLong ? 'long_break' : 'short_break');
+      this.setPhase('short_break');
     } else {
       this.setPhase('focus');
     }

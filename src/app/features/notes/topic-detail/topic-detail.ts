@@ -344,8 +344,23 @@ export class TopicDetail {
       return;
     }
 
-    this.pomodoro.start(current.id);
-    this.snackBar.open(`Pomodoro iniciado para "${current.title}".`, 'Ver panel', {
+    let message: string;
+    if (this.pomodoro.phase() === 'focus' && this.pomodoro.status() === 'running') {
+      if (this.pomodoro.selectedTopicId() === current.id) {
+        message = `El Pomodoro ya está activo para "${current.title}".`;
+      } else {
+        this.pomodoro.selectTopic(current.id);
+        message = `Pomodoro vinculado ahora a "${current.title}".`;
+      }
+    } else {
+      if (this.pomodoro.phase() !== 'focus') {
+        this.pomodoro.setPhase('focus');
+      }
+      this.pomodoro.start(current.id);
+      message = `Pomodoro iniciado para "${current.title}".`;
+    }
+
+    this.snackBar.open(message, 'Ver panel', {
       duration: 3000,
     }).onAction().subscribe(() => {
       void this.router.navigate(['/planner'], { queryParams: { tab: 'pomodoro' } });

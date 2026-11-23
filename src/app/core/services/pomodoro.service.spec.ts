@@ -136,4 +136,30 @@ describe('PomodoroService', () => {
     expect(store.studySessions().length).toBe(1);
     expect(service.phase()).toBe('short_break');
   });
+
+  it('notifies user when finishing early without a selected topic and prevents duplicate logs', async () => {
+    vi.useFakeTimers();
+    const snackBar = TestBed.inject(MatSnackBar);
+
+    service.updateSettings({ focusMinutes: 25, soundEnabled: false });
+    service.start();
+    vi.advanceTimersByTime(65_000);
+
+    const [first, second] = await Promise.all([
+      service.finishAndLogEarly(),
+      service.finishAndLogEarly(),
+    ]);
+
+    expect(first).toBeNull();
+    expect(second).toBeNull();
+    expect(service.phase()).toBe('short_break');
+    expect(snackBar.open).toHaveBeenCalledTimes(1);
+  });
+
+  it('transitions to short_break when skipping focus without incrementing cycles', () => {
+    service.updateSettings({ cyclesBeforeLongBreak: 1 });
+    service.skipPhase();
+    expect(service.phase()).toBe('short_break');
+    expect(service.completedFocusCycles()).toBe(0);
+  });
 });

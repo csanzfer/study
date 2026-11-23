@@ -174,7 +174,10 @@ export class BackupService {
       typeof session.blockId === 'string' &&
       VALID_BLOCK_IDS.has(session.blockId as TaiBlockId) &&
       typeof session.startedAt === 'string' &&
+      typeof session.endedAt === 'string' &&
       typeof session.durationMinutes === 'number' &&
+      Number.isFinite(session.durationMinutes) &&
+      session.durationMinutes > 0 &&
       typeof session.type === 'string'
     );
   }
@@ -189,11 +192,14 @@ export class BackupService {
       typeof planItem.id === 'string' &&
       typeof planItem.weekStartDate === 'string' &&
       typeof planItem.dayOfWeek === 'number' &&
+      Number.isInteger(planItem.dayOfWeek) &&
       planItem.dayOfWeek >= 1 &&
       planItem.dayOfWeek <= 7 &&
       typeof planItem.topicId === 'string' &&
       typeof planItem.blockId === 'string' &&
       VALID_BLOCK_IDS.has(planItem.blockId as TaiBlockId) &&
+      typeof planItem.order === 'number' &&
+      Number.isFinite(planItem.order) &&
       typeof planItem.completed === 'boolean'
     );
   }
