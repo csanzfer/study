@@ -140,12 +140,164 @@ export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
   soundEnabled: true,
 };
 
+// --- Fase 3: Motor de Tests y Simulacros TAI ---
+
+export type ExamMode = 'practice' | 'simulation' | 'mistakes' | 'case_study';
+export type QuestionOptionIndex = 0 | 1 | 2 | 3;
+
+export const EXAM_MODE_LABELS: Record<ExamMode, string> = {
+  practice: 'Práctica por tema / bloque',
+  simulation: 'Simulacro oficial TAI',
+  mistakes: 'Repaso de fallos y marcadas',
+  case_study: 'Supuesto práctico',
+};
+
+export interface PenaltyPreset {
+  label: string;
+  shortLabel: string;
+  ratio: number;
+}
+
+export const PENALTY_PRESETS: PenaltyPreset[] = [
+  { label: 'Oficial INAP (-1/3)', shortLabel: '-1/3', ratio: 1 / 3 },
+  { label: 'Penalización -1/4', shortLabel: '-1/4', ratio: 0.25 },
+  { label: 'Penalización -1/2', shortLabel: '-1/2', ratio: 0.5 },
+  { label: 'Sin penalización (0)', shortLabel: '0', ratio: 0 },
+];
+
+export interface CaseStudy {
+  id: string;
+  blockId: TaiBlockId;
+  title: string;
+  statement: string;
+  source?: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCaseStudyInput {
+  blockId: TaiBlockId;
+  title: string;
+  statement: string;
+  source?: string;
+  tags?: string[];
+}
+
+export interface UpdateCaseStudyPatch {
+  blockId?: TaiBlockId;
+  title?: string;
+  statement?: string;
+  source?: string;
+  tags?: string[];
+}
+
+export interface QuestionStats {
+  attempts: number;
+  correct: number;
+  lastAnsweredAt?: string;
+  lastResult?: 'correct' | 'wrong' | 'blank';
+}
+
+export interface Question {
+  id: string;
+  blockId: TaiBlockId;
+  topicId?: string;
+  caseStudyId?: string;
+  prompt: string;
+  options: [string, string, string, string];
+  correctIndex: QuestionOptionIndex;
+  explanation?: string;
+  reference?: string;
+  source?: string;
+  tags: string[];
+  flagged: boolean;
+  stats: QuestionStats;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuestionInput {
+  blockId: TaiBlockId;
+  topicId?: string;
+  caseStudyId?: string;
+  prompt: string;
+  options: [string, string, string, string];
+  correctIndex: QuestionOptionIndex;
+  explanation?: string;
+  reference?: string;
+  source?: string;
+  tags?: string[];
+  flagged?: boolean;
+}
+
+export interface UpdateQuestionPatch {
+  blockId?: TaiBlockId;
+  topicId?: string;
+  caseStudyId?: string;
+  prompt?: string;
+  options?: [string, string, string, string];
+  correctIndex?: QuestionOptionIndex;
+  explanation?: string;
+  reference?: string;
+  source?: string;
+  tags?: string[];
+  flagged?: boolean;
+  stats?: QuestionStats;
+}
+
+export interface ExamAnswer {
+  questionId: string;
+  blockId: TaiBlockId;
+  topicId?: string;
+  selectedIndex: QuestionOptionIndex | null;
+  correctIndex: QuestionOptionIndex;
+  isCorrect: boolean;
+}
+
+export interface ExamAttempt {
+  id: string;
+  title: string;
+  date: string;
+  mode: ExamMode;
+  penaltyRatio: number;
+  caseStudyId?: string;
+  answers: ExamAnswer[];
+  correctCount: number;
+  wrongCount: number;
+  blankCount: number;
+  netScore: number;
+  maxScore: number;
+  scoreOn10: number;
+  durationSec: number;
+}
+
+export interface CreateExamAttemptInput {
+  title: string;
+  date?: string;
+  mode: ExamMode;
+  penaltyRatio: number;
+  caseStudyId?: string;
+  answers: ExamAnswer[];
+  correctCount: number;
+  wrongCount: number;
+  blankCount: number;
+  netScore: number;
+  maxScore: number;
+  scoreOn10: number;
+  durationSec: number;
+  logStudySession?: boolean;
+}
+
 export interface BackupPayload {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   appName: 'tai-study';
   exportedAt: string;
   blocks: TaiBlock[];
   topics: Topic[];
   studySessions?: StudySession[];
   weeklyPlanItems?: WeeklyPlanItem[];
+  caseStudies?: CaseStudy[];
+  questions?: Question[];
+  examAttempts?: ExamAttempt[];
 }

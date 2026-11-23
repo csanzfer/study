@@ -1,0 +1,103 @@
+<section class="space-y-6">
+  <!-- Header -->
+  <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300">
+        <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">quiz</mat-icon>
+        Fase 3 · Motor de Tests y Simulacros INAP
+      </span>
+      <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+        Tests y Simulacros TAI
+      </h1>
+      <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        Practica por temas, entrena simulacros oficiales con penalización -1/3, resuelve supuestos y analiza tus fallos.
+      </p>
+    </div>
+
+    @if (runner.isRunning()) {
+      <a
+        routerLink="/tests/session"
+        mat-flat-button
+        class="!bg-amber-600 !text-white"
+      >
+        <mat-icon>play_arrow</mat-icon>
+        Reanudar test en curso
+      </a>
+    }
+  </header>
+
+  <!-- Tabs -->
+  <nav
+    aria-label="Secciones del motor de tests"
+    class="flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800"
+  >
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        (click)="selectTab(tab.id)"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition"
+        [class.bg-blue-600]="activeTab() === tab.id"
+        [class.text-white]="activeTab() === tab.id"
+        [class.shadow-xs]="activeTab() === tab.id"
+        [class.bg-white]="activeTab() !== tab.id"
+        [class.text-slate-700]="activeTab() !== tab.id"
+        [class.hover:bg-slate-100]="activeTab() !== tab.id"
+        [class.dark:bg-slate-900]="activeTab() !== tab.id"
+        [class.dark:text-slate-300]="activeTab() !== tab.id"
+        [class.dark:hover:bg-slate-800]="activeTab() !== tab.id"
+      >
+        <mat-icon class="!h-[18px] !w-[18px] !text-[18px]">{{ tab.icon }}</mat-icon>
+        <span>{{ tab.label }}</span>
+        @if (tab.id === 'bank') {
+          <span
+            class="rounded-full px-2 py-0.5 text-[11px]"
+            [class.bg-blue-500]="activeTab() === tab.id"
+            [class.text-white]="activeTab() === tab.id"
+            [class.bg-slate-100]="activeTab() !== tab.id"
+            [class.text-slate-600]="activeTab() !== tab.id"
+            [class.dark:bg-slate-800]="activeTab() !== tab.id"
+            [class.dark:text-slate-300]="activeTab() !== tab.id"
+          >
+            {{ store.totalQuestions() }}
+          </span>
+        }
+        @if (tab.id === 'cases' && store.caseStudies().length > 0) {
+          <span
+            class="rounded-full px-2 py-0.5 text-[11px]"
+            [class.bg-blue-500]="activeTab() === tab.id"
+            [class.text-white]="activeTab() === tab.id"
+            [class.bg-slate-100]="activeTab() !== tab.id"
+            [class.text-slate-600]="activeTab() !== tab.id"
+            [class.dark:bg-slate-800]="activeTab() !== tab.id"
+            [class.dark:text-slate-300]="activeTab() !== tab.id"
+          >
+            {{ store.caseStudies().length }}
+          </span>
+        }
+      </button>
+    }
+  </nav>
+
+  <!-- Active Tab Content -->
+  @switch (activeTab()) {
+    @case ('launcher') {
+      <app-test-launcher
+        [initialMode]="launcherMode()"
+        [initialBlockId]="launcherBlockId()"
+        [initialTopicId]="launcherTopicId()"
+      />
+    }
+    @case ('bank') {
+      <app-question-bank />
+    }
+    @case ('cases') {
+      <app-case-studies-panel (launchCaseStudy)="onLaunchCaseStudy($event)" />
+    }
+    @case ('analytics') {
+      <app-test-analytics
+        (practiceTopic)="onPracticeWeakTopic($event)"
+        (launchMistakes)="onLaunchMistakesFromAnalytics()"
+      />
+    }
+  }
+</section>

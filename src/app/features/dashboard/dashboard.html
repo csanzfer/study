@@ -123,6 +123,50 @@
     </div>
   </div>
 
+  <!-- Tests & Simulacros Quick Access -->
+  <div class="flex flex-col justify-between gap-4 rounded-2xl border border-indigo-200 bg-indigo-50/40 p-5 sm:flex-row sm:items-center dark:border-indigo-900/50 dark:bg-indigo-950/20">
+    <div class="flex items-start gap-3">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
+        <mat-icon>quiz</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-slate-900 dark:text-white">
+          Motor de Tests y Simulacros TAI
+        </h2>
+        <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+          {{ store.totalQuestions() }} preguntas en banco
+          @if (store.overallTestAccuracy() !== null) {
+            · {{ store.overallTestAccuracy() }}% precisión media
+          }
+          @if (store.failedQuestions().length > 0) {
+            · {{ store.failedQuestions().length }} falladas para repasar
+          }
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      @if (store.failedQuestions().length > 0) {
+        <a
+          mat-stroked-button
+          routerLink="/tests"
+          [queryParams]="{ tab: 'launcher', mode: 'mistakes' }"
+        >
+          <mat-icon>psychology</mat-icon>
+          Repasar fallos ({{ store.failedQuestions().length }})
+        </a>
+      }
+      <a
+        mat-flat-button
+        routerLink="/tests"
+        [queryParams]="{ tab: 'launcher', mode: 'simulation' }"
+      >
+        <mat-icon>assignment</mat-icon>
+        Simulacro TAI
+      </a>
+    </div>
+  </div>
+
   <!-- Search results preview when searching -->
   @if (store.searchQuery().trim()) {
     <div class="rounded-2xl border border-blue-200 bg-blue-50/50 p-5 dark:border-blue-900/60 dark:bg-blue-950/30">

@@ -107,13 +107,16 @@ flowchart TD
 ### 2.4. Capa de Persistencia (`src/app/core/db/`)
 
 - **Dexie.js (`StudyDatabase`):** Extiende de `Dexie` creando la base de datos `TaiStudyDB`.
-- **Esquema Actual (Versión 2):**
+- **Esquema Actual (Versión 3):**
   ```ts
-  this.version(2).stores({
+  this.version(3).stores({
     blocks: 'id, order',
     topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
     studySessions: 'id, topicId, blockId, startedAt, type',
     weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
+    caseStudies: 'id, blockId, updatedAt, *tags',
+    questions: 'id, blockId, topicId, caseStudyId, flagged, updatedAt, *tags',
+    examAttempts: 'id, date, mode, caseStudyId',
   });
   ```
 - **Seeding Automático:** Al iniciar la app (`initialize()`), si la tabla `blocks` está vacía, se inyectan automáticamente los **4 Bloques Oficiales TAI** definidos en `tai-seed.ts`.
