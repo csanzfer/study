@@ -101,6 +101,7 @@ html.dark .note-editor-shell {
 /* TipTap Document Content Styling */
 .tiptap-content {
   min-height: 360px;
+  overflow-x: auto;
   color: #1e293b;
   font-size: 0.95rem;
   line-height: 1.7;

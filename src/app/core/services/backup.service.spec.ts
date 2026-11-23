@@ -91,4 +91,44 @@ describe('BackupService', () => {
       service.parseBackupJson(JSON.stringify({ appName: 'other', schemaVersion: 1 })),
     ).toThrow();
   });
+
+  it('should preserve rich contentJson, plainText, and customOutlineMd across export/import round-trip', async () => {
+    const richContentJson = {
+      type: 'doc',
+      content: [
+        { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Ley 39/2015' }] },
+        {
+          type: 'examCallout',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Plazo general: 3 meses' }] }],
+        },
+      ],
+    };
+
+    repo.topics = [
+      {
+        ...repo.topics[0],
+        contentJson: richContentJson,
+        plainText: 'Ley 39/2015 Plazo general: 3 meses',
+        customOutlineMd: '# Ley 39/2015\n- ⚠️ Plazo general: 3 meses',
+      },
+    ];
+
+    const exported = await service.createBackupPayload();
+    const jsonString = JSON.stringify(exported);
+
+    // Wipe repository before restoring
+    await repo.replaceAllData([], []);
+    expect((await repo.getTopics()).length).toBe(0);
+
+    const file = new File([jsonString], 'tai-study-backup.json', { type: 'application/json' });
+    const result = await service.importBackupFile(file);
+
+    expect(result.blocksCount).toBe(4);
+    expect(result.topicsCount).toBe(1);
+
+    const [restored] = await repo.getTopics();
+    expect(restored.contentJson).toEqual(richContentJson);
+    expect(restored.plainText).toBe('Ley 39/2015 Plazo general: 3 meses');
+    expect(restored.customOutlineMd).toBe('# Ley 39/2015\n- ⚠️ Plazo general: 3 meses');
+  });
 });

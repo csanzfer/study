@@ -23,7 +23,7 @@ interface ToolNavItem {
   label: string;
   route: string;
   icon: string;
-  phaseBadge: string;
+  phaseBadge?: string;
 }
 
 @Component({
@@ -77,7 +77,7 @@ export class AppShell {
   protected readonly isDark = computed(() => this.theme.mode() === 'dark');
 
   protected readonly upcomingTools: ToolNavItem[] = [
-    { label: 'Esquemas', route: '/schemas', icon: 'account_tree', phaseBadge: 'F1' },
+    { label: 'Esquemas', route: '/schemas', icon: 'account_tree' },
     { label: 'Planificador', route: '/planner', icon: 'view_kanban', phaseBadge: 'F2' },
     { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz', phaseBadge: 'F3' },
     { label: 'Flashcards', route: '/flashcards', icon: 'style', phaseBadge: 'F4' },
