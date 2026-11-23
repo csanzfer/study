@@ -242,6 +242,7 @@ export interface GamificationProfile {
 **Objetivo:** Practicar preguntas tipo examen oficial con penalización real y seguimiento de fallos.
 
 - [x] **Gestor de banco de preguntas:** creación manual + importador rápido (CSV / JSON / texto formateado para pegar tandas de preguntas de exámenes INAP o libros).
+- [x] **Generador automático de preguntas desde apuntes:** extracción 100% offline desde tablas, definiciones, listas y bloques *"Ojo examen"* del tema + generador de prompt calibrado estilo INAP listo para copiar en cualquier IA y pegar/importar el resultado.
 - [x] **Modos de test:**
   - *Práctica por tema o bloque:* corrección inmediata mostrando explicación y referencia.
   - *Simulacro oficial TAI:* cronómetro, distribución configurable por bloques, opción en blanco y penalización configurable (`-1/3` por defecto).

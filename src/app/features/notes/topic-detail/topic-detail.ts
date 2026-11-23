@@ -10,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
 import {
+  CreateQuestionInput,
   TOPIC_STATUS_LABELS,
   TOPIC_STATUS_LIST,
   TaiBlockId,
@@ -31,6 +32,10 @@ import {
   NoteImportDialogResult,
 } from '../import-dialog/note-import-dialog';
 import { NoteImportService } from '../services/note-import.service';
+import {
+  TopicQuestionGeneratorDialog,
+  TopicQuestionGeneratorDialogData,
+} from '../../tests/topic-question-generator-dialog/topic-question-generator-dialog';
 
 export type TopicViewMode = 'note' | 'schema' | 'split';
 export type SchemaSourceMode = 'auto' | 'custom';
@@ -459,6 +464,40 @@ export class TopicDetail {
         : 'Contenido añadido al final del tema.',
       'Cerrar',
       { duration: 2500 },
+    );
+  }
+
+  protected async openGenerateQuestionsDialog(): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    await this.flushPendingSave();
+
+    const ref = this.dialog.open<
+      TopicQuestionGeneratorDialog,
+      TopicQuestionGeneratorDialogData,
+      CreateQuestionInput[]
+    >(TopicQuestionGeneratorDialog, {
+      width: '860px',
+      maxWidth: '96vw',
+      data: {
+        topicId: current.id,
+        blockId: current.blockId,
+      },
+    });
+
+    const generated = await firstValueFrom(ref.afterClosed());
+    if (!generated || generated.length === 0) {
+      return;
+    }
+
+    await this.store.bulkCreateQuestions(generated);
+    this.snackBar.open(
+      `${generated.length} preguntas generadas para "${current.title}".`,
+      'Cerrar',
+      { duration: 3500 },
     );
   }
 

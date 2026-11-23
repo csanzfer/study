@@ -1,0 +1,303 @@
+<div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+  <div>
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+      Generar preguntas desde tus apuntes
+    </h2>
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+      Extrae borradores automáticamente en local (offline) o genera un prompt calibrado estilo INAP para cualquier IA.
+    </p>
+  </div>
+  <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="!max-h-[78vh] !px-6 !py-5">
+  <div class="space-y-4">
+    <!-- Topic Selector + Mode Tabs -->
+    <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+      <div class="min-w-0 flex-1">
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Tema origen
+        </label>
+        <select
+          [ngModel]="selectedTopicId()"
+          (ngModelChange)="selectedTopicId.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        >
+          @if (store.topics().length === 0) {
+            <option value="">No tienes temas creados todavía</option>
+          } @else {
+            @for (topic of store.topics(); track topic.id) {
+              <option [value]="topic.id">
+                {{ topic.blockId }} · #{{ topic.order }} {{ topic.title }}
+              </option>
+            }
+          }
+        </select>
+      </div>
+
+      <div class="inline-flex shrink-0 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+        <button
+          type="button"
+          (click)="activeTab.set('local')"
+          class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          [class.bg-white]="activeTab() === 'local'"
+          [class.text-blue-600]="activeTab() === 'local'"
+          [class.shadow-xs]="activeTab() === 'local'"
+          [class.dark:bg-slate-900]="activeTab() === 'local'"
+          [class.dark:text-blue-400]="activeTab() === 'local'"
+          [class.text-slate-600]="activeTab() !== 'local'"
+          [class.dark:text-slate-400]="activeTab() !== 'local'"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[16px]">offline_bolt</mat-icon>
+          Automático (offline)
+        </button>
+        <button
+          type="button"
+          (click)="activeTab.set('ai_prompt')"
+          class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          [class.bg-white]="activeTab() === 'ai_prompt'"
+          [class.text-blue-600]="activeTab() === 'ai_prompt'"
+          [class.shadow-xs]="activeTab() === 'ai_prompt'"
+          [class.dark:bg-slate-900]="activeTab() === 'ai_prompt'"
+          [class.dark:text-blue-400]="activeTab() === 'ai_prompt'"
+          [class.text-slate-600]="activeTab() !== 'ai_prompt'"
+          [class.dark:text-slate-400]="activeTab() !== 'ai_prompt'"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[16px]">auto_awesome</mat-icon>
+          Prompt IA (INAP)
+        </button>
+      </div>
+    </div>
+
+    @if (!selectedTopic()) {
+      <div class="rounded-xl border border-dashed border-slate-300 p-6 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+        Crea primero al menos un tema con apuntes para poder generar preguntas automáticamente.
+      </div>
+    } @else if (activeTab() === 'local') {
+      <!-- TAB 1: LOCAL HEURISTIC GENERATOR -->
+      <div class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs dark:border-slate-800 dark:bg-slate-800/50">
+          <div class="flex flex-wrap items-center gap-2 text-slate-600 dark:text-slate-300">
+            <span class="font-bold text-slate-900 dark:text-white">
+              {{ localDrafts().length }} borradores detectados
+            </span>
+            <span>({{ selectedLocalCount() }} seleccionados)</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            @if (localDrafts().length > 0) {
+              <button
+                type="button"
+                (click)="toggleSelectAllLocal(selectedLocalCount() < localDrafts().length)"
+                class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+              >
+                {{ selectedLocalCount() < localDrafts().length ? 'Marcar todas' : 'Desmarcar todas' }}
+              </button>
+            }
+            <button mat-stroked-button type="button" (click)="regenerateLocal()">
+              <mat-icon>refresh</mat-icon>
+              Regenerar
+            </button>
+          </div>
+        </div>
+
+        @if (localDrafts().length === 0) {
+          <div class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900/50">
+            <mat-icon class="!h-9 !w-9 !text-[36px] text-slate-400">lightbulb</mat-icon>
+            <h3 class="mt-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+              No se detectaron suficientes estructuras automáticas en este tema
+            </h3>
+            <p class="mx-auto mt-1 max-w-md text-xs text-slate-500 dark:text-slate-400">
+              El generador offline extrae preguntas de <strong>tablas (≥ 4 filas)</strong>, <strong>listas de definiciones ("Término: descripción")</strong>, <strong>bloques "Ojo examen"</strong> con plazos/puertos/artículos y <strong>listas por apartados</strong>.
+            </p>
+            <div class="mt-4">
+              <button mat-flat-button type="button" (click)="activeTab.set('ai_prompt')">
+                <mat-icon>auto_awesome</mat-icon>
+                Generar con Prompt IA (estilo INAP)
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="max-h-96 space-y-2.5 overflow-y-auto pr-1">
+            @for (item of localDrafts(); track item.id) {
+              <div
+                class="rounded-xl border p-3.5 transition"
+                [class.border-blue-300]="item.selected"
+                [class.bg-white]="item.selected"
+                [class.dark:border-blue-800]="item.selected"
+                [class.dark:bg-slate-900]="item.selected"
+                [class.border-slate-200]="!item.selected"
+                [class.bg-slate-50/70]="!item.selected"
+                [class.opacity-60]="!item.selected"
+                [class.dark:border-slate-800]="!item.selected"
+                [class.dark:bg-slate-900/40]="!item.selected"
+              >
+                <div class="flex items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    [checked]="item.selected"
+                    (change)="toggleDraftSelection(item.id)"
+                    class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600"
+                  />
+                  <div class="min-w-0 flex-1 space-y-2">
+                    <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
+                      <span class="rounded bg-indigo-50 px-2 py-0.5 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                        {{ item.draft.strategyLabel }}
+                      </span>
+                      <span class="text-slate-400">
+                        Correcta: {{ letters[item.draft.correctIndex] }}
+                      </span>
+                    </div>
+
+                    <input
+                      type="text"
+                      [ngModel]="item.draft.prompt"
+                      (ngModelChange)="updateDraftPrompt(item.id, $event)"
+                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    />
+
+                    <div class="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                      @for (opt of item.draft.options; track $index) {
+                        <div
+                          class="rounded-lg border px-2.5 py-1 text-[11px]"
+                          [class.border-emerald-300]="item.draft.correctIndex === $index"
+                          [class.bg-emerald-50/60]="item.draft.correctIndex === $index"
+                          [class.text-emerald-900]="item.draft.correctIndex === $index"
+                          [class.dark:border-emerald-800]="item.draft.correctIndex === $index"
+                          [class.dark:bg-emerald-950/40]="item.draft.correctIndex === $index"
+                          [class.dark:text-emerald-200]="item.draft.correctIndex === $index"
+                          [class.border-slate-200]="item.draft.correctIndex !== $index"
+                          [class.text-slate-600]="item.draft.correctIndex !== $index"
+                          [class.dark:border-slate-800]="item.draft.correctIndex !== $index"
+                          [class.dark:text-slate-300]="item.draft.correctIndex !== $index"
+                        >
+                          <strong>{{ letters[$index] }})</strong> {{ opt }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- TAB 2: AI PROMPT BUILDER + DIRECT PASTE IMPORT -->
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-800/50">
+          <div>
+            <label class="mb-1 block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              Nº de preguntas
+            </label>
+            <select
+              [ngModel]="aiQuestionCount()"
+              (ngModelChange)="aiQuestionCount.set(+$event)"
+              class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option [ngValue]="5">5 preguntas</option>
+              <option [ngValue]="10">10 preguntas</option>
+              <option [ngValue]="15">15 preguntas</option>
+              <option [ngValue]="20">20 preguntas</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              Nivel de dificultad
+            </label>
+            <select
+              [ngModel]="aiDifficulty()"
+              (ngModelChange)="aiDifficulty.set($event)"
+              class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value="standard">Estándar oficial INAP</option>
+              <option value="hard">Difícil (preguntas trampa)</option>
+            </select>
+          </div>
+
+          <div class="flex items-end pb-1">
+            <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                [ngModel]="aiFocusCallouts()"
+                (ngModelChange)="aiFocusCallouts.set($event)"
+                class="h-4 w-4 rounded border-slate-300 text-blue-600"
+              />
+              <span>Priorizar "Ojo examen"</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Step 1: Copy Prompt -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-100">
+              1. Copia este prompt y pégalo en Gemini, ChatGPT, Claude u Ollama
+            </span>
+            <button mat-stroked-button type="button" (click)="copyPrompt()">
+              <mat-icon>{{ copiedPrompt() ? 'check' : 'content_copy' }}</mat-icon>
+              {{ copiedPrompt() ? '¡Copiado!' : 'Copiar prompt' }}
+            </button>
+          </div>
+
+          <textarea
+            rows="6"
+            readonly
+            [value]="aiPromptResult()?.prompt ?? ''"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+          ></textarea>
+          @if (aiPromptResult()?.truncated) {
+            <p class="text-[11px] text-amber-600 dark:text-amber-400">
+              Nota: el tema es muy extenso y se ha recortado a los primeros 18.000 caracteres para ajustarse al prompt.
+            </p>
+          }
+        </div>
+
+        <!-- Step 2: Paste LLM Response -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-800 dark:text-slate-100">
+            2. Pega aquí la respuesta de la IA (JSON o texto con opciones A-D)
+          </label>
+          <textarea
+            rows="6"
+            [ngModel]="aiResponseText()"
+            (ngModelChange)="aiResponseText.set($event)"
+            placeholder="Pega aquí el JSON devuelto por la IA..."
+            class="w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          ></textarea>
+
+          @if (aiResponseText().trim()) {
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                <mat-icon class="!h-4 !w-4 !text-[16px]">check_circle</mat-icon>
+                {{ aiParsedResult().valid.length }} preguntas válidas detectadas
+              </span>
+              @if (aiParsedResult().errors.length > 0) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                  <mat-icon class="!h-4 !w-4 !text-[16px]">error</mat-icon>
+                  {{ aiParsedResult().errors.length }} errores ({{ aiParsedResult().errors[0].message }})
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="border-t border-slate-200 !px-6 !py-3 dark:border-slate-800">
+  <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+  <button
+    mat-flat-button
+    type="button"
+    [disabled]="readyToSaveCount() === 0"
+    (click)="confirmSave()"
+  >
+    <mat-icon>save</mat-icon>
+    Guardar {{ readyToSaveCount() }} preguntas en el banco
+  </button>
+</mat-dialog-actions>

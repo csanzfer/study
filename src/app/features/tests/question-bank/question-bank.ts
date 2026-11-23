@@ -24,6 +24,10 @@ import {
   QuestionImportDialog,
   QuestionImportDialogData,
 } from '../question-import-dialog/question-import-dialog';
+import {
+  TopicQuestionGeneratorDialog,
+  TopicQuestionGeneratorDialogData,
+} from '../topic-question-generator-dialog/topic-question-generator-dialog';
 import { isQuestionFailed } from '../utils/test-generator.util';
 import { OPTION_LETTERS } from '../utils/test-scoring.util';
 
@@ -163,6 +167,29 @@ export class QuestionBank {
 
     await this.store.bulkCreateQuestions(imported);
     this.snackBar.open(`${imported.length} preguntas importadas al banco.`, 'Cerrar', {
+      duration: 3500,
+    });
+  }
+
+  protected async openGeneratorDialog(): Promise<void> {
+    const data: TopicQuestionGeneratorDialogData = {
+      blockId: this.blockFilter() === 'ALL' ? undefined : (this.blockFilter() as TaiBlockId),
+      topicId: this.topicFilter() === 'ALL' ? undefined : this.topicFilter(),
+    };
+    const ref = this.dialog.open<
+      TopicQuestionGeneratorDialog,
+      TopicQuestionGeneratorDialogData,
+      CreateQuestionInput[]
+    >(TopicQuestionGeneratorDialog, {
+      width: '860px',
+      maxWidth: '96vw',
+      data,
+    });
+    const generated = await firstValueFrom(ref.afterClosed());
+    if (!generated || generated.length === 0) return;
+
+    await this.store.bulkCreateQuestions(generated);
+    this.snackBar.open(`${generated.length} preguntas generadas y guardadas.`, 'Cerrar', {
       duration: 3500,
     });
   }
