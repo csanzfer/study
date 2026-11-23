@@ -1,10 +1,23 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
-import { BackupPayload, TaiBlockId, Topic } from '../models/study.models';
+import {
+  BackupPayload,
+  StudySession,
+  TaiBlockId,
+  Topic,
+  WeeklyPlanItem,
+} from '../models/study.models';
 import { STUDY_REPOSITORY } from '../repositories/study.repository';
 
 const LAST_BACKUP_STORAGE_KEY = 'tai-study:last-backup-at';
 const VALID_BLOCK_IDS = new Set<TaiBlockId>(['B1', 'B2', 'B3', 'B4']);
+
+export interface BackupImportResult {
+  blocksCount: number;
+  topicsCount: number;
+  sessionsCount: number;
+  weeklyPlanItemsCount: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class BackupService {
@@ -12,17 +25,21 @@ export class BackupService {
   readonly lastBackupAt = signal<string | null>(this.readLastBackupDate());
 
   async createBackupPayload(): Promise<BackupPayload> {
-    const [blocks, topics] = await Promise.all([
+    const [blocks, topics, studySessions, weeklyPlanItems] = await Promise.all([
       this.repository.getBlocks(),
       this.repository.getTopics(),
+      this.repository.getStudySessions(),
+      this.repository.getWeeklyPlanItems(),
     ]);
 
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       appName: 'tai-study',
       exportedAt: new Date().toISOString(),
       blocks: blocks.length > 0 ? blocks : TAI_BLOCKS_SEED,
       topics,
+      studySessions,
+      weeklyPlanItems,
     };
   }
 
@@ -57,8 +74,13 @@ export class BackupService {
     }
 
     const candidate = parsed as Partial<BackupPayload>;
-    if (candidate.appName !== 'tai-study' || candidate.schemaVersion !== 1) {
-      throw new Error('Este archivo no corresponde a un backup compatible de TAI Study (v1).');
+    if (
+      candidate.appName !== 'tai-study' ||
+      (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2)
+    ) {
+      throw new Error(
+        'Este archivo no corresponde a un backup compatible de TAI Study (v1/v2).',
+      );
     }
 
     if (!Array.isArray(candidate.blocks) || !Array.isArray(candidate.topics)) {
@@ -70,23 +92,56 @@ export class BackupService {
       throw new Error('Algunos temas del backup tienen una estructura incompleta o corrupta.');
     }
 
+    let studySessions: StudySession[] = [];
+    let weeklyPlanItems: WeeklyPlanItem[] = [];
+
+    if (candidate.studySessions !== undefined) {
+      if (
+        !Array.isArray(candidate.studySessions) ||
+        !candidate.studySessions.every((session) => this.isValidStudySession(session))
+      ) {
+        throw new Error('Algunas sesiones de estudio del backup tienen una estructura inválida.');
+      }
+      studySessions = candidate.studySessions;
+    }
+
+    if (candidate.weeklyPlanItems !== undefined) {
+      if (
+        !Array.isArray(candidate.weeklyPlanItems) ||
+        !candidate.weeklyPlanItems.every((item) => this.isValidWeeklyPlanItem(item))
+      ) {
+        throw new Error('Algunos elementos del plan semanal del backup tienen una estructura inválida.');
+      }
+      weeklyPlanItems = candidate.weeklyPlanItems;
+    }
+
     return {
-      schemaVersion: 1,
+      schemaVersion: candidate.schemaVersion,
       appName: 'tai-study',
-      exportedAt: typeof candidate.exportedAt === 'string' ? candidate.exportedAt : new Date().toISOString(),
+      exportedAt:
+        typeof candidate.exportedAt === 'string'
+          ? candidate.exportedAt
+          : new Date().toISOString(),
       blocks: candidate.blocks.length > 0 ? candidate.blocks : TAI_BLOCKS_SEED,
       topics: candidate.topics,
+      studySessions,
+      weeklyPlanItems,
     };
   }
 
-  async importBackupFile(file: File): Promise<{ blocksCount: number; topicsCount: number }> {
+  async importBackupFile(file: File): Promise<BackupImportResult> {
     const rawText = await file.text();
     const payload = this.parseBackupJson(rawText);
 
-    await this.repository.replaceAllData(payload.blocks, payload.topics);
+    const sessions = payload.studySessions ?? [];
+    const planItems = payload.weeklyPlanItems ?? [];
+
+    await this.repository.replaceAllData(payload.blocks, payload.topics, sessions, planItems);
     return {
       blocksCount: payload.blocks.length,
       topicsCount: payload.topics.length,
+      sessionsCount: sessions.length,
+      weeklyPlanItemsCount: planItems.length,
     };
   }
 
@@ -104,6 +159,42 @@ export class BackupService {
       typeof topic.order === 'number' &&
       typeof topic.status === 'string' &&
       Array.isArray(topic.tags)
+    );
+  }
+
+  private isValidStudySession(item: unknown): item is StudySession {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+
+    const session = item as Partial<StudySession>;
+    return (
+      typeof session.id === 'string' &&
+      typeof session.topicId === 'string' &&
+      typeof session.blockId === 'string' &&
+      VALID_BLOCK_IDS.has(session.blockId as TaiBlockId) &&
+      typeof session.startedAt === 'string' &&
+      typeof session.durationMinutes === 'number' &&
+      typeof session.type === 'string'
+    );
+  }
+
+  private isValidWeeklyPlanItem(item: unknown): item is WeeklyPlanItem {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+
+    const planItem = item as Partial<WeeklyPlanItem>;
+    return (
+      typeof planItem.id === 'string' &&
+      typeof planItem.weekStartDate === 'string' &&
+      typeof planItem.dayOfWeek === 'number' &&
+      planItem.dayOfWeek >= 1 &&
+      planItem.dayOfWeek <= 7 &&
+      typeof planItem.topicId === 'string' &&
+      typeof planItem.blockId === 'string' &&
+      VALID_BLOCK_IDS.has(planItem.blockId as TaiBlockId) &&
+      typeof planItem.completed === 'boolean'
     );
   }
 

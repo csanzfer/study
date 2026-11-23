@@ -72,15 +72,19 @@ flowchart TD
   - Señales primarias:
     - `blocks = signal<TaiBlock[]>([])`
     - `topics = signal<Topic[]>([])`
+    - `studySessions = signal<StudySession[]>([])`
+    - `weeklyPlanItems = signal<WeeklyPlanItem[]>([])`
     - `searchQuery = signal('')`
     - `loading = signal(false)`
     - `initialized = signal(false)`
   - Señales derivadas (`computed`):
-    - `totalTopics`: recuento total de temas.
-    - `masteredTopics`: temas con estado `mastered`.
+    - `totalTopics`, `masteredTopics`, `totalRoundsCompleted`.
     - `topicCountByBlock`: mapa de recuento de temas por cada uno de los 4 bloques.
+    - `rustyTopics`: temas oxidados/críticos ordenados por urgencia de repaso.
+    - `studyMinutesThisWeek`, `studyMinutesByBlockThisWeek`, `studyMinutesByBlockTotal`.
     - `filteredTopics`: filtrado en memoria por búsqueda sobre título, texto plano o etiquetas.
-- **`BackupService`:** Orquesta la exportación de la base de datos a un archivo descargable `tai-study-backup-YYYY-MM-DD.json` con `schemaVersion: 1`, y valida esquemas durante la restauración.
+- **`PomodoroService`:** Temporizador global con Signals persistente durante la navegación entre vistas; guarda automáticamente `StudySession` al finalizar bloques de enfoque y actualiza `lastReviewedAt`.
+- **`BackupService`:** Orquesta la exportación de la base de datos a un archivo descargable `tai-study-backup-YYYY-MM-DD.json` con `schemaVersion: 2` (retrocompatible con backups `v1`), validando esquemas durante la restauración.
 - **`ThemeService`:** Persiste y conmuta el modo visual (`light` / `dark`) actualizando la clase CSS en el elemento raíz `<html>`.
 
 ### 2.3. Capa de Repositorio y Dominio (`src/app/core/repositories/` & `src/app/core/models/`)
@@ -103,11 +107,13 @@ flowchart TD
 ### 2.4. Capa de Persistencia (`src/app/core/db/`)
 
 - **Dexie.js (`StudyDatabase`):** Extiende de `Dexie` creando la base de datos `TaiStudyDB`.
-- **Esquema Inicial (Versión 1):**
+- **Esquema Actual (Versión 2):**
   ```ts
-  this.version(1).stores({
+  this.version(2).stores({
     blocks: 'id, order',
-    topics: 'id, blockId, order, status, updatedAt, *tags',
+    topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
+    studySessions: 'id, topicId, blockId, startedAt, type',
+    weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
   });
   ```
 - **Seeding Automático:** Al iniciar la app (`initialize()`), si la tabla `blocks` está vacía, se inyectan automáticamente los **4 Bloques Oficiales TAI** definidos en `tai-seed.ts`.

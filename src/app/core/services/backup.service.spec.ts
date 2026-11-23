@@ -1,6 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
-import { TaiBlock, TaiBlockId, Topic } from '../models/study.models';
+import {
+  StudySession,
+  TaiBlock,
+  TaiBlockId,
+  Topic,
+  WeeklyPlanItem,
+} from '../models/study.models';
 import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.repository';
 import { BackupService } from './backup.service';
 
@@ -20,6 +26,29 @@ class MockStudyRepository implements StudyRepository {
       customOutlineMd: '# Constitución\n## Título Preliminar\n- Art. 1',
       createdAt: '2026-11-20T12:00:00.000Z',
       updatedAt: '2026-11-20T12:00:00.000Z',
+    },
+  ];
+  sessions: StudySession[] = [
+    {
+      id: 's-1',
+      topicId: 't-1',
+      blockId: 'B1',
+      startedAt: '2026-11-23T09:00:00.000Z',
+      endedAt: '2026-11-23T09:25:00.000Z',
+      durationMinutes: 25,
+      type: 'reading',
+    },
+  ];
+  weeklyPlan: WeeklyPlanItem[] = [
+    {
+      id: 'w-1',
+      weekStartDate: '2026-11-23',
+      dayOfWeek: 1,
+      topicId: 't-1',
+      blockId: 'B1',
+      order: 1,
+      completed: false,
+      targetPomodoros: 2,
     },
   ];
 
@@ -49,9 +78,41 @@ class MockStudyRepository implements StudyRepository {
   async deleteTopic(id: string): Promise<void> {
     this.topics = this.topics.filter((t) => t.id !== id);
   }
-  async replaceAllData(blocks: TaiBlock[], topics: Topic[]): Promise<void> {
+  async getStudySessions(): Promise<StudySession[]> {
+    return this.sessions;
+  }
+  async saveStudySession(session: StudySession): Promise<void> {
+    this.sessions.push(session);
+  }
+  async deleteStudySession(id: string): Promise<void> {
+    this.sessions = this.sessions.filter((s) => s.id !== id);
+  }
+  async getWeeklyPlanItems(weekStartDate?: string): Promise<WeeklyPlanItem[]> {
+    return weekStartDate
+      ? this.weeklyPlan.filter((w) => w.weekStartDate === weekStartDate)
+      : this.weeklyPlan;
+  }
+  async saveWeeklyPlanItem(item: WeeklyPlanItem): Promise<void> {
+    this.weeklyPlan.push(item);
+  }
+  async saveWeeklyPlanItems(items: WeeklyPlanItem[]): Promise<void> {
+    for (const item of items) {
+      await this.saveWeeklyPlanItem(item);
+    }
+  }
+  async deleteWeeklyPlanItem(id: string): Promise<void> {
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.id !== id);
+  }
+  async replaceAllData(
+    blocks: TaiBlock[],
+    topics: Topic[],
+    studySessions: StudySession[] = [],
+    weeklyPlanItems: WeeklyPlanItem[] = [],
+  ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
+    this.sessions = [...studySessions];
+    this.weeklyPlan = [...weeklyPlanItems];
   }
 }
 
@@ -70,29 +131,40 @@ describe('BackupService', () => {
     service = TestBed.inject(BackupService);
   });
 
-  it('should create a valid v1 backup payload', async () => {
+  it('should create a valid v2 backup payload including sessions and weekly plan', async () => {
     const payload = await service.createBackupPayload();
     expect(payload.appName).toBe('tai-study');
-    expect(payload.schemaVersion).toBe(1);
+    expect(payload.schemaVersion).toBe(2);
     expect(payload.blocks.length).toBe(4);
     expect(payload.topics.length).toBe(1);
+    expect(payload.studySessions?.length).toBe(1);
+    expect(payload.weeklyPlanItems?.length).toBe(1);
   });
 
-  it('should parse and validate a valid backup JSON string preserving customOutlineMd', async () => {
-    const payload = await service.createBackupPayload();
-    const parsed = service.parseBackupJson(JSON.stringify(payload));
-    expect(parsed.topics[0].title).toBe('Constitución Española');
-    expect(parsed.topics[0].customOutlineMd).toBe('# Constitución\n## Título Preliminar\n- Art. 1');
+  it('should accept legacy v1 backup files for backward compatibility', async () => {
+    const legacyV1 = {
+      schemaVersion: 1,
+      appName: 'tai-study',
+      exportedAt: '2026-11-20T12:00:00.000Z',
+      blocks: repo.blocks,
+      topics: repo.topics,
+    };
+
+    const parsed = service.parseBackupJson(JSON.stringify(legacyV1));
+    expect(parsed.schemaVersion).toBe(1);
+    expect(parsed.topics.length).toBe(1);
+    expect(parsed.studySessions).toEqual([]);
+    expect(parsed.weeklyPlanItems).toEqual([]);
   });
 
   it('should reject an invalid backup JSON', () => {
     expect(() => service.parseBackupJson('{invalid')).toThrow();
     expect(() =>
-      service.parseBackupJson(JSON.stringify({ appName: 'other', schemaVersion: 1 })),
+      service.parseBackupJson(JSON.stringify({ appName: 'other', schemaVersion: 2 })),
     ).toThrow();
   });
 
-  it('should preserve rich contentJson, plainText, and customOutlineMd across export/import round-trip', async () => {
+  it('should preserve rich topics, studySessions, and weeklyPlanItems across export/import round-trip', async () => {
     const richContentJson = {
       type: 'doc',
       content: [
@@ -117,18 +189,24 @@ describe('BackupService', () => {
     const jsonString = JSON.stringify(exported);
 
     // Wipe repository before restoring
-    await repo.replaceAllData([], []);
+    await repo.replaceAllData([], [], [], []);
     expect((await repo.getTopics()).length).toBe(0);
+    expect((await repo.getStudySessions()).length).toBe(0);
+    expect((await repo.getWeeklyPlanItems()).length).toBe(0);
 
     const file = new File([jsonString], 'tai-study-backup.json', { type: 'application/json' });
     const result = await service.importBackupFile(file);
 
     expect(result.blocksCount).toBe(4);
     expect(result.topicsCount).toBe(1);
+    expect(result.sessionsCount).toBe(1);
+    expect(result.weeklyPlanItemsCount).toBe(1);
 
     const [restored] = await repo.getTopics();
     expect(restored.contentJson).toEqual(richContentJson);
     expect(restored.plainText).toBe('Ley 39/2015 Plazo general: 3 meses');
     expect(restored.customOutlineMd).toBe('# Ley 39/2015\n- ⚠️ Plazo general: 3 meses');
+    expect((await repo.getStudySessions())[0].durationMinutes).toBe(25);
+    expect((await repo.getWeeklyPlanItems())[0].weekStartDate).toBe('2026-11-23');
   });
 });

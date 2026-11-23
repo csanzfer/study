@@ -225,14 +225,14 @@ export interface GamificationProfile {
 
 ---
 
-### Fase 2 — Tableros de Estudio y Planificación
+### Fase 2 — Tableros de Estudio y Planificación ✅
 **Objetivo:** Controlar el avance real del temario, las vueltas y el tiempo dedicado a cada bloque.
 
-- [ ] **Tablero Kanban de vueltas** (`@angular/cdk/drag-drop`): columnas `Sin empezar`, `1ª Vuelta`, `Esquematizado`, `Memorizando`, `Dominado` filtrable por bloque.
-- [ ] Registro automático de `lastReviewedAt` e incremento de `roundCount` al completar una vuelta.
-- [ ] **Mapa de salud del temario (Heatmap):** vista compacta de los 4 bloques con código de color según días sin repasar (detecta temas "oxidados").
-- [ ] **Planificador semanal ligero:** asignar temas objetivo a cada día de la semana.
-- [ ] **Temporizador Pomodoro integrado:** vincula cada sesión (25/5 o configurable) a un tema y guarda métricas de horas reales por bloque.
+- [x] **Tablero Kanban de vueltas** (`@angular/cdk/drag-drop`): columnas `Sin empezar`, `1ª Vuelta`, `Esquematizado`, `Memorizando`, `Dominado` filtrable por bloque.
+- [x] Registro automático de `lastReviewedAt` e incremento de `roundCount` al completar una vuelta.
+- [x] **Mapa de salud del temario (Heatmap):** vista compacta de los 4 bloques con código de color según días sin repasar (detecta temas "oxidados").
+- [x] **Planificador semanal ligero:** asignar temas objetivo a cada día de la semana.
+- [x] **Temporizador Pomodoro integrado:** vincula cada sesión (25/5 o configurable) a un tema y guarda métricas de horas reales por bloque.
 
 **Criterio de hecho:** Ves de un vistazo en qué estado está cada bloque, qué temas llevan más tiempo sin repasarse y cuántas horas reales dedicas a la semana.
 

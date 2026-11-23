@@ -6,6 +6,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { BackupService } from '../../core/services/backup.service';
 import { StudyStoreService } from '../../core/services/study-store.service';
+import { formatMinutesAsHours } from '../../shared/utils/week-date.util';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +19,10 @@ export class Dashboard {
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
+  protected formatDuration(minutes: number): string {
+    return formatMinutesAsHours(minutes);
+  }
 
   protected async exportBackup(): Promise<void> {
     try {

@@ -1,12 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
-import { TaiBlock, TaiBlockId, Topic } from '../models/study.models';
+import {
+  StudySession,
+  TaiBlock,
+  TaiBlockId,
+  Topic,
+  WeeklyPlanItem,
+} from '../models/study.models';
 import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.repository';
 import { StudyStoreService } from './study-store.service';
 
 class InMemoryStudyRepository implements StudyRepository {
   blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
   topics: Topic[] = [];
+  sessions: StudySession[] = [];
+  weeklyPlan: WeeklyPlanItem[] = [];
 
   async initialize(): Promise<void> {}
 
@@ -40,11 +48,67 @@ class InMemoryStudyRepository implements StudyRepository {
 
   async deleteTopic(id: string): Promise<void> {
     this.topics = this.topics.filter((t) => t.id !== id);
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.topicId !== id);
   }
 
-  async replaceAllData(blocks: TaiBlock[], topics: Topic[]): Promise<void> {
+  async getStudySessions(): Promise<StudySession[]> {
+    return [...this.sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  }
+
+  async saveStudySession(session: StudySession): Promise<void> {
+    const idx = this.sessions.findIndex((s) => s.id === session.id);
+    if (idx >= 0) {
+      this.sessions[idx] = session;
+    } else {
+      this.sessions.push(session);
+    }
+  }
+
+  async deleteStudySession(id: string): Promise<void> {
+    this.sessions = this.sessions.filter((s) => s.id !== id);
+  }
+
+  async getWeeklyPlanItems(weekStartDate?: string): Promise<WeeklyPlanItem[]> {
+    const list = weekStartDate
+      ? this.weeklyPlan.filter((w) => w.weekStartDate === weekStartDate)
+      : [...this.weeklyPlan];
+    return list.sort(
+      (a, b) =>
+        a.weekStartDate.localeCompare(b.weekStartDate) ||
+        a.dayOfWeek - b.dayOfWeek ||
+        a.order - b.order,
+    );
+  }
+
+  async saveWeeklyPlanItem(item: WeeklyPlanItem): Promise<void> {
+    const idx = this.weeklyPlan.findIndex((w) => w.id === item.id);
+    if (idx >= 0) {
+      this.weeklyPlan[idx] = item;
+    } else {
+      this.weeklyPlan.push(item);
+    }
+  }
+
+  async saveWeeklyPlanItems(items: WeeklyPlanItem[]): Promise<void> {
+    for (const item of items) {
+      await this.saveWeeklyPlanItem(item);
+    }
+  }
+
+  async deleteWeeklyPlanItem(id: string): Promise<void> {
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.id !== id);
+  }
+
+  async replaceAllData(
+    blocks: TaiBlock[],
+    topics: Topic[],
+    studySessions: StudySession[] = [],
+    weeklyPlanItems: WeeklyPlanItem[] = [],
+  ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
+    this.sessions = [...studySessions];
+    this.weeklyPlan = [...weeklyPlanItems];
   }
 }
 
@@ -115,5 +179,73 @@ describe('StudyStoreService', () => {
     const remaining = store.getTopicsForBlock('B3');
     expect(remaining.map((t) => t.id)).toEqual([t1.id, t3.id]);
     expect(remaining.map((t) => t.order)).toEqual([1, 2]);
+  });
+
+  it('should automatically increment roundCount and set lastReviewedAt when moving to mastered', async () => {
+    const topic = await store.createTopic({ blockId: 'B1', title: 'Ley 39/2015' });
+    expect(topic.roundCount).toBe(0);
+    expect(topic.lastReviewedAt).toBeUndefined();
+
+    const firstMove = await store.moveTopicStatus(topic.id, 'first_round');
+    expect(firstMove?.roundIncremented).toBe(false);
+    expect(firstMove?.topic.roundCount).toBe(0);
+    expect(firstMove?.topic.lastReviewedAt).toBeDefined();
+
+    const masteredMove = await store.moveTopicStatus(topic.id, 'mastered');
+    expect(masteredMove?.roundIncremented).toBe(true);
+    expect(masteredMove?.topic.roundCount).toBe(1);
+    expect(store.totalRoundsCompleted()).toBe(1);
+
+    // Moving to mastered again is a no-op
+    const sameMove = await store.moveTopicStatus(topic.id, 'mastered');
+    expect(sameMove?.roundIncremented).toBe(false);
+    expect(sameMove?.topic.roundCount).toBe(1);
+  });
+
+  it('should log extra reviews and study sessions, updating weekly study minutes', async () => {
+    const topic = await store.createTopic({ blockId: 'B4', title: 'TCP/IP' });
+
+    const reviewed = await store.logTopicReview(topic.id, true);
+    expect(reviewed?.roundCount).toBe(1);
+    expect(reviewed?.status).toBe('first_round');
+    expect(reviewed?.lastReviewedAt).toBeDefined();
+
+    const session = await store.addStudySession({
+      topicId: topic.id,
+      blockId: 'B4',
+      durationMinutes: 25,
+      type: 'reading',
+    });
+
+    expect(store.studySessions().length).toBe(1);
+    expect(store.studyMinutesThisWeek()).toBe(25);
+    expect(store.studyMinutesByBlockThisWeek().B4).toBe(25);
+
+    await store.deleteStudySession(session.id);
+    expect(store.studySessions().length).toBe(0);
+    expect(store.studyMinutesThisWeek()).toBe(0);
+  });
+
+  it('should manage weekly plan items and clean them up when a topic is deleted', async () => {
+    const topic = await store.createTopic({ blockId: 'B2', title: 'Sistemas Operativos' });
+    const item = await store.addWeeklyPlanItem({
+      weekStartDate: '2026-11-23',
+      dayOfWeek: 1,
+      topicId: topic.id,
+      blockId: 'B2',
+      targetPomodoros: 2,
+    });
+
+    expect(store.getWeeklyPlanForWeek('2026-11-23').length).toBe(1);
+
+    const toggled = await store.toggleWeeklyPlanItem(item.id);
+    expect(toggled?.completed).toBe(true);
+    expect(store.getTopicById(topic.id)?.lastReviewedAt).toBeDefined();
+
+    await store.moveWeeklyPlanItem(item.id, 3, [item.id]);
+    expect(store.getWeeklyPlanForWeek('2026-11-23')[0].dayOfWeek).toBe(3);
+
+    await store.deleteTopic(topic.id);
+    expect(store.getWeeklyPlanForWeek('2026-11-23').length).toBe(0);
   });
 });

@@ -1,0 +1,490 @@
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+  <!-- Left: Pomodoro Timer Card -->
+  <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 lg:col-span-5">
+    <!-- Phase Selector -->
+    <div class="flex items-center justify-between gap-2">
+      <div
+        class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800"
+        role="tablist"
+        aria-label="Fase del temporizador Pomodoro"
+      >
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="pomodoro.phase() === 'focus'"
+          (click)="setPhase('focus')"
+          class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+          [class.bg-white]="pomodoro.phase() === 'focus'"
+          [class.text-slate-900]="pomodoro.phase() === 'focus'"
+          [class.shadow-2xs]="pomodoro.phase() === 'focus'"
+          [class.dark:bg-slate-900]="pomodoro.phase() === 'focus'"
+          [class.dark:text-white]="pomodoro.phase() === 'focus'"
+          [class.text-slate-500]="pomodoro.phase() !== 'focus'"
+          [class.dark:text-slate-400]="pomodoro.phase() !== 'focus'"
+        >
+          Enfoque
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="pomodoro.phase() === 'short_break'"
+          (click)="setPhase('short_break')"
+          class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+          [class.bg-white]="pomodoro.phase() === 'short_break'"
+          [class.text-slate-900]="pomodoro.phase() === 'short_break'"
+          [class.shadow-2xs]="pomodoro.phase() === 'short_break'"
+          [class.dark:bg-slate-900]="pomodoro.phase() === 'short_break'"
+          [class.dark:text-white]="pomodoro.phase() === 'short_break'"
+          [class.text-slate-500]="pomodoro.phase() !== 'short_break'"
+          [class.dark:text-slate-400]="pomodoro.phase() !== 'short_break'"
+        >
+          Corto
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="pomodoro.phase() === 'long_break'"
+          (click)="setPhase('long_break')"
+          class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+          [class.bg-white]="pomodoro.phase() === 'long_break'"
+          [class.text-slate-900]="pomodoro.phase() === 'long_break'"
+          [class.shadow-2xs]="pomodoro.phase() === 'long_break'"
+          [class.dark:bg-slate-900]="pomodoro.phase() === 'long_break'"
+          [class.dark:text-white]="pomodoro.phase() === 'long_break'"
+          [class.text-slate-500]="pomodoro.phase() !== 'long_break'"
+          [class.dark:text-slate-400]="pomodoro.phase() !== 'long_break'"
+        >
+          Largo
+        </button>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        (click)="showSettings.set(!showSettings())"
+        matTooltip="Configurar duraciones"
+        aria-label="Configurar duraciones"
+      >
+        <mat-icon>tune</mat-icon>
+      </button>
+    </div>
+
+    <!-- Settings Drawer -->
+    @if (showSettings()) {
+      <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
+        <label class="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+          Enfoque (m)
+          <input
+            type="number"
+            min="1"
+            max="120"
+            [ngModel]="pomodoro.settings().focusMinutes"
+            (ngModelChange)="updateFocusMinutes($event)"
+            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900"
+          />
+        </label>
+        <label class="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+          Corto (m)
+          <input
+            type="number"
+            min="1"
+            max="60"
+            [ngModel]="pomodoro.settings().shortBreakMinutes"
+            (ngModelChange)="updateShortBreakMinutes($event)"
+            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900"
+          />
+        </label>
+        <label class="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+          Largo (m)
+          <input
+            type="number"
+            min="1"
+            max="90"
+            [ngModel]="pomodoro.settings().longBreakMinutes"
+            (ngModelChange)="updateLongBreakMinutes($event)"
+            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900"
+          />
+        </label>
+        <div class="col-span-3 flex items-center justify-between pt-1">
+          <span class="text-xs text-slate-600 dark:text-slate-300">Aviso sonoro al terminar</span>
+          <button
+            type="button"
+            (click)="toggleSound()"
+            class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+            [class.bg-emerald-100]="pomodoro.settings().soundEnabled"
+            [class.text-emerald-700]="pomodoro.settings().soundEnabled"
+            [class.dark:bg-emerald-950/60]="pomodoro.settings().soundEnabled"
+            [class.dark:text-emerald-300]="pomodoro.settings().soundEnabled"
+            [class.bg-slate-200]="!pomodoro.settings().soundEnabled"
+            [class.text-slate-600]="!pomodoro.settings().soundEnabled"
+            [class.dark:bg-slate-700]="!pomodoro.settings().soundEnabled"
+            [class.dark:text-slate-300]="!pomodoro.settings().soundEnabled"
+          >
+            <mat-icon class="!h-4 !w-4 !text-[16px]">
+              {{ pomodoro.settings().soundEnabled ? 'volume_up' : 'volume_off' }}
+            </mat-icon>
+            {{ pomodoro.settings().soundEnabled ? 'Activado' : 'Silencio' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Big Clock Display -->
+    <div class="mt-6 text-center">
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+        [class.bg-rose-50]="pomodoro.phase() === 'focus'"
+        [class.text-rose-700]="pomodoro.phase() === 'focus'"
+        [class.dark:bg-rose-950/60]="pomodoro.phase() === 'focus'"
+        [class.dark:text-rose-300]="pomodoro.phase() === 'focus'"
+        [class.bg-emerald-50]="pomodoro.phase() !== 'focus'"
+        [class.text-emerald-700]="pomodoro.phase() !== 'focus'"
+        [class.dark:bg-emerald-950/60]="pomodoro.phase() !== 'focus'"
+        [class.dark:text-emerald-300]="pomodoro.phase() !== 'focus'"
+      >
+        <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">
+          {{ pomodoro.phase() === 'focus' ? 'local_fire_department' : 'coffee' }}
+        </mat-icon>
+        {{ pomodoro.phaseLabel() }} · Ciclo #{{ pomodoro.completedFocusCycles() + 1 }}
+      </span>
+
+      <div class="mt-4 font-mono text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+        {{ pomodoro.formattedTime() }}
+      </div>
+
+      <!-- Progress bar -->
+      <div class="mx-auto mt-4 h-2 max-w-xs overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div
+          class="h-full rounded-full transition-all duration-300"
+          [class.bg-rose-500]="pomodoro.phase() === 'focus'"
+          [class.bg-emerald-500]="pomodoro.phase() !== 'focus'"
+          [style.width.%]="pomodoro.progressPercent()"
+        ></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <button
+          mat-flat-button
+          type="button"
+          (click)="pomodoro.togglePlayPause()"
+          class="!h-11 !rounded-xl !px-6 !text-sm !font-semibold"
+        >
+          <mat-icon>{{ pomodoro.status() === 'running' ? 'pause' : 'play_arrow' }}</mat-icon>
+          {{
+            pomodoro.status() === 'running'
+              ? 'Pausar'
+              : pomodoro.status() === 'paused'
+                ? 'Reanudar'
+                : 'Iniciar'
+          }}
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="pomodoro.reset()"
+          [disabled]="pomodoro.status() === 'idle'"
+          class="!h-11 !rounded-xl"
+          matTooltip="Reiniciar fase actual"
+        >
+          <mat-icon>restart_alt</mat-icon>
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="pomodoro.skipPhase()"
+          class="!h-11 !rounded-xl"
+          matTooltip="Saltar a la siguiente fase"
+        >
+          <mat-icon>skip_next</mat-icon>
+        </button>
+      </div>
+
+      @if (pomodoro.phase() === 'focus' && pomodoro.status() !== 'idle') {
+        <button
+          type="button"
+          (click)="finishEarly()"
+          class="mt-3 text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Terminar ahora y guardar minutos transcurridos
+        </button>
+      }
+    </div>
+
+    <!-- Topic & Activity Binding -->
+    <div class="mt-6 space-y-3 border-t border-slate-100 pt-5 dark:border-slate-800">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Tema vinculado (se guarda al completar)
+        </label>
+        <select
+          aria-label="Tema vinculado al Pomodoro"
+          [ngModel]="pomodoro.selectedTopicId() ?? ''"
+          (ngModelChange)="onTopicSelected($event)"
+          class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        >
+          <option value="">Sin tema específico (solo cronómetro)</option>
+          @for (topic of store.topics(); track topic.id) {
+            <option [value]="topic.id">[{{ topic.blockId }}] #{{ topic.order }} {{ topic.title }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Tipo de actividad
+        </label>
+        <div class="mt-1.5 grid grid-cols-2 gap-1.5">
+          @for (entry of sessionTypeEntries; track entry[0]) {
+            <button
+              type="button"
+              (click)="onSessionTypeSelected(entry[0])"
+              class="rounded-xl border px-2.5 py-1.5 text-xs font-medium transition"
+              [class.border-blue-500]="pomodoro.sessionType() === entry[0]"
+              [class.bg-blue-50]="pomodoro.sessionType() === entry[0]"
+              [class.text-blue-700]="pomodoro.sessionType() === entry[0]"
+              [class.dark:bg-blue-950/60]="pomodoro.sessionType() === entry[0]"
+              [class.dark:text-blue-300]="pomodoro.sessionType() === entry[0]"
+              [class.border-slate-200]="pomodoro.sessionType() !== entry[0]"
+              [class.bg-white]="pomodoro.sessionType() !== entry[0]"
+              [class.text-slate-600]="pomodoro.sessionType() !== entry[0]"
+              [class.dark:border-slate-700]="pomodoro.sessionType() !== entry[0]"
+              [class.dark:bg-slate-800]="pomodoro.sessionType() !== entry[0]"
+              [class.dark:text-slate-300]="pomodoro.sessionType() !== entry[0]"
+            >
+              {{ entry[1] }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (pomodoro.selectedTopic(); as activeTopic) {
+        <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-xs dark:bg-slate-800/70">
+          <span class="truncate text-slate-600 dark:text-slate-300">
+            Puedes abrir el apunte y el Pomodoro seguirá activo.
+          </span>
+          <a
+            [routerLink]="['/blocks', activeTopic.blockId, 'topics', activeTopic.id]"
+            class="ml-2 shrink-0 font-semibold text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Abrir tema
+          </a>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Right: Metrics & Session History -->
+  <div class="space-y-5 lg:col-span-7">
+    <!-- Weekly & Block Metrics -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+            Horas reales por bloque TAI
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Esta semana: <strong>{{ formatDuration(store.studyMinutesThisWeek()) }}</strong> ·
+            Total acumulado: <strong>{{ formatDuration(totalMinutesAllTime()) }}</strong>
+          </p>
+        </div>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="toggleManualLog()"
+          class="!h-8 !rounded-xl !text-xs"
+        >
+          <mat-icon class="!text-[16px]">add_circle_outline</mat-icon>
+          Registrar sesión manual
+        </button>
+      </div>
+
+      <!-- Manual Session Form -->
+      @if (showManualLog()) {
+        <form
+          (ngSubmit)="submitManualSession()"
+          class="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/60 dark:bg-blue-950/30 sm:grid-cols-2"
+        >
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">
+              Tema estudiado
+            </label>
+            <select
+              name="manualTopicId"
+              [ngModel]="manualTopicId()"
+              (ngModelChange)="manualTopicId.set($event)"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+            >
+              @for (topic of store.topics(); track topic.id) {
+                <option [value]="topic.id">[{{ topic.blockId }}] {{ topic.title }}</option>
+              }
+            </select>
+          </div>
+
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            Minutos dedicados
+            <input
+              type="number"
+              name="manualDuration"
+              min="1"
+              max="600"
+              [ngModel]="manualDuration()"
+              (ngModelChange)="manualDuration.set($event)"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+            />
+          </label>
+
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            Actividad
+            <select
+              name="manualType"
+              [ngModel]="manualType()"
+              (ngModelChange)="manualType.set($event)"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+            >
+              @for (entry of sessionTypeEntries; track entry[0]) {
+                <option [value]="entry[0]">{{ entry[1] }}</option>
+              }
+            </select>
+          </label>
+
+          <div class="flex items-center justify-end gap-2 sm:col-span-2">
+            <button
+              type="button"
+              mat-button
+              (click)="showManualLog.set(false)"
+              class="!rounded-xl !text-xs"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              mat-flat-button
+              [disabled]="!manualTopicId()"
+              class="!rounded-xl !text-xs"
+            >
+              Guardar sesión
+            </button>
+          </div>
+        </form>
+      }
+
+      <!-- Block bars -->
+      <div class="mt-4 space-y-3">
+        @for (metric of blockMetrics(); track metric.block.id) {
+          <div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200">
+                <span
+                  class="h-2.5 w-2.5 rounded-full"
+                  [style.background-color]="metric.block.color"
+                ></span>
+                {{ metric.block.code }} · {{ metric.block.shortTitle }}
+              </span>
+              <span class="text-slate-500 dark:text-slate-400">
+                <strong class="text-slate-900 dark:text-white">{{ formatDuration(metric.weekMinutes) }}</strong>
+                <span class="ml-1 text-[11px]">(total: {{ formatDuration(metric.totalMinutes) }})</span>
+              </span>
+            </div>
+            <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                class="h-full rounded-full transition-all duration-300"
+                [style.background-color]="metric.block.color"
+                [style.width.%]="metric.barWidthPercent"
+              ></div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Daily distribution this week -->
+      <div class="mt-6 border-t border-slate-100 pt-4 dark:border-slate-800">
+        <p class="mb-3 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Actividad diaria de la semana actual
+        </p>
+        <div class="grid h-28 grid-cols-7 items-end gap-2">
+          @for (bar of weeklyDailyBars(); track bar.dateKey) {
+            <div class="flex h-full flex-col items-center justify-end gap-1">
+              <span class="text-[10px] font-medium text-slate-400">
+                {{ bar.minutes > 0 ? bar.minutes + 'm' : '' }}
+              </span>
+              <div class="flex w-full flex-1 items-end">
+                <div
+                  class="w-full rounded-t-lg transition-all"
+                  [class.bg-blue-500]="bar.isToday && bar.minutes > 0"
+                  [class.bg-indigo-400]="!bar.isToday && bar.minutes > 0"
+                  [class.bg-slate-100]="bar.minutes === 0"
+                  [class.dark:bg-slate-800]="bar.minutes === 0"
+                  [style.height.%]="bar.heightPercent"
+                  [matTooltip]="bar.fullLabel + ': ' + formatDuration(bar.minutes)"
+                ></div>
+              </div>
+              <span
+                class="text-[11px] font-semibold"
+                [class.text-blue-600]="bar.isToday"
+                [class.dark:text-blue-400]="bar.isToday"
+                [class.text-slate-500]="!bar.isToday"
+                [class.dark:text-slate-400]="!bar.isToday"
+              >
+                {{ bar.shortLabel }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Sessions -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+        Sesiones recientes ({{ store.studySessions().length }})
+      </h3>
+
+      @if (recentSessions().length === 0) {
+        <p class="mt-3 rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+          Completa un Pomodoro o registra una sesión manual para empezar a ver tu historial.
+        </p>
+      } @else {
+        <div class="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
+          @for (session of recentSessions(); track session.id) {
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="h-2.5 w-2.5 shrink-0 rounded-full"
+                    [style.background-color]="getBlockColor(session.blockId)"
+                  ></span>
+                  <span class="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">
+                    {{ getTopicTitle(session.topicId) }}
+                  </span>
+                </div>
+                <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  {{ sessionTypeLabels[session.type] }} ·
+                  {{ session.startedAt | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+
+              <div class="flex shrink-0 items-center gap-2">
+                <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  {{ formatDuration(session.durationMinutes) }}
+                </span>
+                <button
+                  type="button"
+                  (click)="deleteSession(session)"
+                  aria-label="Eliminar sesión"
+                  matTooltip="Eliminar sesión"
+                  class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+                >
+                  <mat-icon class="!h-4 !w-4 !text-[16px]">delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </div>
+</div>

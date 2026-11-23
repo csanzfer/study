@@ -1,12 +1,20 @@
 import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
-import { TaiBlock, TaiBlockId, Topic } from '../models/study.models';
+import {
+  StudySession,
+  TaiBlock,
+  TaiBlockId,
+  Topic,
+  WeeklyPlanItem,
+} from '../models/study.models';
 import { TAI_BLOCKS_SEED } from './tai-seed';
 
 @Injectable({ providedIn: 'root' })
 export class StudyDatabase extends Dexie {
   blocks!: Table<TaiBlock, TaiBlockId>;
   topics!: Table<Topic, string>;
+  studySessions!: Table<StudySession, string>;
+  weeklyPlanItems!: Table<WeeklyPlanItem, string>;
 
   constructor() {
     super('TaiStudyDB');
@@ -14,6 +22,13 @@ export class StudyDatabase extends Dexie {
     this.version(1).stores({
       blocks: 'id, order',
       topics: 'id, blockId, order, status, updatedAt, *tags',
+    });
+
+    this.version(2).stores({
+      blocks: 'id, order',
+      topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
+      studySessions: 'id, topicId, blockId, startedAt, type',
+      weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
     });
   }
 

@@ -37,14 +37,7 @@ export const routes: Routes = [
   {
     path: 'planner',
     loadComponent: () =>
-      import('./features/coming-soon/coming-soon').then((m) => m.ComingSoon),
-    data: {
-      title: 'Tablero Kanban y Planificador',
-      phase: 'Fase 2',
-      icon: 'view_kanban',
-      description:
-        'Control de vueltas al temario, mapa de salud de temas oxidados, planificación semanal y temporizador Pomodoro.',
-    },
+      import('./features/planner/planner-page/planner-page').then((m) => m.PlannerPage),
   },
   {
     path: 'tests',

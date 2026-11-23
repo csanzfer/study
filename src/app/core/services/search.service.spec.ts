@@ -1,7 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
-import { TaiBlock, TaiBlockId, Topic } from '../models/study.models';
+import {
+  StudySession,
+  TaiBlock,
+  TaiBlockId,
+  Topic,
+  WeeklyPlanItem,
+} from '../models/study.models';
 import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.repository';
 import { SearchService, buildHighlightedSnippet } from './search.service';
 import { StudyStoreService } from './study-store.service';
@@ -9,6 +15,8 @@ import { StudyStoreService } from './study-store.service';
 class InMemoryRepository implements StudyRepository {
   private blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
   private topics: Topic[] = [];
+  private sessions: StudySession[] = [];
+  private weeklyPlan: WeeklyPlanItem[] = [];
 
   async initialize(): Promise<void> {}
   async getBlocks(): Promise<TaiBlock[]> {
@@ -35,10 +43,43 @@ class InMemoryRepository implements StudyRepository {
   }
   async deleteTopic(id: string): Promise<void> {
     this.topics = this.topics.filter((t) => t.id !== id);
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.topicId !== id);
   }
-  async replaceAllData(blocks: TaiBlock[], topics: Topic[]): Promise<void> {
+  async getStudySessions(): Promise<StudySession[]> {
+    return [...this.sessions];
+  }
+  async saveStudySession(session: StudySession): Promise<void> {
+    this.sessions.push(session);
+  }
+  async deleteStudySession(id: string): Promise<void> {
+    this.sessions = this.sessions.filter((s) => s.id !== id);
+  }
+  async getWeeklyPlanItems(weekStartDate?: string): Promise<WeeklyPlanItem[]> {
+    return weekStartDate
+      ? this.weeklyPlan.filter((w) => w.weekStartDate === weekStartDate)
+      : [...this.weeklyPlan];
+  }
+  async saveWeeklyPlanItem(item: WeeklyPlanItem): Promise<void> {
+    this.weeklyPlan.push(item);
+  }
+  async saveWeeklyPlanItems(items: WeeklyPlanItem[]): Promise<void> {
+    for (const item of items) {
+      await this.saveWeeklyPlanItem(item);
+    }
+  }
+  async deleteWeeklyPlanItem(id: string): Promise<void> {
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.id !== id);
+  }
+  async replaceAllData(
+    blocks: TaiBlock[],
+    topics: Topic[],
+    studySessions: StudySession[] = [],
+    weeklyPlanItems: WeeklyPlanItem[] = [],
+  ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
+    this.sessions = [...studySessions];
+    this.weeklyPlan = [...weeklyPlanItems];
   }
 }
 
