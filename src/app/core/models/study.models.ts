@@ -289,8 +289,104 @@ export interface CreateExamAttemptInput {
   logStudySession?: boolean;
 }
 
+// --- Fase 4: Flashcards (SRS SM-2) y Gamificación ---
+
+export type FlashcardRating = 'again' | 'hard' | 'good' | 'easy';
+
+export const FLASHCARD_RATING_LABELS: Record<FlashcardRating, string> = {
+  again: 'Otra vez',
+  hard: 'Difícil',
+  good: 'Bien',
+  easy: 'Fácil',
+};
+
+export const TAI_FLASHCARD_SUGGESTED_TAGS: string[] = [
+  'siglas',
+  'plazos',
+  'puertos',
+  'comandos',
+  'leyes',
+  'protocolos',
+  'sql',
+  'seguridad',
+];
+
+export interface FlashcardSrsState {
+  intervalDays: number;
+  easeFactor: number;
+  repetitions: number;
+  lapses: number;
+  dueDate: string; // YYYY-MM-DD local
+  lastReviewedAt?: string;
+}
+
+export interface Flashcard {
+  id: string;
+  blockId: TaiBlockId;
+  topicId?: string;
+  front: string;
+  back: string;
+  hint?: string;
+  tags: string[];
+  srs: FlashcardSrsState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFlashcardInput {
+  blockId: TaiBlockId;
+  topicId?: string;
+  front: string;
+  back: string;
+  hint?: string;
+  tags?: string[];
+}
+
+export interface UpdateFlashcardPatch {
+  blockId?: TaiBlockId;
+  topicId?: string;
+  front?: string;
+  back?: string;
+  hint?: string;
+  tags?: string[];
+  srs?: FlashcardSrsState;
+}
+
+export interface GamificationProfile {
+  id: 'local-user';
+  xp: number;
+  streakDays: number;
+  longestStreakDays: number;
+  streakFreezes: number;
+  maxStreakFreezes: number;
+  lastActiveDate?: string; // YYYY-MM-DD local
+  activeDates: string[];
+  freezeUsedDates: string[];
+  weeklyRestDays: number[]; // 0 = Domingo, 1 = Lunes ... 6 = Sábado
+  claimedMissionIds: string[];
+  updatedAt: string;
+}
+
+export function createDefaultGamificationProfile(
+  nowIso: string = new Date().toISOString(),
+): GamificationProfile {
+  return {
+    id: 'local-user',
+    xp: 0,
+    streakDays: 0,
+    longestStreakDays: 0,
+    streakFreezes: 2,
+    maxStreakFreezes: 3,
+    activeDates: [],
+    freezeUsedDates: [],
+    weeklyRestDays: [0],
+    claimedMissionIds: [],
+    updatedAt: nowIso,
+  };
+}
+
 export interface BackupPayload {
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   appName: 'tai-study';
   exportedAt: string;
   blocks: TaiBlock[];
@@ -300,4 +396,6 @@ export interface BackupPayload {
   caseStudies?: CaseStudy[];
   questions?: Question[];
   examAttempts?: ExamAttempt[];
+  flashcards?: Flashcard[];
+  gamificationProfile?: GamificationProfile;
 }

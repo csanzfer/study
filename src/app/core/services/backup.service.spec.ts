@@ -3,12 +3,15 @@ import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
+  Flashcard,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
   Topic,
   WeeklyPlanItem,
+  createDefaultGamificationProfile,
 } from '../models/study.models';
 import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.repository';
 import { BackupService } from './backup.service';
@@ -108,6 +111,34 @@ class MockStudyRepository implements StudyRepository {
       durationSec: 45,
     },
   ];
+  flashcards: Flashcard[] = [
+    {
+      id: 'fc-1',
+      blockId: 'B4',
+      topicId: 't-1',
+      front: 'DNS',
+      back: 'Domain Name System',
+      hint: 'Puerto 53',
+      tags: ['siglas', 'puertos'],
+      srs: {
+        intervalDays: 6,
+        easeFactor: 2.5,
+        repetitions: 2,
+        lapses: 0,
+        dueDate: '2026-11-29',
+      },
+      createdAt: '2026-11-23T10:00:00.000Z',
+      updatedAt: '2026-11-23T10:00:00.000Z',
+    },
+  ];
+  profile: GamificationProfile | undefined = {
+    ...createDefaultGamificationProfile('2026-11-23T11:00:00.000Z'),
+    xp: 120,
+    streakDays: 3,
+    longestStreakDays: 5,
+    lastActiveDate: '2026-11-23',
+    activeDates: ['2026-11-21', '2026-11-22', '2026-11-23'],
+  };
 
   async initialize(): Promise<void> {}
   async getBlocks(): Promise<TaiBlock[]> {
@@ -190,6 +221,24 @@ class MockStudyRepository implements StudyRepository {
   async deleteExamAttempt(id: string): Promise<void> {
     this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
   }
+  async getFlashcards(): Promise<Flashcard[]> {
+    return this.flashcards;
+  }
+  async saveFlashcard(fc: Flashcard): Promise<void> {
+    this.flashcards.push(fc);
+  }
+  async saveFlashcards(fcs: Flashcard[]): Promise<void> {
+    this.flashcards.push(...fcs);
+  }
+  async deleteFlashcard(id: string): Promise<void> {
+    this.flashcards = this.flashcards.filter((f) => f.id !== id);
+  }
+  async getGamificationProfile(): Promise<GamificationProfile | undefined> {
+    return this.profile;
+  }
+  async saveGamificationProfile(profile: GamificationProfile): Promise<void> {
+    this.profile = profile;
+  }
   async replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
@@ -198,6 +247,8 @@ class MockStudyRepository implements StudyRepository {
     caseStudies: CaseStudy[] = [],
     questions: Question[] = [],
     examAttempts: ExamAttempt[] = [],
+    flashcards: Flashcard[] = [],
+    gamificationProfile?: GamificationProfile,
   ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
@@ -206,6 +257,8 @@ class MockStudyRepository implements StudyRepository {
     this.caseStudies = [...caseStudies];
     this.questions = [...questions];
     this.examAttempts = [...examAttempts];
+    this.flashcards = [...flashcards];
+    this.profile = gamificationProfile;
   }
 }
 
@@ -224,10 +277,10 @@ describe('BackupService', () => {
     service = TestBed.inject(BackupService);
   });
 
-  it('should create a valid v3 backup payload including tests, case studies, and exam attempts', async () => {
+  it('should create a valid v4 backup payload including flashcards and gamification profile', async () => {
     const payload = await service.createBackupPayload();
     expect(payload.appName).toBe('tai-study');
-    expect(payload.schemaVersion).toBe(3);
+    expect(payload.schemaVersion).toBe(4);
     expect(payload.blocks.length).toBe(4);
     expect(payload.topics.length).toBe(1);
     expect(payload.studySessions?.length).toBe(1);
@@ -235,6 +288,8 @@ describe('BackupService', () => {
     expect(payload.caseStudies?.length).toBe(1);
     expect(payload.questions?.length).toBe(1);
     expect(payload.examAttempts?.length).toBe(1);
+    expect(payload.flashcards?.length).toBe(1);
+    expect(payload.gamificationProfile?.xp).toBe(120);
   });
 
   it('should accept legacy v1 and v2 backup files for backward compatibility', async () => {
@@ -319,6 +374,8 @@ describe('BackupService', () => {
     expect(result.caseStudiesCount).toBe(1);
     expect(result.questionsCount).toBe(1);
     expect(result.examAttemptsCount).toBe(1);
+    expect(result.flashcardsCount).toBe(1);
+    expect((await repo.getGamificationProfile())?.streakDays).toBe(3);
 
     const [restored] = await repo.getTopics();
     expect(restored.contentJson).toEqual(richContentJson);
@@ -384,5 +441,41 @@ describe('BackupService', () => {
       examAttempts: [{ ...base.examAttempts![0], scoreOn10: undefined }],
     };
     expect(() => service.parseBackupJson(JSON.stringify(missingAttemptScoreOn10))).toThrow();
+
+    const invalidFlashcardPayload = {
+      ...base,
+      flashcards: [{ ...base.flashcards![0], srs: { ...base.flashcards![0].srs, easeFactor: 0.5 } }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidFlashcardPayload))).toThrow();
+
+    const missingFlashcardLapsesPayload = {
+      ...base,
+      flashcards: [{ ...base.flashcards![0], srs: { ...base.flashcards![0].srs, lapses: undefined } }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingFlashcardLapsesPayload))).toThrow();
+
+    const invalidProfilePayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, xp: -10 },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidProfilePayload))).toThrow();
+
+    const missingFreezeUsedDatesPayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, freezeUsedDates: undefined },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingFreezeUsedDatesPayload))).toThrow();
+
+    const missingClaimedMissionsPayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, claimedMissionIds: undefined },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingClaimedMissionsPayload))).toThrow();
+
+    const invalidRestDaysPayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, weeklyRestDays: [9] },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidRestDaysPayload))).toThrow();
   });
 });

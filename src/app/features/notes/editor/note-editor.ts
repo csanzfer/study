@@ -40,12 +40,27 @@ export class NoteEditor {
   );
 
   readonly contentChange = output<NoteEditorChange>();
+  readonly createFlashcardRequest = output<string>();
 
   private editor: Editor | null = null;
   private loadedTopicId: string | null = null;
   private isApplyingExternalContent = false;
 
   protected readonly stateTick = signal(0);
+
+  protected readonly selectedText = computed(() => {
+    this.stateTick();
+    if (!this.editor) {
+      return '';
+    }
+    const { from, to } = this.editor.state.selection;
+    if (from === to) {
+      return '';
+    }
+    return this.editor.state.doc.textBetween(from, to, ' ').trim();
+  });
+
+  protected readonly hasSelection = computed(() => this.selectedText().length > 0);
 
   protected readonly isInTable = computed(() => {
     this.stateTick();
@@ -94,6 +109,14 @@ export class NoteEditor {
         attributes: {
           class: 'tiptap-content focus:outline-none',
           spellcheck: 'true',
+        },
+        handleKeyDown: (_view, event) => {
+          if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'f') {
+            event.preventDefault();
+            this.requestCreateFlashcard();
+            return true;
+          }
+          return false;
         },
       },
       onTransaction: () => {
@@ -228,5 +251,9 @@ export class NoteEditor {
 
   protected redo(): void {
     this.editor?.chain().focus().redo().run();
+  }
+
+  protected requestCreateFlashcard(): void {
+    this.createFlashcardRequest.emit(this.selectedText());
   }
 }

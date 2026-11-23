@@ -254,18 +254,18 @@ export interface GamificationProfile {
 
 ---
 
-### Fase 4 — Flashcards (Repetición Espaciada) y Planificación Gamificada
+### Fase 4 — Flashcards (Repetición Espaciada) y Planificación Gamificada ✅
 **Objetivo:** Consolidar memoria a largo plazo (leyes, plazos, puertos, siglas) y hacer más llevadera la constancia diaria.
 
 #### 4A. Flashcards con Repetición Espaciada (SRS)
-- [ ] Implementar algoritmo **SM-2** (botones: *Otra vez*, *Difícil*, *Bien*, *Fácil*) para programar automáticamente la próxima fecha de repaso.
-- [ ] Integración directa con el editor TipTap: seleccionar texto en un apunte → botón **"Crear flashcard"** vinculada al tema.
-- [ ] Cola diaria de repaso filtrable por bloque o etiqueta (`plazos`, `puertos`, `siglas`, `comandos`).
+- [x] Implementar algoritmo **SM-2** (botones: *Otra vez*, *Difícil*, *Bien*, *Fácil*) para programar automáticamente la próxima fecha de repaso.
+- [x] Integración directa con el editor TipTap: seleccionar texto en un apunte → botón **"Crear flashcard"** vinculada al tema.
+- [x] Cola diaria de repaso filtrable por bloque o etiqueta (`plazos`, `puertos`, `siglas`, `comandos`) con soporte específico para **revisión de siglas TAI** (pack base B1–B4, extracción automática y modo bidireccional).
 
 #### 4B. Planificación Gamificada
-- [ ] **Mapa de campaña / niveles por Bloque:** cada tema suma progreso/nivel al avanzar de vuelta, tener esquema, dominar flashcards y superar el 75% en tests.
-- [ ] **Misiones diarias autogeneradas:** sugerencias realistas según tu planificación, flashcards pendientes y temas oxidados (ej.: *"Repasa 15 flashcards de Bloque I + completa 1 Pomodoro del Tema 4"*).
-- [ ] **Racha flexible:** contador de constancia respetando días de descanso configurados y con "congeladores" para no generar frustración si un día no puedes estudiar.
+- [x] **Mapa de campaña / niveles por Bloque:** cada tema suma progreso/nivel al avanzar de vuelta, tener esquema, dominar flashcards y superar el 75% en tests.
+- [x] **Misiones diarias autogeneradas:** sugerencias realistas según tu planificación, flashcards pendientes y temas oxidados (ej.: *"Repasa 15 flashcards de Bloque I + completa 1 Pomodoro del Tema 4"*).
+- [x] **Racha flexible:** contador de constancia respetando días de descanso configurados y con "congeladores" para no generar frustración si un día no puedes estudiar.
 
 **Criterio de hecho:** Cada día la app te propone un plan claro y alcanzable (misiones + flashcards vencidas) y refleja visualmente tu avance en los 4 bloques TAI.
 

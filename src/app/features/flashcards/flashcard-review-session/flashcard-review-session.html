@@ -1,0 +1,372 @@
+@if (!sessionActive()) {
+  <!-- Session setup & quick launch -->
+  <div class="space-y-6">
+    @if (store.totalFlashcards() === 0) {
+      <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+          <mat-icon>style</mat-icon>
+        </div>
+        <h3 class="mt-4 text-base font-bold text-slate-900 dark:text-white">
+          Aún no tienes flashcards en tu mazo
+        </h3>
+        <p class="mx-auto mt-1 max-w-md text-sm text-slate-500 dark:text-slate-400">
+          Puedes cargar el pack curado de siglas TAI (B1–B4), extraer tarjetas automáticamente de tus apuntes o crear flashcards al vuelo seleccionando texto en el editor.
+        </p>
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+          <button mat-flat-button type="button" (click)="openImportRequest.emit('acronyms')">
+            <mat-icon>spellcheck</mat-icon>
+            Cargar pack de siglas TAI
+          </button>
+          <button mat-stroked-button type="button" (click)="openImportRequest.emit('extract')">
+            <mat-icon>auto_awesome</mat-icon>
+            Extraer desde apuntes
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">
+              Configurar sesión de repaso SM-2
+            </h2>
+            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Filtra por bloque, tema o etiqueta. Usa <kbd class="rounded border border-slate-300 px-1 text-[11px] dark:border-slate-700">Espacio</kbd> para voltear y <kbd class="rounded border border-slate-300 px-1 text-[11px] dark:border-slate-700">1</kbd>–<kbd class="rounded border border-slate-300 px-1 text-[11px] dark:border-slate-700">4</kbd> para calificar.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            (click)="toggleOnlyAcronyms()"
+            class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition"
+            [class.border-blue-500]="tagFilter() === 'siglas'"
+            [class.bg-blue-50]="tagFilter() === 'siglas'"
+            [class.text-blue-700]="tagFilter() === 'siglas'"
+            [class.dark:bg-blue-950/60]="tagFilter() === 'siglas'"
+            [class.dark:text-blue-300]="tagFilter() === 'siglas'"
+            [class.border-slate-200]="tagFilter() !== 'siglas'"
+            [class.text-slate-700]="tagFilter() !== 'siglas'"
+            [class.dark:border-slate-700]="tagFilter() !== 'siglas'"
+            [class.dark:text-slate-300]="tagFilter() !== 'siglas'"
+          >
+            <mat-icon class="!h-4 !w-4 !text-[16px]">spellcheck</mat-icon>
+            Solo siglas ({{ store.acronymFlashcards().length }})
+          </button>
+        </div>
+
+        <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Bloque TAI</span>
+            <select
+              [ngModel]="blockFilter()"
+              (ngModelChange)="blockFilter.set($event); topicFilter.set('')"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="ALL">Todos los bloques ({{ store.totalFlashcards() }})</option>
+              @for (block of store.blocks(); track block.id) {
+                <option [value]="block.id">
+                  {{ block.code }} ({{ store.flashcardCountByBlock()[block.id] }})
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Tema específico</span>
+            <select
+              [ngModel]="topicFilter()"
+              (ngModelChange)="topicFilter.set($event)"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="">Todos los temas</option>
+              @for (topic of topicsForBlock(); track topic.id) {
+                <option [value]="topic.id">
+                  {{ topic.blockId }} · #{{ topic.order }} {{ topic.title }}
+                  ({{ store.flashcardCountByTopic()[topic.id] || 0 }})
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Etiqueta</span>
+            <select
+              [ngModel]="tagFilter()"
+              (ngModelChange)="tagFilter.set($event)"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="">Todas las etiquetas</option>
+              @for (tag of store.flashcardTags(); track tag) {
+                <option [value]="tag">#{{ tag }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Dirección de tarjeta</span>
+            <select
+              [ngModel]="direction()"
+              (ngModelChange)="direction.set($event)"
+              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="normal">Normal (Anverso → Reverso)</option>
+              <option value="reverse">Inverso (Reverso → Anverso)</option>
+              <option value="mixed">Mixto aleatorio (ideal siglas)</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-5 flex flex-col justify-between gap-4 border-t border-slate-200 pt-4 sm:flex-row sm:items-center dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="queueMode.set('due')"
+              class="rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+              [class.bg-blue-600]="queueMode() === 'due'"
+              [class.text-white]="queueMode() === 'due'"
+              [class.bg-slate-100]="queueMode() !== 'due'"
+              [class.text-slate-600]="queueMode() !== 'due'"
+              [class.dark:bg-slate-800]="queueMode() !== 'due'"
+              [class.dark:text-slate-300]="queueMode() !== 'due'"
+            >
+              Cola vencida hoy
+            </button>
+            <button
+              type="button"
+              (click)="queueMode.set('all')"
+              class="rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+              [class.bg-blue-600]="queueMode() === 'all'"
+              [class.text-white]="queueMode() === 'all'"
+              [class.bg-slate-100]="queueMode() !== 'all'"
+              [class.text-slate-600]="queueMode() !== 'all'"
+              [class.dark:bg-slate-800]="queueMode() !== 'all'"
+              [class.dark:text-slate-300]="queueMode() !== 'all'"
+            >
+              Repaso libre (todas)
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {{ matchingCards().length }} tarjeta{{ matchingCards().length === 1 ? '' : 's' }} lista{{ matchingCards().length === 1 ? '' : 's' }}
+            </span>
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="matchingCards().length === 0"
+              (click)="startSession()"
+            >
+              <mat-icon>play_arrow</mat-icon>
+              Empezar repaso
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+} @else if (sessionFinished()) {
+  <!-- Session summary -->
+  <div class="mx-auto max-w-xl rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-xs dark:border-emerald-900/50 dark:bg-slate-900">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+      <mat-icon class="!h-8 !w-8 !text-[32px]">emoji_events</mat-icon>
+    </div>
+    <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">
+      ¡Sesión completada!
+    </h3>
+    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+      Has repasado <strong>{{ reviewedTotal() }}</strong> tarjeta{{ reviewedTotal() === 1 ? '' : 's' }} y sumado
+      <strong class="text-amber-600 dark:text-amber-400">+{{ xpEarned() }} XP</strong>.
+    </p>
+
+    <div class="mt-6 grid grid-cols-4 gap-2 text-center">
+      <div class="rounded-xl bg-rose-50 p-3 dark:bg-rose-950/30">
+        <p class="text-lg font-bold text-rose-600 dark:text-rose-400">{{ ratingCounts().again }}</p>
+        <p class="text-[11px] text-slate-500">Otra vez</p>
+      </div>
+      <div class="rounded-xl bg-amber-50 p-3 dark:bg-amber-950/30">
+        <p class="text-lg font-bold text-amber-600 dark:text-amber-400">{{ ratingCounts().hard }}</p>
+        <p class="text-[11px] text-slate-500">Difícil</p>
+      </div>
+      <div class="rounded-xl bg-blue-50 p-3 dark:bg-blue-950/30">
+        <p class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ ratingCounts().good }}</p>
+        <p class="text-[11px] text-slate-500">Bien</p>
+      </div>
+      <div class="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30">
+        <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400">{{ ratingCounts().easy }}</p>
+        <p class="text-[11px] text-slate-500">Fácil</p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-center gap-2">
+      <button mat-stroked-button type="button" (click)="exitSession()">
+        Volver a filtros
+      </button>
+      @if (matchingCards().length > 0) {
+        <button mat-flat-button type="button" (click)="startSession()">
+          <mat-icon>replay</mat-icon>
+          Repasar otra tanda
+        </button>
+      }
+    </div>
+  </div>
+} @else if (currentCard(); as card) {
+  <!-- Active review card -->
+  <div class="mx-auto max-w-2xl space-y-4">
+    <!-- Top progress bar -->
+    <div class="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+      <button
+        type="button"
+        (click)="exitSession()"
+        class="inline-flex items-center gap-1 font-medium hover:text-slate-900 dark:hover:text-white"
+      >
+        <mat-icon class="!h-4 !w-4 !text-[16px]">arrow_back</mat-icon>
+        Salir
+      </button>
+      <span class="font-semibold text-slate-700 dark:text-slate-200">
+        Tarjeta {{ currentIndex() + 1 }} de {{ queueIds().length }}
+      </span>
+      <button
+        type="button"
+        (click)="editCurrentCard()"
+        class="inline-flex items-center gap-1 font-medium text-blue-600 hover:underline dark:text-blue-400"
+      >
+        <mat-icon class="!h-4 !w-4 !text-[16px]">edit</mat-icon>
+        Editar
+      </button>
+    </div>
+
+    <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+      <div
+        class="h-full rounded-full bg-blue-600 transition-all duration-300"
+        [style.width.%]="progressPercent()"
+      ></div>
+    </div>
+
+    <!-- Card surface -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            {{ card.blockId }}
+          </span>
+          @if (cardReversed()) {
+            <span class="rounded-lg bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+              Modo inverso
+            </span>
+          }
+          @for (tag of card.tags; track tag) {
+            <span class="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+              #{{ tag }}
+            </span>
+          }
+        </div>
+
+        @if (currentTopicTitle(); as topicTitle) {
+          <a
+            [routerLink]="['/blocks', card.blockId, 'topics', card.topicId]"
+            class="truncate text-xs text-slate-400 hover:text-blue-600 hover:underline"
+          >
+            {{ topicTitle }}
+          </a>
+        }
+      </div>
+
+      <!-- Prompt side -->
+      <div class="mt-8 text-center">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          {{ cardReversed() ? '¿Qué concepto o sigla corresponde?' : 'Pregunta / Concepto' }}
+        </p>
+        <p class="mt-3 whitespace-pre-line text-xl font-bold text-slate-900 sm:text-2xl dark:text-white">
+          {{ cardReversed() ? card.back : card.front }}
+        </p>
+
+        @if (card.hint && !flipped()) {
+          <div class="mt-4">
+            @if (showHint()) {
+              <p class="inline-block rounded-xl bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                Pista: {{ card.hint }}
+              </p>
+            } @else {
+              <button
+                type="button"
+                (click)="showHint.set(true)"
+                class="text-xs font-medium text-amber-600 hover:underline dark:text-amber-400"
+              >
+                Mostrar pista
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Answer side -->
+      @if (flipped()) {
+        <div class="mt-8 border-t border-slate-200 pt-6 text-center dark:border-slate-800">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            Respuesta
+          </p>
+          <p class="mt-2 whitespace-pre-line text-lg font-semibold text-slate-800 sm:text-xl dark:text-slate-100">
+            {{ cardReversed() ? card.front : card.back }}
+          </p>
+          @if (card.hint) {
+            <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              Referencia / contexto: {{ card.hint }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Action controls -->
+    @if (!flipped()) {
+      <div class="flex justify-center">
+        <button mat-flat-button type="button" class="!px-8 !py-2.5" (click)="flipCard()">
+          <mat-icon>flip</mat-icon>
+          Mostrar respuesta (Espacio)
+        </button>
+      </div>
+    } @else {
+      <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <button
+          type="button"
+          [disabled]="submittingRating()"
+          (click)="rateCurrentCard('again')"
+          class="flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70"
+        >
+          <span class="text-xs font-bold">1 · {{ ratingLabels.again }}</span>
+          <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().again }}</span>
+        </button>
+
+        <button
+          type="button"
+          [disabled]="submittingRating()"
+          (click)="rateCurrentCard('hard')"
+          class="flex flex-col items-center rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/70"
+        >
+          <span class="text-xs font-bold">2 · {{ ratingLabels.hard }}</span>
+          <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().hard }}</span>
+        </button>
+
+        <button
+          type="button"
+          [disabled]="submittingRating()"
+          (click)="rateCurrentCard('good')"
+          class="flex flex-col items-center rounded-2xl border border-blue-200 bg-blue-50 px-3 py-3 text-blue-700 transition hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70"
+        >
+          <span class="text-xs font-bold">3 · {{ ratingLabels.good }}</span>
+          <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().good }}</span>
+        </button>
+
+        <button
+          type="button"
+          [disabled]="submittingRating()"
+          (click)="rateCurrentCard('easy')"
+          class="flex flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+        >
+          <span class="text-xs font-bold">4 · {{ ratingLabels.easy }}</span>
+          <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().easy }}</span>
+        </button>
+      </div>
+    }
+  </div>
+}

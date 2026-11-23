@@ -3,6 +3,8 @@ import { TAI_BLOCKS_SEED } from '../../../core/db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
+  Flashcard,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlock,
@@ -22,6 +24,8 @@ class InMemoryTestRepo implements StudyRepository {
   caseStudies: CaseStudy[] = [];
   questions: Question[] = [];
   examAttempts: ExamAttempt[] = [];
+  flashcards: Flashcard[] = [];
+  profile?: GamificationProfile;
 
   async initialize(): Promise<void> {}
   async getBlocks(): Promise<TaiBlock[]> { return this.blocks; }
@@ -75,6 +79,18 @@ class InMemoryTestRepo implements StudyRepository {
   async deleteExamAttempt(id: string): Promise<void> {
     this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
   }
+  async getFlashcards(): Promise<Flashcard[]> { return [...this.flashcards]; }
+  async saveFlashcard(fc: Flashcard): Promise<void> {
+    this.flashcards = [fc, ...this.flashcards.filter((x) => x.id !== fc.id)];
+  }
+  async saveFlashcards(fcs: Flashcard[]): Promise<void> {
+    for (const f of fcs) await this.saveFlashcard(f);
+  }
+  async deleteFlashcard(id: string): Promise<void> {
+    this.flashcards = this.flashcards.filter((f) => f.id !== id);
+  }
+  async getGamificationProfile(): Promise<GamificationProfile | undefined> { return this.profile; }
+  async saveGamificationProfile(profile: GamificationProfile): Promise<void> { this.profile = profile; }
   async replaceAllData(): Promise<void> {}
 }
 

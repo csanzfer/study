@@ -3,6 +3,8 @@ import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
+  Flashcard,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlock,
@@ -21,6 +23,8 @@ class InMemoryStudyRepository implements StudyRepository {
   caseStudies: CaseStudy[] = [];
   questions: Question[] = [];
   examAttempts: ExamAttempt[] = [];
+  flashcards: Flashcard[] = [];
+  profile?: GamificationProfile;
 
   async initialize(): Promise<void> {}
 
@@ -56,6 +60,7 @@ class InMemoryStudyRepository implements StudyRepository {
     this.topics = this.topics.filter((t) => t.id !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.topicId !== id);
     this.questions = this.questions.map((q) => (q.topicId === id ? { ...q, topicId: undefined } : q));
+    this.flashcards = this.flashcards.map((f) => (f.topicId === id ? { ...f, topicId: undefined } : f));
   }
 
   async getStudySessions(): Promise<StudySession[]> {
@@ -145,6 +150,26 @@ class InMemoryStudyRepository implements StudyRepository {
   async deleteExamAttempt(id: string): Promise<void> {
     this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
   }
+  async getFlashcards(): Promise<Flashcard[]> {
+    return [...this.flashcards];
+  }
+  async saveFlashcard(fc: Flashcard): Promise<void> {
+    const idx = this.flashcards.findIndex((f) => f.id === fc.id);
+    if (idx >= 0) this.flashcards[idx] = fc;
+    else this.flashcards.push(fc);
+  }
+  async saveFlashcards(fcs: Flashcard[]): Promise<void> {
+    for (const f of fcs) await this.saveFlashcard(f);
+  }
+  async deleteFlashcard(id: string): Promise<void> {
+    this.flashcards = this.flashcards.filter((f) => f.id !== id);
+  }
+  async getGamificationProfile(): Promise<GamificationProfile | undefined> {
+    return this.profile;
+  }
+  async saveGamificationProfile(profile: GamificationProfile): Promise<void> {
+    this.profile = profile;
+  }
 
   async replaceAllData(
     blocks: TaiBlock[],
@@ -154,6 +179,8 @@ class InMemoryStudyRepository implements StudyRepository {
     caseStudies: CaseStudy[] = [],
     questions: Question[] = [],
     examAttempts: ExamAttempt[] = [],
+    flashcards: Flashcard[] = [],
+    gamificationProfile?: GamificationProfile,
   ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
@@ -162,6 +189,8 @@ class InMemoryStudyRepository implements StudyRepository {
     this.caseStudies = [...caseStudies];
     this.questions = [...questions];
     this.examAttempts = [...examAttempts];
+    this.flashcards = [...flashcards];
+    this.profile = gamificationProfile;
   }
 }
 
@@ -406,5 +435,36 @@ describe('StudyStoreService', () => {
     expect(store.studySessions()[0].type).toBe('test');
     expect(store.studySessions()[0].durationMinutes).toBe(2);
     expect(store.getTopicById(topic.id)?.lastReviewedAt).toBeDefined();
+  });
+
+  it('should create, review with SM-2, unlink on topic delete, and award XP/streak for flashcards', async () => {
+    const topic = await store.createTopic({ blockId: 'B4', title: 'Protocolos' });
+    const card = await store.createFlashcard({
+      blockId: 'B4',
+      topicId: topic.id,
+      front: 'DNS',
+      back: 'Domain Name System',
+      hint: 'Puerto 53',
+      tags: ['siglas', 'puertos'],
+    });
+
+    expect(store.totalFlashcards()).toBe(1);
+    expect(store.dueFlashcardsCount()).toBe(1);
+    expect(store.acronymFlashcards().length).toBe(1);
+    expect(store.flashcardCountByTopic()[topic.id]).toBe(1);
+
+    const reviewed = await store.reviewFlashcard(card.id, 'good');
+    expect(reviewed?.srs.intervalDays).toBe(1);
+    expect(reviewed?.srs.repetitions).toBe(1);
+    expect(store.dueFlashcardsCount()).toBe(0);
+    expect(store.gamificationProfile().xp).toBeGreaterThan(0);
+    expect(store.gamificationProfile().streakDays).toBe(1);
+
+    await store.updateWeeklyRestDays([0, 6]);
+    expect(store.gamificationProfile().weeklyRestDays).toEqual([0, 6]);
+
+    await store.deleteTopic(topic.id);
+    expect(store.getFlashcardById(card.id)?.topicId).toBeUndefined();
+    expect(store.totalFlashcards()).toBe(1);
   });
 });

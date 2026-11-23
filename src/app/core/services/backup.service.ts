@@ -6,6 +6,9 @@ import {
   ExamAnswer,
   ExamAttempt,
   ExamMode,
+  Flashcard,
+  FlashcardSrsState,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlockId,
@@ -26,6 +29,7 @@ export interface BackupImportResult {
   caseStudiesCount: number;
   questionsCount: number;
   examAttemptsCount: number;
+  flashcardsCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -34,19 +38,30 @@ export class BackupService {
   readonly lastBackupAt = signal<string | null>(this.readLastBackupDate());
 
   async createBackupPayload(): Promise<BackupPayload> {
-    const [blocks, topics, studySessions, weeklyPlanItems, caseStudies, questions, examAttempts] =
-      await Promise.all([
-        this.repository.getBlocks(),
-        this.repository.getTopics(),
-        this.repository.getStudySessions(),
-        this.repository.getWeeklyPlanItems(),
-        this.repository.getCaseStudies(),
-        this.repository.getQuestions(),
-        this.repository.getExamAttempts(),
-      ]);
+    const [
+      blocks,
+      topics,
+      studySessions,
+      weeklyPlanItems,
+      caseStudies,
+      questions,
+      examAttempts,
+      flashcards,
+      gamificationProfile,
+    ] = await Promise.all([
+      this.repository.getBlocks(),
+      this.repository.getTopics(),
+      this.repository.getStudySessions(),
+      this.repository.getWeeklyPlanItems(),
+      this.repository.getCaseStudies(),
+      this.repository.getQuestions(),
+      this.repository.getExamAttempts(),
+      this.repository.getFlashcards(),
+      this.repository.getGamificationProfile(),
+    ]);
 
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       appName: 'tai-study',
       exportedAt: new Date().toISOString(),
       blocks: blocks.length > 0 ? blocks : TAI_BLOCKS_SEED,
@@ -56,6 +71,8 @@ export class BackupService {
       caseStudies,
       questions,
       examAttempts,
+      flashcards,
+      gamificationProfile,
     };
   }
 
@@ -94,10 +111,11 @@ export class BackupService {
       candidate.appName !== 'tai-study' ||
       (candidate.schemaVersion !== 1 &&
         candidate.schemaVersion !== 2 &&
-        candidate.schemaVersion !== 3)
+        candidate.schemaVersion !== 3 &&
+        candidate.schemaVersion !== 4)
     ) {
       throw new Error(
-        'Este archivo no corresponde a un backup compatible de TAI Study (v1/v2/v3).',
+        'Este archivo no corresponde a un backup compatible de TAI Study (v1/v2/v3/v4).',
       );
     }
 
@@ -115,6 +133,8 @@ export class BackupService {
     let caseStudies: CaseStudy[] = [];
     let questions: Question[] = [];
     let examAttempts: ExamAttempt[] = [];
+    let flashcards: Flashcard[] = [];
+    let gamificationProfile: GamificationProfile | undefined;
 
     if (candidate.studySessions !== undefined) {
       if (
@@ -166,6 +186,23 @@ export class BackupService {
       examAttempts = candidate.examAttempts;
     }
 
+    if (candidate.flashcards !== undefined) {
+      if (
+        !Array.isArray(candidate.flashcards) ||
+        !candidate.flashcards.every((card) => this.isValidFlashcard(card))
+      ) {
+        throw new Error('Algunas flashcards del backup tienen una estructura inválida.');
+      }
+      flashcards = candidate.flashcards;
+    }
+
+    if (candidate.gamificationProfile !== undefined) {
+      if (!this.isValidGamificationProfile(candidate.gamificationProfile)) {
+        throw new Error('El perfil de gamificación del backup tiene una estructura inválida.');
+      }
+      gamificationProfile = candidate.gamificationProfile;
+    }
+
     return {
       schemaVersion: candidate.schemaVersion,
       appName: 'tai-study',
@@ -180,6 +217,8 @@ export class BackupService {
       caseStudies,
       questions,
       examAttempts,
+      flashcards,
+      gamificationProfile,
     };
   }
 
@@ -192,6 +231,7 @@ export class BackupService {
     const caseStudies = payload.caseStudies ?? [];
     const questions = payload.questions ?? [];
     const examAttempts = payload.examAttempts ?? [];
+    const flashcards = payload.flashcards ?? [];
 
     await this.repository.replaceAllData(
       payload.blocks,
@@ -201,6 +241,8 @@ export class BackupService {
       caseStudies,
       questions,
       examAttempts,
+      flashcards,
+      payload.gamificationProfile,
     );
     return {
       blocksCount: payload.blocks.length,
@@ -210,6 +252,7 @@ export class BackupService {
       caseStudiesCount: caseStudies.length,
       questionsCount: questions.length,
       examAttemptsCount: examAttempts.length,
+      flashcardsCount: flashcards.length,
     };
   }
 
@@ -375,6 +418,82 @@ export class BackupService {
       Number.isFinite(a.durationSec) &&
       a.durationSec >= 0
     );
+  }
+
+  private isValidFlashcard(item: unknown): item is Flashcard {
+    if (!this.isRecord(item)) {
+      return false;
+    }
+    const f = item as Partial<Flashcard>;
+    return (
+      this.isString(f.id) &&
+      this.isValidBlockId(f.blockId) &&
+      this.isString(f.front) &&
+      this.isString(f.back) &&
+      this.isStringArray(f.tags) &&
+      this.isValidFlashcardSrs(f.srs) &&
+      this.isString(f.createdAt) &&
+      this.isString(f.updatedAt)
+    );
+  }
+
+  private isValidFlashcardSrs(item: unknown): item is FlashcardSrsState {
+    if (!this.isRecord(item)) {
+      return false;
+    }
+    const srs = item as Partial<FlashcardSrsState>;
+    return (
+      this.isFiniteNumber(srs.intervalDays, 0) &&
+      this.isFiniteNumber(srs.easeFactor, 1.0) &&
+      this.isFiniteNumber(srs.repetitions, 0) &&
+      this.isFiniteNumber(srs.lapses, 0) &&
+      this.isString(srs.dueDate)
+    );
+  }
+
+  private isValidGamificationProfile(item: unknown): item is GamificationProfile {
+    if (!this.isRecord(item)) {
+      return false;
+    }
+    const p = item as Partial<GamificationProfile>;
+    return (
+      p.id === 'local-user' &&
+      this.isFiniteNumber(p.xp, 0) &&
+      this.isFiniteNumber(p.streakDays, 0) &&
+      this.isFiniteNumber(p.longestStreakDays, 0) &&
+      this.isFiniteNumber(p.streakFreezes, 0) &&
+      this.isFiniteNumber(p.maxStreakFreezes, 1) &&
+      Array.isArray(p.weeklyRestDays) &&
+      p.weeklyRestDays.every((d) => this.isIntInRange(d, 0, 6)) &&
+      this.isStringArray(p.activeDates) &&
+      this.isStringArray(p.freezeUsedDates) &&
+      this.isStringArray(p.claimedMissionIds) &&
+      this.isString(p.updatedAt)
+    );
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isString(value: unknown): value is string {
+    return typeof value === 'string';
+  }
+
+  private isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every((item) => typeof item === 'string');
+  }
+
+  private isFiniteNumber(value: unknown, min = -Infinity): value is number {
+    return typeof value === 'number' && Number.isFinite(value) && value >= min;
+  }
+
+  private isIntInRange(value: unknown, min: number, max: number): value is number {
+    return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+  }
+
+  private isValidBlockId(value: unknown): value is TaiBlockId {
+    return typeof value === 'string' && VALID_BLOCK_IDS.has(value as TaiBlockId);
   }
 
   private readLastBackupDate(): string | null {

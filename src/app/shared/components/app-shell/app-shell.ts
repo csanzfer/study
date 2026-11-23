@@ -82,7 +82,7 @@ export class AppShell {
     { label: 'Esquemas', route: '/schemas', icon: 'account_tree' },
     { label: 'Planificador', route: '/planner', icon: 'view_kanban' },
     { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz' },
-    { label: 'Flashcards', route: '/flashcards', icon: 'style', phaseBadge: 'F4' },
+    { label: 'Flashcards y Siglas', route: '/flashcards', icon: 'style' },
   ];
 
   protected closeDrawerOnMobile(): void {
