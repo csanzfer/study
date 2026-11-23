@@ -329,8 +329,9 @@
       <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <button
           type="button"
+          [disabled]="submittingRating()"
           (click)="rateCurrentCard('again')"
-          class="flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3 text-rose-700 transition hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70"
+          class="flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70"
         >
           <span class="text-xs font-bold">1 · {{ ratingLabels.again }}</span>
           <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().again }}</span>
@@ -338,8 +339,9 @@
 
         <button
           type="button"
+          [disabled]="submittingRating()"
           (click)="rateCurrentCard('hard')"
-          class="flex flex-col items-center rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-700 transition hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/70"
+          class="flex flex-col items-center rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/70"
         >
           <span class="text-xs font-bold">2 · {{ ratingLabels.hard }}</span>
           <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().hard }}</span>
@@ -347,8 +349,9 @@
 
         <button
           type="button"
+          [disabled]="submittingRating()"
           (click)="rateCurrentCard('good')"
-          class="flex flex-col items-center rounded-2xl border border-blue-200 bg-blue-50 px-3 py-3 text-blue-700 transition hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70"
+          class="flex flex-col items-center rounded-2xl border border-blue-200 bg-blue-50 px-3 py-3 text-blue-700 transition hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70"
         >
           <span class="text-xs font-bold">3 · {{ ratingLabels.good }}</span>
           <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().good }}</span>
@@ -356,8 +359,9 @@
 
         <button
           type="button"
+          [disabled]="submittingRating()"
           (click)="rateCurrentCard('easy')"
-          class="flex flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+          class="flex flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
         >
           <span class="text-xs font-bold">4 · {{ ratingLabels.easy }}</span>
           <span class="mt-0.5 text-[11px] opacity-80">{{ intervalPreview().easy }}</span>

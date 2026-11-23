@@ -7,6 +7,7 @@ import {
   ExamAttempt,
   ExamMode,
   Flashcard,
+  FlashcardSrsState,
   GamificationProfile,
   Question,
   StudySession,
@@ -420,52 +421,79 @@ export class BackupService {
   }
 
   private isValidFlashcard(item: unknown): item is Flashcard {
-    if (!item || typeof item !== 'object') {
+    if (!this.isRecord(item)) {
       return false;
     }
     const f = item as Partial<Flashcard>;
     return (
-      typeof f.id === 'string' &&
-      typeof f.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(f.blockId as TaiBlockId) &&
-      typeof f.front === 'string' &&
-      typeof f.back === 'string' &&
-      Array.isArray(f.tags) &&
-      !!f.srs &&
-      typeof f.srs.intervalDays === 'number' &&
-      Number.isFinite(f.srs.intervalDays) &&
-      f.srs.intervalDays >= 0 &&
-      typeof f.srs.easeFactor === 'number' &&
-      Number.isFinite(f.srs.easeFactor) &&
-      f.srs.easeFactor >= 1.0 &&
-      typeof f.srs.repetitions === 'number' &&
-      Number.isFinite(f.srs.repetitions) &&
-      f.srs.repetitions >= 0 &&
-      typeof f.srs.dueDate === 'string' &&
-      typeof f.createdAt === 'string' &&
-      typeof f.updatedAt === 'string'
+      this.isString(f.id) &&
+      this.isValidBlockId(f.blockId) &&
+      this.isString(f.front) &&
+      this.isString(f.back) &&
+      this.isStringArray(f.tags) &&
+      this.isValidFlashcardSrs(f.srs) &&
+      this.isString(f.createdAt) &&
+      this.isString(f.updatedAt)
+    );
+  }
+
+  private isValidFlashcardSrs(item: unknown): item is FlashcardSrsState {
+    if (!this.isRecord(item)) {
+      return false;
+    }
+    const srs = item as Partial<FlashcardSrsState>;
+    return (
+      this.isFiniteNumber(srs.intervalDays, 0) &&
+      this.isFiniteNumber(srs.easeFactor, 1.0) &&
+      this.isFiniteNumber(srs.repetitions, 0) &&
+      this.isFiniteNumber(srs.lapses, 0) &&
+      this.isString(srs.dueDate)
     );
   }
 
   private isValidGamificationProfile(item: unknown): item is GamificationProfile {
-    if (!item || typeof item !== 'object') {
+    if (!this.isRecord(item)) {
       return false;
     }
     const p = item as Partial<GamificationProfile>;
     return (
       p.id === 'local-user' &&
-      typeof p.xp === 'number' &&
-      Number.isFinite(p.xp) &&
-      p.xp >= 0 &&
-      typeof p.streakDays === 'number' &&
-      Number.isFinite(p.streakDays) &&
-      p.streakDays >= 0 &&
-      typeof p.streakFreezes === 'number' &&
-      Number.isFinite(p.streakFreezes) &&
-      p.streakFreezes >= 0 &&
+      this.isFiniteNumber(p.xp, 0) &&
+      this.isFiniteNumber(p.streakDays, 0) &&
+      this.isFiniteNumber(p.longestStreakDays, 0) &&
+      this.isFiniteNumber(p.streakFreezes, 0) &&
+      this.isFiniteNumber(p.maxStreakFreezes, 1) &&
       Array.isArray(p.weeklyRestDays) &&
-      Array.isArray(p.activeDates)
+      p.weeklyRestDays.every((d) => this.isIntInRange(d, 0, 6)) &&
+      this.isStringArray(p.activeDates) &&
+      this.isStringArray(p.freezeUsedDates) &&
+      this.isStringArray(p.claimedMissionIds) &&
+      this.isString(p.updatedAt)
     );
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isString(value: unknown): value is string {
+    return typeof value === 'string';
+  }
+
+  private isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every((item) => typeof item === 'string');
+  }
+
+  private isFiniteNumber(value: unknown, min = -Infinity): value is number {
+    return typeof value === 'number' && Number.isFinite(value) && value >= min;
+  }
+
+  private isIntInRange(value: unknown, min: number, max: number): value is number {
+    return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+  }
+
+  private isValidBlockId(value: unknown): value is TaiBlockId {
+    return typeof value === 'string' && VALID_BLOCK_IDS.has(value as TaiBlockId);
   }
 
   private readLastBackupDate(): string | null {

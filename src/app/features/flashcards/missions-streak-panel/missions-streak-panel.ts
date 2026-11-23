@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -38,12 +38,22 @@ export class MissionsStreakPanel {
     await this.store.updateWeeklyRestDays(next);
   }
 
+  protected readonly claimingMissionId = signal<string | null>(null);
+
   protected async claimMission(mission: DailyMission): Promise<void> {
-    const claimed = await this.store.claimMissionReward(mission.id);
-    if (claimed) {
-      this.snackBar.open(`¡Misión completada! +${mission.xpReward} XP`, 'Cerrar', {
-        duration: 2800,
-      });
+    if (this.claimingMissionId() !== null) {
+      return;
+    }
+    this.claimingMissionId.set(mission.id);
+    try {
+      const claimed = await this.store.claimMissionReward(mission.id);
+      if (claimed) {
+        this.snackBar.open(`¡Misión completada! +${mission.xpReward} XP`, 'Cerrar', {
+          duration: 2800,
+        });
+      }
+    } finally {
+      this.claimingMissionId.set(null);
     }
   }
 

@@ -67,9 +67,18 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
     wasFlashcardReviewedOnDate(card, todayKey),
   ).length;
 
-  if (ctx.flashcards.length === 0) {
+  const createdTodayCount = ctx.flashcards.filter((card) => {
+    const created = new Date(card.createdAt);
+    return !Number.isNaN(created.getTime()) && formatLocalDateKey(created) === todayKey;
+  }).length;
+  const cardsBeforeToday = ctx.flashcards.length - createdTodayCount;
+  const startMissionId = `${todayKey}:flashcards-start`;
+  const showStarterMission =
+    ctx.flashcards.length === 0 || (cardsBeforeToday < 5 && !claimedSet.has(startMissionId));
+
+  if (showStarterMission) {
     missions.push({
-      id: `${todayKey}:flashcards-start`,
+      id: startMissionId,
       kind: 'flashcards',
       title: 'Crea tus primeras 5 flashcards o siglas',
       description: 'Empieza tu mazo de repetición espaciada desde un apunte o con el pack TAI.',
@@ -78,7 +87,7 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
       current: Math.min(5, ctx.flashcards.length),
       target: 5,
       completed: ctx.flashcards.length >= 5,
-      claimed: claimedSet.has(`${todayKey}:flashcards-start`),
+      claimed: claimedSet.has(startMissionId),
       actionLabel: 'Ir al mazo',
       route: ['/flashcards'],
       queryParams: { tab: 'deck' },
@@ -87,12 +96,13 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
     const dueNotYetReviewedToday = dueCards.filter(
       (card) => !wasFlashcardReviewedOnDate(card, todayKey),
     ).length;
-    const targetReviews = Math.min(15, Math.max(5, dueNotYetReviewedToday + reviewedTodayCount));
+    const desiredTarget = Math.max(5, dueNotYetReviewedToday + reviewedTodayCount);
+    const targetReviews = Math.min(ctx.flashcards.length, 15, desiredTarget);
     const missionId = `${todayKey}:flashcards-review`;
     missions.push({
       id: missionId,
       kind: 'flashcards',
-      title: `Repasa ${targetReviews} flashcards hoy`,
+      title: `Repasa ${targetReviews} flashcard${targetReviews === 1 ? '' : 's'} hoy`,
       description:
         dueCards.length > 0
           ? `Tienes ${dueCards.length} tarjeta(s) vencidas esperando en tu cola diaria.`
@@ -107,26 +117,26 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
       route: ['/flashcards'],
       queryParams: { tab: 'review' },
     });
+  }
 
-    if (acronymCards.length >= 3) {
-      const targetAcronyms = Math.min(8, acronymCards.length);
-      const acronymMissionId = `${todayKey}:acronyms-review`;
-      missions.push({
-        id: acronymMissionId,
-        kind: 'acronyms',
-        title: `Domina ${targetAcronyms} siglas TAI`,
-        description: 'Refuerza acrónimos clave de los bloques de informática y administración.',
-        icon: 'spellcheck',
-        xpReward: 35,
-        current: Math.min(targetAcronyms, reviewedAcronymsToday),
-        target: targetAcronyms,
-        completed: reviewedAcronymsToday >= targetAcronyms,
-        claimed: claimedSet.has(acronymMissionId),
-        actionLabel: 'Repasar siglas',
-        route: ['/flashcards'],
-        queryParams: { tab: 'review', tag: 'siglas' },
-      });
-    }
+  if (acronymCards.length >= 3) {
+    const targetAcronyms = Math.min(8, acronymCards.length);
+    const acronymMissionId = `${todayKey}:acronyms-review`;
+    missions.push({
+      id: acronymMissionId,
+      kind: 'acronyms',
+      title: `Domina ${targetAcronyms} siglas TAI`,
+      description: 'Refuerza acrónimos clave de los bloques de informática y administración.',
+      icon: 'spellcheck',
+      xpReward: 35,
+      current: Math.min(targetAcronyms, reviewedAcronymsToday),
+      target: targetAcronyms,
+      completed: reviewedAcronymsToday >= targetAcronyms,
+      claimed: claimedSet.has(acronymMissionId),
+      actionLabel: 'Repasar siglas',
+      route: ['/flashcards'],
+      queryParams: { tab: 'review', tag: 'siglas' },
+    });
   }
 
   // 2. Focus / Pomodoro mission (prioritize today's weekly plan or rustiest topic)
@@ -145,22 +155,27 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
     })
     .reduce((sum, session) => sum + session.durationMinutes, 0);
 
-  if (pendingPlanToday) {
-    const topic = ctx.topics.find((t) => t.id === pendingPlanToday.topicId);
+  if (todayPlanItems.length > 0) {
     const completedTodayPlan = todayPlanItems.filter((i) => i.completed).length;
+    const allPlanCompleted = completedTodayPlan >= todayPlanItems.length;
+    const topic = pendingPlanToday
+      ? ctx.topics.find((t) => t.id === pendingPlanToday.topicId)
+      : undefined;
     const planMissionId = `${todayKey}:weekly-plan`;
     missions.push({
       id: planMissionId,
       kind: 'planner',
-      title: topic
-        ? `Completa tu objetivo: ${topic.title}`
-        : 'Completa tus objetivos planificados de hoy',
+      title: allPlanCompleted
+        ? 'Objetivos planificados de hoy completados'
+        : topic
+          ? `Completa tu objetivo: ${topic.title}`
+          : 'Completa tus objetivos planificados de hoy',
       description: `${completedTodayPlan}/${todayPlanItems.length} tema(s) del plan de hoy completados.`,
       icon: 'event_available',
       xpReward: 50,
       current: completedTodayPlan,
       target: todayPlanItems.length,
-      completed: completedTodayPlan >= todayPlanItems.length,
+      completed: allPlanCompleted,
       claimed: claimedSet.has(planMissionId),
       actionLabel: 'Ver planificador',
       route: ['/planner'],

@@ -173,7 +173,12 @@
                 +{{ mission.xpReward }} XP
               </span>
               @if (mission.completed && !mission.claimed) {
-                <button mat-flat-button type="button" (click)="claimMission(mission)">
+                <button
+                  mat-flat-button
+                  type="button"
+                  [disabled]="claimingMissionId() !== null"
+                  (click)="claimMission(mission)"
+                >
                   Reclamar XP
                 </button>
               } @else if (mission.claimed) {

@@ -448,10 +448,34 @@ describe('BackupService', () => {
     };
     expect(() => service.parseBackupJson(JSON.stringify(invalidFlashcardPayload))).toThrow();
 
+    const missingFlashcardLapsesPayload = {
+      ...base,
+      flashcards: [{ ...base.flashcards![0], srs: { ...base.flashcards![0].srs, lapses: undefined } }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingFlashcardLapsesPayload))).toThrow();
+
     const invalidProfilePayload = {
       ...base,
       gamificationProfile: { ...base.gamificationProfile!, xp: -10 },
     };
     expect(() => service.parseBackupJson(JSON.stringify(invalidProfilePayload))).toThrow();
+
+    const missingFreezeUsedDatesPayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, freezeUsedDates: undefined },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingFreezeUsedDatesPayload))).toThrow();
+
+    const missingClaimedMissionsPayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, claimedMissionIds: undefined },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingClaimedMissionsPayload))).toThrow();
+
+    const invalidRestDaysPayload = {
+      ...base,
+      gamificationProfile: { ...base.gamificationProfile!, weeklyRestDays: [9] },
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidRestDaysPayload))).toThrow();
   });
 });

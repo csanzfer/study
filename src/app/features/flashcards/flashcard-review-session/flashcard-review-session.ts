@@ -70,6 +70,8 @@ export class FlashcardReviewSession {
   });
   protected readonly reviewedTotal = signal(0);
   protected readonly xpEarned = signal(0);
+  protected readonly submittingRating = signal(false);
+  private reviewedBlockCounts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
 
   protected readonly topicsForBlock = computed(() => {
     const block = this.blockFilter();
@@ -154,6 +156,8 @@ export class FlashcardReviewSession {
     this.showHint.set(false);
     this.reviewedTotal.set(0);
     this.xpEarned.set(0);
+    this.submittingRating.set(false);
+    this.reviewedBlockCounts = { B1: 0, B2: 0, B3: 0, B4: 0 };
     this.ratingCounts.set({ again: 0, hard: 0, good: 0, easy: 0 });
     this.sessionStartedAt.set(Date.now());
     this.sessionFinished.set(false);
@@ -170,33 +174,39 @@ export class FlashcardReviewSession {
 
   protected async rateCurrentCard(rating: FlashcardRating): Promise<void> {
     const card = this.currentCard();
-    if (!card || !this.flipped()) {
+    if (!card || !this.flipped() || this.submittingRating()) {
       return;
     }
 
-    await this.store.reviewFlashcard(card.id, rating);
+    this.submittingRating.set(true);
+    try {
+      await this.store.reviewFlashcard(card.id, rating);
 
-    const xpMap: Record<FlashcardRating, number> = { again: 2, hard: 4, good: 6, easy: 8 };
-    this.xpEarned.update((xp) => xp + xpMap[rating]);
-    this.reviewedTotal.update((n) => n + 1);
-    this.ratingCounts.update((counts) => ({
-      ...counts,
-      [rating]: counts[rating] + 1,
-    }));
+      const xpMap: Record<FlashcardRating, number> = { again: 2, hard: 4, good: 6, easy: 8 };
+      this.xpEarned.update((xp) => xp + xpMap[rating]);
+      this.reviewedTotal.update((n) => n + 1);
+      this.reviewedBlockCounts[card.blockId] = (this.reviewedBlockCounts[card.blockId] ?? 0) + 1;
+      this.ratingCounts.update((counts) => ({
+        ...counts,
+        [rating]: counts[rating] + 1,
+      }));
 
-    // If 'again', re-append card to the end of the current session queue once
-    if (rating === 'again' && this.queueIds().length < 60) {
-      this.queueIds.update((ids) => [...ids, card.id]);
-    }
+      // If 'again', re-append card to the end of the current session queue once
+      if (rating === 'again' && this.queueIds().length < 60) {
+        this.queueIds.update((ids) => [...ids, card.id]);
+      }
 
-    const nextIdx = this.currentIndex() + 1;
-    if (nextIdx >= this.queueIds().length) {
-      await this.finishSession();
-    } else {
-      this.currentIndex.set(nextIdx);
-      this.flipped.set(false);
-      this.showHint.set(false);
-      this.resolveCardDirection();
+      const nextIdx = this.currentIndex() + 1;
+      if (nextIdx >= this.queueIds().length) {
+        await this.finishSession();
+      } else {
+        this.currentIndex.set(nextIdx);
+        this.flipped.set(false);
+        this.showHint.set(false);
+        this.resolveCardDirection();
+      }
+    } finally {
+      this.submittingRating.set(false);
     }
   }
 
@@ -227,7 +237,7 @@ export class FlashcardReviewSession {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (!this.sessionActive() || this.sessionFinished()) {
+    if (!this.sessionActive() || this.sessionFinished() || this.dialog.openDialogs.length > 0) {
       return;
     }
     const target = event.target as HTMLElement | null;
@@ -286,7 +296,10 @@ export class FlashcardReviewSession {
     const elapsedMs = Date.now() - this.sessionStartedAt();
     const durationMinutes = Math.round(elapsedMs / 60_000);
     if (durationMinutes >= 1) {
-      const block = this.blockFilter() === 'ALL' ? 'B1' : (this.blockFilter() as TaiBlockId);
+      const block =
+        this.blockFilter() === 'ALL'
+          ? this.getDominantReviewedBlock()
+          : (this.blockFilter() as TaiBlockId);
       await this.store.addStudySession({
         topicId: this.topicFilter(),
         blockId: block,
@@ -295,5 +308,15 @@ export class FlashcardReviewSession {
         notes: `Repaso SRS: ${this.reviewedTotal()} tarjetas${this.tagFilter() ? ` (#${this.tagFilter()})` : ''}`,
       });
     }
+  }
+
+  private getDominantReviewedBlock(): TaiBlockId {
+    let best: TaiBlockId = 'B1';
+    for (const id of ['B1', 'B2', 'B3', 'B4'] as TaiBlockId[]) {
+      if (this.reviewedBlockCounts[id] > this.reviewedBlockCounts[best]) {
+        best = id;
+      }
+    }
+    return best;
   }
 }
