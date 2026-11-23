@@ -17,7 +17,7 @@ const prNumber = process.env.PR_NUMBER;
 const prTitle = process.env.PR_TITLE ?? '';
 const prBody = process.env.PR_BODY ?? '';
 const headSha = (process.env.HEAD_SHA ?? '').slice(0, 7);
-const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
+const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
 
 if (!githubToken || !repo || !prNumber) {
   console.error('Faltan variables de entorno de GitHub (GITHUB_TOKEN, GITHUB_REPOSITORY o PR_NUMBER).');
