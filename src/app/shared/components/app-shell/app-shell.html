@@ -125,29 +125,22 @@
           </button>
         }
 
-        <div class="relative w-full max-w-md">
-          <mat-icon class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] !h-[18px] !w-[18px] text-slate-400">
-            search
-          </mat-icon>
-          <input
-            type="search"
-            [value]="store.searchQuery()"
-            (input)="onSearchInput($event)"
-            placeholder="Buscar temas, etiquetas o apuntes..."
-            aria-label="Buscar temas, etiquetas o apuntes"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-9 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:bg-slate-900"
-          />
-          @if (store.searchQuery()) {
-            <button
-              type="button"
-              (click)="clearSearch()"
-              aria-label="Limpiar búsqueda"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-            >
-              <mat-icon class="!text-[16px] !h-4 !w-4">close</mat-icon>
-            </button>
-          }
-        </div>
+        <button
+          type="button"
+          (click)="openGlobalSearch()"
+          aria-label="Abrir búsqueda global"
+          class="flex w-full max-w-md items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm text-slate-400 transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+        >
+          <span class="flex min-w-0 items-center gap-2">
+            <mat-icon class="!h-[18px] !w-[18px] shrink-0 !text-[18px] text-slate-400">
+              search
+            </mat-icon>
+            <span class="truncate">Buscar temas, leyes, puertos o apuntes...</span>
+          </span>
+          <kbd class="hidden shrink-0 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans text-[11px] font-medium text-slate-500 sm:inline-block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+            {{ shortcutHint }}
+          </kbd>
+        </button>
       </div>
 
       <div class="flex items-center gap-1.5">

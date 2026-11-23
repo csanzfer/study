@@ -1,0 +1,168 @@
+<div
+  class="flex max-h-[80vh] flex-col overflow-hidden rounded-2xl bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+  (keydown)="onKeydown($event)"
+>
+  <!-- Search Input Bar -->
+  <div class="flex items-center gap-2.5 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+    <mat-icon class="shrink-0 text-slate-400">search</mat-icon>
+    <input
+      #searchInput
+      type="text"
+      aria-label="Buscar en todo el temario TAI"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      placeholder="Buscar temas, leyes, puertos, comandos o etiquetas..."
+      class="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+    />
+    @if (query()) {
+      <button
+        type="button"
+        aria-label="Limpiar búsqueda"
+        (click)="clearQuery()"
+        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+      >
+        <mat-icon class="!h-4 !w-4 !text-[16px]">close</mat-icon>
+      </button>
+    }
+    <button
+      type="button"
+      (click)="close()"
+      class="hidden shrink-0 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-500 sm:inline-block dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+    >
+      Esc
+    </button>
+  </div>
+
+  <!-- Results / Recent List -->
+  <div class="flex-1 overflow-y-auto p-2">
+    @if (hasQuery()) {
+      @if (results().length === 0) {
+        <div class="px-4 py-10 text-center">
+          <mat-icon class="!h-9 !w-9 !text-[36px] text-slate-300 dark:text-slate-600">search_off</mat-icon>
+          <p class="mt-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            Sin resultados para «{{ query() }}»
+          </p>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Prueba con otra palabra clave, una etiqueta o parte de una ley (ej. «39/2015», «443»).
+          </p>
+        </div>
+      } @else {
+        <div class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          {{ results().length }} {{ results().length === 1 ? 'resultado' : 'resultados' }}
+        </div>
+        <div class="space-y-1">
+          @for (item of results(); track item.topic.id; let i = $index) {
+            <button
+              type="button"
+              (mouseenter)="activeIndex.set(i)"
+              (click)="openTopic(item.topic)"
+              class="w-full rounded-xl px-3 py-2.5 text-left transition"
+              [class.bg-blue-50]="activeIndex() === i"
+              [class.dark:bg-blue-950/50]="activeIndex() === i"
+              [class.hover:bg-slate-100]="activeIndex() !== i"
+              [class.dark:hover:bg-slate-800/70]="activeIndex() !== i"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex min-w-0 items-center gap-2">
+                  <span
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white"
+                    [style.background-color]="item.block?.color ?? '#3b82f6'"
+                  >
+                    {{ item.block?.code ?? item.topic.blockId }}
+                  </span>
+                  <span class="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                    #{{ item.topic.order }} {{ item.topic.title }}
+                  </span>
+                </div>
+                <span class="shrink-0 text-[11px] text-slate-400">
+                  {{ statusLabels[item.topic.status] }}
+                </span>
+              </div>
+
+              @if (item.topic.tags.length > 0) {
+                <div class="mt-1.5 flex flex-wrap items-center gap-1">
+                  @for (tag of item.topic.tags; track tag) {
+                    <span
+                      class="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                      [class.bg-amber-100]="item.matchedTags.includes(tag)"
+                      [class.text-amber-800]="item.matchedTags.includes(tag)"
+                      [class.dark:bg-amber-900/50]="item.matchedTags.includes(tag)"
+                      [class.dark:text-amber-200]="item.matchedTags.includes(tag)"
+                      [class.bg-slate-100]="!item.matchedTags.includes(tag)"
+                      [class.text-slate-600]="!item.matchedTags.includes(tag)"
+                      [class.dark:bg-slate-800]="!item.matchedTags.includes(tag)"
+                      [class.dark:text-slate-400]="!item.matchedTags.includes(tag)"
+                    >
+                      #{{ tag }}
+                    </span>
+                  }
+                </div>
+              }
+
+              @if (item.snippet.length > 0) {
+                <p class="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  @for (seg of item.snippet; track $index) {
+                    @if (seg.highlight) {
+                      <mark class="rounded bg-amber-200/80 px-0.5 text-slate-900 dark:bg-amber-500/35 dark:text-amber-100">{{ seg.text }}</mark>
+                    } @else {
+                      {{ seg.text }}
+                    }
+                  }
+                </p>
+              }
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      @if (recentTopics().length > 0) {
+        <div class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          Temas recientes
+        </div>
+        <div class="space-y-1">
+          @for (item of recentTopics(); track item.topic.id; let i = $index) {
+            <button
+              type="button"
+              (mouseenter)="activeIndex.set(i)"
+              (click)="openTopic(item.topic)"
+              class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition"
+              [class.bg-blue-50]="activeIndex() === i"
+              [class.dark:bg-blue-950/50]="activeIndex() === i"
+              [class.hover:bg-slate-100]="activeIndex() !== i"
+              [class.dark:hover:bg-slate-800/70]="activeIndex() !== i"
+            >
+              <div class="flex min-w-0 items-center gap-2">
+                <span
+                  class="inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[11px] font-semibold text-white"
+                  [style.background-color]="item.block?.color ?? '#3b82f6'"
+                >
+                  {{ item.block?.code ?? item.topic.blockId }}
+                </span>
+                <span class="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                  #{{ item.topic.order }} {{ item.topic.title }}
+                </span>
+              </div>
+              <mat-icon class="!h-4 !w-4 shrink-0 !text-[16px] text-slate-400">
+                subdirectory_arrow_left
+              </mat-icon>
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+          Aún no tienes temas creados. Crea o importa apuntes en cualquiera de los 4 bloques TAI para buscarlos al instante.
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Keyboard Hints Footer -->
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50/80 px-4 py-2 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+    <div class="flex items-center gap-3">
+      <span><kbd class="rounded border border-slate-300 bg-white px-1 py-0.5 font-sans text-[10px] dark:border-slate-700 dark:bg-slate-800">↑↓</kbd> Navegar</span>
+      <span><kbd class="rounded border border-slate-300 bg-white px-1 py-0.5 font-sans text-[10px] dark:border-slate-700 dark:bg-slate-800">↵</kbd> Abrir tema</span>
+      <span><kbd class="rounded border border-slate-300 bg-white px-1 py-0.5 font-sans text-[10px] dark:border-slate-700 dark:bg-slate-800">Esc</kbd> Cerrar</span>
+    </div>
+    <span class="hidden sm:inline">MiniSearch · 100% local</span>
+  </div>
+</div>
