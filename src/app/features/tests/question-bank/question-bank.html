@@ -160,7 +160,8 @@
                   </span>
                 }
 
-                @if (accuracyFor(question); as acc) {
+                @let acc = accuracyFor(question);
+                @if (acc !== null) {
                   <span
                     class="rounded-md px-2 py-0.5"
                     [class.bg-emerald-50]="acc >= 75"

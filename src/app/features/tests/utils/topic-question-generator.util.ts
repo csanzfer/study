@@ -79,7 +79,17 @@ function extractPlain(node: TipTapNode | undefined): string {
   if (node.type === 'text') return node.text ?? '';
   if (node.type === 'hardBreak') return ' ';
   if (!Array.isArray(node.content)) return '';
-  return normalizeSpaces(node.content.map((c) => extractPlain(c)).join(''));
+  const parts: string[] = [];
+  for (const child of node.content) {
+    const text = extractPlain(child);
+    if (!text) continue;
+    const isInline = child.type === 'text' || child.type === 'hardBreak';
+    if (parts.length > 0 && !isInline) {
+      parts.push(' ');
+    }
+    parts.push(text);
+  }
+  return normalizeSpaces(parts.join(''));
 }
 
 function truncateText(text: string, max = 140): string {
@@ -338,6 +348,35 @@ function generateClozeFromFact(
   return null;
 }
 
+function rebalanceCorrectPositions(
+  drafts: GeneratedQuestionDraft[],
+  rng: () => number,
+): GeneratedQuestionDraft[] {
+  let slotBag: QuestionOptionIndex[] = [];
+  const nextSlot = (): QuestionOptionIndex => {
+    if (slotBag.length === 0) {
+      slotBag = shuffleArray<QuestionOptionIndex>([0, 1, 2, 3], rng);
+    }
+    return slotBag.pop()!;
+  };
+
+  return drafts.map((draft) => {
+    const targetIndex = nextSlot();
+    if (draft.correctIndex === targetIndex) {
+      return draft;
+    }
+    const nextOptions: [string, string, string, string] = [...draft.options];
+    const tmp = nextOptions[targetIndex];
+    nextOptions[targetIndex] = nextOptions[draft.correctIndex];
+    nextOptions[draft.correctIndex] = tmp;
+    return {
+      ...draft,
+      options: nextOptions,
+      correctIndex: targetIndex,
+    };
+  });
+}
+
 export function generateQuestionsFromTopic(
   topic: Topic,
   options: TopicGenerationOptions = {},
@@ -457,7 +496,7 @@ export function generateQuestionsFromTopic(
     }
   }
 
-  return drafts.slice(0, maxQuestions);
+  return rebalanceCorrectPositions(drafts.slice(0, maxQuestions), rng);
 }
 
 // --- Option 2: Structured Markdown + Calibrated INAP AI Prompt Builder ---
@@ -526,6 +565,7 @@ Genera exactamente ${options.questionCount} preguntas tipo test basadas EXCLUSIV
 Reglas obligatorias:
 - ${difficultyInstruction}
 ${calloutInstruction}- Cada pregunta debe tener exactamente 4 opciones (A, B, C, D) con una única respuesta correcta.
+- Distribuye de forma equilibrada la posición de la respuesta correcta ("correctIndex") entre 0, 1, 2 y 3 (evita concentrar las respuestas en las mismas letras).
 - Incluye una explicación breve y clara y la referencia normativa/técnica cuando aparezca en el texto.
 - Responde ÚNICAMENTE con un array JSON válido (sin texto adicional antes ni después) con exactamente esta estructura:
 
@@ -557,6 +597,6 @@ ${content || '(El tema aún no tiene apuntes escritos; genera preguntas represen
  */
 export function stripMarkdownCodeFence(raw: string): string {
   const trimmed = raw.trim();
-  const fenceMatch = trimmed.match(/^```(?:json|csv|txt|text)?\s*\n([\s\S]*?)\n```$/i);
+  const fenceMatch = trimmed.match(/```(?:json|csv|txt|text)?\s*\n([\s\S]*?)\n```/i);
   return fenceMatch ? fenceMatch[1].trim() : trimmed;
 }

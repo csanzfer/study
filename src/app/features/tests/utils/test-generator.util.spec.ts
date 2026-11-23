@@ -76,4 +76,14 @@ describe('test-generator.util', () => {
     });
     expect(res.questions.map((q) => q.id)).toEqual(['q4', 'q5']);
   });
+
+  it('should return empty questions in case_study mode when no caseStudyId is selected', () => {
+    const res = generateTestQuestions(pool, {
+      mode: 'case_study',
+      caseStudyId: undefined,
+      shuffle: false,
+    });
+    expect(res.questions).toEqual([]);
+    expect(res.warnings).toEqual([]);
+  });
 });

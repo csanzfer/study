@@ -97,6 +97,8 @@ export class TestRunner {
 
   protected onKeydown(event: KeyboardEvent): void {
     if (!this.runner.isRunning()) return;
+    if (this.dialog.openDialogs.length > 0) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     const tag = (event.target as HTMLElement | null)?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 

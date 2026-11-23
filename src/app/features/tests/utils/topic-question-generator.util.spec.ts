@@ -101,6 +101,10 @@ describe('topic-question-generator.util', () => {
     expect(drafts.some((d) => d.strategy === 'table')).toBe(true);
     expect(drafts.some((d) => d.strategy === 'definition')).toBe(true);
 
+    // Every batch of 4 generated questions should cover A, B, C, and D evenly
+    const firstFourIndices = new Set(drafts.slice(0, 4).map((d) => d.correctIndex));
+    expect(firstFourIndices).toEqual(new Set([0, 1, 2, 3]));
+
     for (const d of drafts) {
       expect(d.blockId).toBe('B1');
       expect(d.topicId).toBe('topic-1');
@@ -125,8 +129,32 @@ describe('topic-question-generator.util', () => {
     expect(result.prompt).toContain('"blockId": "B1"');
   });
 
-  it('should strip markdown code fences from pasted LLM JSON', () => {
+  it('should strip markdown code fences from pasted LLM JSON including surrounding prose', () => {
     const fenced = '```json\n[{"prompt": "Test"}]\n```';
     expect(stripMarkdownCodeFence(fenced)).toBe('[{"prompt": "Test"}]');
+
+    const withProse = 'Aquí tienes las preguntas:\n```json\n[{"prompt": "Test"}]\n```\nEspero que te sirvan.';
+    expect(stripMarkdownCodeFence(withProse)).toBe('[{"prompt": "Test"}]');
+  });
+
+  it('should preserve spaces between consecutive paragraphs inside examCallout blocks', () => {
+    const multiParaTopic: Topic = {
+      ...sampleTopic,
+      contentJson: {
+        type: 'doc',
+        content: [
+          {
+            type: 'examCallout',
+            content: [
+              { type: 'paragraph', content: [{ type: 'text', text: 'Plazo máximo:' }] },
+              { type: 'paragraph', content: [{ type: 'text', text: '3 meses en general.' }] },
+            ],
+          },
+        ],
+      },
+    };
+    const drafts = generateQuestionsFromTopic(multiParaTopic, { maxQuestions: 5, rng: () => 0.5 });
+    expect(drafts.length).toBe(1);
+    expect(drafts[0].explanation).toBe('Plazo máximo: 3 meses en general.');
   });
 });

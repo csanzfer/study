@@ -90,7 +90,7 @@ export class TestsPage {
     this.activeTab.set(tab);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab },
+      queryParams: { tab, mode: null, blockId: null, topicId: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

@@ -67,6 +67,9 @@ export function generateTestQuestions(
   const shouldShuffle = config.shuffle !== false;
 
   if (config.mode === 'case_study') {
+    if (!config.caseStudyId) {
+      return { questions: [], warnings: [] };
+    }
     const matching = allQuestions.filter((q) => q.caseStudyId === config.caseStudyId);
     const ordered = shouldShuffle ? shuffleArray(matching, rng) : [...matching];
     if (ordered.length === 0) {

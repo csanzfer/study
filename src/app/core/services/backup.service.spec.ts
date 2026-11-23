@@ -360,5 +360,29 @@ describe('BackupService', () => {
       questions: [{ ...base.questions![0], correctIndex: 5 }],
     };
     expect(() => service.parseBackupJson(JSON.stringify(invalidQuestionPayload))).toThrow();
+
+    const missingQuestionUpdatedAt = {
+      ...base,
+      questions: [{ ...base.questions![0], updatedAt: undefined }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingQuestionUpdatedAt))).toThrow();
+
+    const missingCaseStudyUpdatedAt = {
+      ...base,
+      caseStudies: [{ ...base.caseStudies![0], updatedAt: undefined }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingCaseStudyUpdatedAt))).toThrow();
+
+    const invalidAttemptMode = {
+      ...base,
+      examAttempts: [{ ...base.examAttempts![0], mode: 'unknown_mode' }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidAttemptMode))).toThrow();
+
+    const missingAttemptScoreOn10 = {
+      ...base,
+      examAttempts: [{ ...base.examAttempts![0], scoreOn10: undefined }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(missingAttemptScoreOn10))).toThrow();
   });
 });

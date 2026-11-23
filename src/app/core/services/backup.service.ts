@@ -3,7 +3,9 @@ import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   BackupPayload,
   CaseStudy,
+  ExamAnswer,
   ExamAttempt,
+  ExamMode,
   Question,
   StudySession,
   TaiBlockId,
@@ -14,6 +16,7 @@ import { STUDY_REPOSITORY } from '../repositories/study.repository';
 
 const LAST_BACKUP_STORAGE_KEY = 'tai-study:last-backup-at';
 const VALID_BLOCK_IDS = new Set<TaiBlockId>(['B1', 'B2', 'B3', 'B4']);
+const VALID_EXAM_MODES = new Set<ExamMode>(['practice', 'simulation', 'mistakes', 'case_study']);
 
 export interface BackupImportResult {
   blocksCount: number;
@@ -280,7 +283,9 @@ export class BackupService {
       VALID_BLOCK_IDS.has(cs.blockId as TaiBlockId) &&
       typeof cs.title === 'string' &&
       typeof cs.statement === 'string' &&
-      Array.isArray(cs.tags)
+      Array.isArray(cs.tags) &&
+      typeof cs.createdAt === 'string' &&
+      typeof cs.updatedAt === 'string'
     );
   }
 
@@ -305,7 +310,37 @@ export class BackupService {
       Array.isArray(q.tags) &&
       !!q.stats &&
       typeof q.stats.attempts === 'number' &&
-      typeof q.stats.correct === 'number'
+      Number.isFinite(q.stats.attempts) &&
+      q.stats.attempts >= 0 &&
+      typeof q.stats.correct === 'number' &&
+      Number.isFinite(q.stats.correct) &&
+      q.stats.correct >= 0 &&
+      typeof q.createdAt === 'string' &&
+      typeof q.updatedAt === 'string'
+    );
+  }
+
+  private isValidExamAnswer(item: unknown): item is ExamAnswer {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+    const ans = item as Partial<ExamAnswer>;
+    const validSelected =
+      ans.selectedIndex === null ||
+      (typeof ans.selectedIndex === 'number' &&
+        Number.isInteger(ans.selectedIndex) &&
+        ans.selectedIndex >= 0 &&
+        ans.selectedIndex <= 3);
+    return (
+      typeof ans.questionId === 'string' &&
+      typeof ans.blockId === 'string' &&
+      VALID_BLOCK_IDS.has(ans.blockId as TaiBlockId) &&
+      validSelected &&
+      typeof ans.correctIndex === 'number' &&
+      Number.isInteger(ans.correctIndex) &&
+      ans.correctIndex >= 0 &&
+      ans.correctIndex <= 3 &&
+      typeof ans.isCorrect === 'boolean'
     );
   }
 
@@ -319,12 +354,26 @@ export class BackupService {
       typeof a.title === 'string' &&
       typeof a.date === 'string' &&
       typeof a.mode === 'string' &&
+      VALID_EXAM_MODES.has(a.mode as ExamMode) &&
       typeof a.penaltyRatio === 'number' &&
       Number.isFinite(a.penaltyRatio) &&
       Array.isArray(a.answers) &&
+      a.answers.every((ans) => this.isValidExamAnswer(ans)) &&
+      typeof a.correctCount === 'number' &&
+      Number.isFinite(a.correctCount) &&
+      typeof a.wrongCount === 'number' &&
+      Number.isFinite(a.wrongCount) &&
+      typeof a.blankCount === 'number' &&
+      Number.isFinite(a.blankCount) &&
       typeof a.netScore === 'number' &&
+      Number.isFinite(a.netScore) &&
       typeof a.maxScore === 'number' &&
-      typeof a.durationSec === 'number'
+      Number.isFinite(a.maxScore) &&
+      typeof a.scoreOn10 === 'number' &&
+      Number.isFinite(a.scoreOn10) &&
+      typeof a.durationSec === 'number' &&
+      Number.isFinite(a.durationSec) &&
+      a.durationSec >= 0
     );
   }
 

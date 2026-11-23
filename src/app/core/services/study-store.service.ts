@@ -751,19 +751,24 @@ export class StudyStoreService {
       this.questions.update((items) => items.map((q) => updatedMap.get(q.id) ?? q));
     }
 
-    // Update lastReviewedAt for topics practiced
+    const willLogSession = input.logStudySession !== false && attempt.durationSec >= 60;
+    const primaryTopicId =
+      touchedTopicIds.size === 1 ? Array.from(touchedTopicIds)[0] : '';
+
+    // Update lastReviewedAt for topics practiced (skip primaryTopicId if addStudySession will update it)
     for (const topicId of touchedTopicIds) {
+      if (willLogSession && topicId === primaryTopicId) {
+        continue;
+      }
       if (this.getTopicById(topicId)) {
         await this.logTopicReview(topicId, false);
       }
     }
 
     // Log a StudySession (type 'test') when test duration >= 60s
-    if (input.logStudySession !== false && attempt.durationSec >= 60) {
+    if (willLogSession) {
       const durationMinutes = Math.max(1, Math.round(attempt.durationSec / 60));
       const dominantBlock = this.getDominantBlock(attempt.answers);
-      const primaryTopicId =
-        touchedTopicIds.size === 1 ? Array.from(touchedTopicIds)[0] : '';
       await this.addStudySession({
         topicId: primaryTopicId,
         blockId: dominantBlock,
