@@ -3,6 +3,8 @@ import { StudyDatabase } from '../db/study.db';
 import {
   CaseStudy,
   ExamAttempt,
+  Flashcard,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlock,
@@ -36,6 +38,12 @@ export interface StudyRepository {
   getExamAttempts(): Promise<ExamAttempt[]>;
   saveExamAttempt(attempt: ExamAttempt): Promise<void>;
   deleteExamAttempt(id: string): Promise<void>;
+  getFlashcards(): Promise<Flashcard[]>;
+  saveFlashcard(flashcard: Flashcard): Promise<void>;
+  saveFlashcards(flashcards: Flashcard[]): Promise<void>;
+  deleteFlashcard(id: string): Promise<void>;
+  getGamificationProfile(): Promise<GamificationProfile | undefined>;
+  saveGamificationProfile(profile: GamificationProfile): Promise<void>;
   replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
@@ -44,6 +52,8 @@ export interface StudyRepository {
     caseStudies?: CaseStudy[],
     questions?: Question[],
     examAttempts?: ExamAttempt[],
+    flashcards?: Flashcard[],
+    gamificationProfile?: GamificationProfile,
   ): Promise<void>;
 }
 
@@ -92,9 +102,7 @@ export class IndexedDbStudyRepository implements StudyRepository {
   async deleteTopic(id: string): Promise<void> {
     await this.db.transaction(
       'rw',
-      this.db.topics,
-      this.db.weeklyPlanItems,
-      this.db.questions,
+      [this.db.topics, this.db.weeklyPlanItems, this.db.questions, this.db.flashcards],
       async () => {
         await this.db.topics.delete(id);
         await this.db.weeklyPlanItems.where('topicId').equals(id).delete();
@@ -102,6 +110,12 @@ export class IndexedDbStudyRepository implements StudyRepository {
         if (linkedQuestions.length > 0) {
           await this.db.questions.bulkPut(
             linkedQuestions.map((q) => ({ ...q, topicId: undefined })),
+          );
+        }
+        const linkedFlashcards = await this.db.flashcards.where('topicId').equals(id).toArray();
+        if (linkedFlashcards.length > 0) {
+          await this.db.flashcards.bulkPut(
+            linkedFlashcards.map((f) => ({ ...f, topicId: undefined })),
           );
         }
       },
@@ -207,6 +221,39 @@ export class IndexedDbStudyRepository implements StudyRepository {
     await this.db.examAttempts.delete(id);
   }
 
+  async getFlashcards(): Promise<Flashcard[]> {
+    const items = await this.db.flashcards.toArray();
+    return items.sort(
+      (a, b) =>
+        a.srs.dueDate.localeCompare(b.srs.dueDate) || b.updatedAt.localeCompare(a.updatedAt),
+    );
+  }
+
+  async saveFlashcard(flashcard: Flashcard): Promise<void> {
+    await this.db.flashcards.put(flashcard);
+  }
+
+  async saveFlashcards(flashcards: Flashcard[]): Promise<void> {
+    if (flashcards.length === 0) {
+      return;
+    }
+    await this.db.transaction('rw', this.db.flashcards, async () => {
+      await this.db.flashcards.bulkPut(flashcards);
+    });
+  }
+
+  async deleteFlashcard(id: string): Promise<void> {
+    await this.db.flashcards.delete(id);
+  }
+
+  async getGamificationProfile(): Promise<GamificationProfile | undefined> {
+    return this.db.gamification.get('local-user');
+  }
+
+  async saveGamificationProfile(profile: GamificationProfile): Promise<void> {
+    await this.db.gamification.put(profile);
+  }
+
   async replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
@@ -215,6 +262,8 @@ export class IndexedDbStudyRepository implements StudyRepository {
     caseStudies: CaseStudy[] = [],
     questions: Question[] = [],
     examAttempts: ExamAttempt[] = [],
+    flashcards: Flashcard[] = [],
+    gamificationProfile?: GamificationProfile,
   ): Promise<void> {
     await this.db.transaction(
       'rw',
@@ -226,6 +275,8 @@ export class IndexedDbStudyRepository implements StudyRepository {
         this.db.caseStudies,
         this.db.questions,
         this.db.examAttempts,
+        this.db.flashcards,
+        this.db.gamification,
       ],
       async () => {
         await this.db.blocks.clear();
@@ -235,6 +286,8 @@ export class IndexedDbStudyRepository implements StudyRepository {
         await this.db.caseStudies.clear();
         await this.db.questions.clear();
         await this.db.examAttempts.clear();
+        await this.db.flashcards.clear();
+        await this.db.gamification.clear();
         if (blocks.length > 0) {
           await this.db.blocks.bulkPut(blocks);
         }
@@ -255,6 +308,12 @@ export class IndexedDbStudyRepository implements StudyRepository {
         }
         if (examAttempts.length > 0) {
           await this.db.examAttempts.bulkPut(examAttempts);
+        }
+        if (flashcards.length > 0) {
+          await this.db.flashcards.bulkPut(flashcards);
+        }
+        if (gamificationProfile) {
+          await this.db.gamification.put(gamificationProfile);
         }
       },
     );

@@ -1,4 +1,17 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { computeCampaignOverview } from '../../features/flashcards/utils/campaign-progress.util';
+import { generateDailyMissions } from '../../features/flashcards/utils/daily-missions.util';
+import {
+  buildStreakSummary,
+  getLevelFromXp,
+  recordGamificationActivity,
+} from '../../features/flashcards/utils/gamification-streak.util';
+import {
+  applySm2Review,
+  createInitialSrsState,
+  isFlashcardDue,
+  isFlashcardMastered,
+} from '../../shared/utils/srs-sm2.util';
 import {
   compareTopicsByUrgency,
   getTopicHealth,
@@ -11,11 +24,15 @@ import {
   CaseStudy,
   CreateCaseStudyInput,
   CreateExamAttemptInput,
+  CreateFlashcardInput,
   CreateQuestionInput,
   CreateStudySessionInput,
   CreateTopicInput,
   CreateWeeklyPlanItemInput,
   ExamAttempt,
+  Flashcard,
+  FlashcardRating,
+  GamificationProfile,
   IsoDayOfWeek,
   Question,
   StudySession,
@@ -24,9 +41,11 @@ import {
   Topic,
   TopicStatus,
   UpdateCaseStudyPatch,
+  UpdateFlashcardPatch,
   UpdateQuestionPatch,
   UpdateTopicPatch,
   WeeklyPlanItem,
+  createDefaultGamificationProfile,
 } from '../models/study.models';
 import { STUDY_REPOSITORY } from '../repositories/study.repository';
 
@@ -46,6 +65,8 @@ export class StudyStoreService {
   readonly caseStudies = signal<CaseStudy[]>([]);
   readonly questions = signal<Question[]>([]);
   readonly examAttempts = signal<ExamAttempt[]>([]);
+  readonly flashcards = signal<Flashcard[]>([]);
+  readonly gamificationProfile = signal<GamificationProfile>(createDefaultGamificationProfile());
   readonly searchQuery = signal('');
   readonly loading = signal(false);
   readonly initialized = signal(false);
@@ -166,6 +187,88 @@ export class StudyStoreService {
 
   readonly latestExamAttempt = computed(() => this.examAttempts()[0] ?? null);
 
+  // --- Phase 4: Flashcards SRS & Gamification Computed Signals ---
+
+  readonly totalFlashcards = computed(() => this.flashcards().length);
+
+  readonly dueFlashcards = computed(() => {
+    const today = new Date();
+    return this.flashcards().filter((card) => isFlashcardDue(card, today));
+  });
+
+  readonly dueFlashcardsCount = computed(() => this.dueFlashcards().length);
+
+  readonly masteredFlashcards = computed(() =>
+    this.flashcards().filter((card) => isFlashcardMastered(card)),
+  );
+
+  readonly acronymFlashcards = computed(() =>
+    this.flashcards().filter((card) =>
+      card.tags.some((tag) => tag.toLowerCase() === 'siglas'),
+    ),
+  );
+
+  readonly dueAcronymFlashcardsCount = computed(() => {
+    const today = new Date();
+    return this.acronymFlashcards().filter((card) => isFlashcardDue(card, today)).length;
+  });
+
+  readonly flashcardCountByBlock = computed(() => {
+    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    for (const card of this.flashcards()) {
+      counts[card.blockId] = (counts[card.blockId] ?? 0) + 1;
+    }
+    return counts;
+  });
+
+  readonly flashcardCountByTopic = computed(() => {
+    const counts: Record<string, number> = {};
+    for (const card of this.flashcards()) {
+      if (card.topicId) {
+        counts[card.topicId] = (counts[card.topicId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  });
+
+  readonly flashcardTags = computed(() => {
+    const counts = new Map<string, number>();
+    for (const card of this.flashcards()) {
+      for (const tag of card.tags) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag]) => tag);
+  });
+
+  readonly campaignOverview = computed(() =>
+    computeCampaignOverview(
+      this.blocks(),
+      this.topics(),
+      this.flashcards(),
+      this.questions(),
+    ),
+  );
+
+  readonly dailyMissions = computed(() =>
+    generateDailyMissions({
+      blocks: this.blocks(),
+      topics: this.topics(),
+      flashcards: this.flashcards(),
+      questions: this.questions(),
+      studySessions: this.studySessions(),
+      weeklyPlanItems: this.weeklyPlanItems(),
+      examAttempts: this.examAttempts(),
+      profile: this.gamificationProfile(),
+    }),
+  );
+
+  readonly streakSummary = computed(() => buildStreakSummary(this.gamificationProfile()));
+
+  readonly xpLevelInfo = computed(() => getLevelFromXp(this.gamificationProfile().xp));
+
   async initialize(): Promise<void> {
     if (this.initialized()) {
       return;
@@ -190,16 +293,27 @@ export class StudyStoreService {
   }
 
   async refresh(): Promise<void> {
-    const [blocks, topics, studySessions, weeklyPlanItems, caseStudies, questions, examAttempts] =
-      await Promise.all([
-        this.repository.getBlocks(),
-        this.repository.getTopics(),
-        this.repository.getStudySessions(),
-        this.repository.getWeeklyPlanItems(),
-        this.repository.getCaseStudies(),
-        this.repository.getQuestions(),
-        this.repository.getExamAttempts(),
-      ]);
+    const [
+      blocks,
+      topics,
+      studySessions,
+      weeklyPlanItems,
+      caseStudies,
+      questions,
+      examAttempts,
+      flashcards,
+      profile,
+    ] = await Promise.all([
+      this.repository.getBlocks(),
+      this.repository.getTopics(),
+      this.repository.getStudySessions(),
+      this.repository.getWeeklyPlanItems(),
+      this.repository.getCaseStudies(),
+      this.repository.getQuestions(),
+      this.repository.getExamAttempts(),
+      this.repository.getFlashcards(),
+      this.repository.getGamificationProfile(),
+    ]);
     this.blocks.set(blocks);
     this.topics.set(topics);
     this.studySessions.set(studySessions);
@@ -207,6 +321,8 @@ export class StudyStoreService {
     this.caseStudies.set(caseStudies);
     this.questions.set(questions);
     this.examAttempts.set(examAttempts);
+    this.flashcards.set(flashcards);
+    this.gamificationProfile.set(profile ?? createDefaultGamificationProfile());
   }
 
   getBlockById(blockId: TaiBlockId): TaiBlock | undefined {
@@ -304,6 +420,10 @@ export class StudyStoreService {
     const updated = await this.updateTopic(id, patch);
     if (!updated) {
       return undefined;
+    }
+
+    if (updated) {
+      await this.recordActivityXp(roundIncremented ? 25 : 10);
     }
 
     return { topic: updated, roundIncremented };
@@ -411,6 +531,8 @@ export class StudyStoreService {
       await this.logTopicReview(input.topicId, false);
     }
 
+    await this.recordActivityXp(Math.min(60, durationMinutes * 2));
+
     return session;
   }
 
@@ -478,6 +600,9 @@ export class StudyStoreService {
 
     if (nextCompleted && this.getTopicById(existing.topicId)) {
       await this.logTopicReview(existing.topicId, false);
+    }
+    if (nextCompleted) {
+      await this.recordActivityXp(15);
     }
 
     return updated;
@@ -779,12 +904,174 @@ export class StudyStoreService {
       });
     }
 
+    const testXp = 20 + Math.min(30, attempt.correctCount * 2);
+    await this.recordActivityXp(testXp);
+
     return attempt;
   }
 
   async deleteExamAttempt(id: string): Promise<void> {
     await this.repository.deleteExamAttempt(id);
     this.examAttempts.update((items) => items.filter((item) => item.id !== id));
+  }
+
+  // --- Phase 4: Flashcards SRS ---
+
+  getFlashcardById(id: string): Flashcard | undefined {
+    return this.flashcards().find((card) => card.id === id);
+  }
+
+  async createFlashcard(input: CreateFlashcardInput): Promise<Flashcard> {
+    const now = new Date();
+    const card = this.buildFlashcard(input, now);
+    await this.repository.saveFlashcard(card);
+    this.flashcards.update((items) =>
+      [card, ...items].sort(
+        (a, b) =>
+          a.srs.dueDate.localeCompare(b.srs.dueDate) || b.updatedAt.localeCompare(a.updatedAt),
+      ),
+    );
+    return card;
+  }
+
+  async bulkCreateFlashcards(inputs: CreateFlashcardInput[]): Promise<Flashcard[]> {
+    if (inputs.length === 0) {
+      return [];
+    }
+    const now = new Date();
+    const created = inputs.map((input) => this.buildFlashcard(input, now));
+    await this.repository.saveFlashcards(created);
+    this.flashcards.update((items) =>
+      [...created, ...items].sort(
+        (a, b) =>
+          a.srs.dueDate.localeCompare(b.srs.dueDate) || b.updatedAt.localeCompare(a.updatedAt),
+      ),
+    );
+    return created;
+  }
+
+  async updateFlashcard(
+    id: string,
+    patch: UpdateFlashcardPatch,
+  ): Promise<Flashcard | undefined> {
+    const existing = this.getFlashcardById(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: Flashcard = {
+      ...existing,
+      ...patch,
+      front: patch.front !== undefined ? patch.front.trim() || existing.front : existing.front,
+      back: patch.back !== undefined ? patch.back.trim() || existing.back : existing.back,
+      hint: patch.hint !== undefined ? patch.hint.trim() || undefined : existing.hint,
+      topicId: patch.topicId !== undefined ? patch.topicId || undefined : existing.topicId,
+      tags:
+        patch.tags !== undefined
+          ? Array.from(new Set(patch.tags.map((t) => t.trim()).filter(Boolean)))
+          : existing.tags,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.repository.saveFlashcard(updated);
+    this.flashcards.update((items) =>
+      items
+        .map((c) => (c.id === id ? updated : c))
+        .sort(
+          (a, b) =>
+            a.srs.dueDate.localeCompare(b.srs.dueDate) || b.updatedAt.localeCompare(a.updatedAt),
+        ),
+    );
+    return updated;
+  }
+
+  async reviewFlashcard(
+    id: string,
+    rating: FlashcardRating,
+    now: Date = new Date(),
+  ): Promise<Flashcard | undefined> {
+    const existing = this.getFlashcardById(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const nextSrs = applySm2Review(existing.srs, rating, now);
+    const updated = await this.updateFlashcard(id, { srs: nextSrs });
+    if (!updated) {
+      return undefined;
+    }
+
+    if (updated.topicId && this.getTopicById(updated.topicId)) {
+      await this.logTopicReview(updated.topicId, false);
+    }
+
+    const xpGain = rating === 'again' ? 2 : rating === 'hard' ? 4 : rating === 'good' ? 6 : 8;
+    await this.recordActivityXp(xpGain, now);
+    return updated;
+  }
+
+  async deleteFlashcard(id: string): Promise<void> {
+    await this.repository.deleteFlashcard(id);
+    this.flashcards.update((items) => items.filter((c) => c.id !== id));
+  }
+
+  // --- Phase 4: Gamification ---
+
+  async recordActivityXp(xpDelta: number, now: Date = new Date()): Promise<GamificationProfile> {
+    const updated = recordGamificationActivity(this.gamificationProfile(), xpDelta, now);
+    await this.repository.saveGamificationProfile(updated);
+    this.gamificationProfile.set(updated);
+    return updated;
+  }
+
+  async updateWeeklyRestDays(restDays: number[]): Promise<GamificationProfile> {
+    const cleanDays = Array.from(
+      new Set(restDays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)),
+    ).sort((a, b) => a - b);
+
+    const updated: GamificationProfile = {
+      ...this.gamificationProfile(),
+      weeklyRestDays: cleanDays,
+      updatedAt: new Date().toISOString(),
+    };
+    await this.repository.saveGamificationProfile(updated);
+    this.gamificationProfile.set(updated);
+    return updated;
+  }
+
+  async claimMissionReward(missionId: string): Promise<boolean> {
+    const mission = this.dailyMissions().find((m) => m.id === missionId);
+    if (!mission || !mission.completed || mission.claimed) {
+      return false;
+    }
+
+    const current = this.gamificationProfile();
+    const claimedMissionIds = Array.from(new Set([...current.claimedMissionIds, missionId])).slice(
+      -60,
+    );
+    const updated = recordGamificationActivity(
+      { ...current, claimedMissionIds },
+      mission.xpReward,
+    );
+    await this.repository.saveGamificationProfile(updated);
+    this.gamificationProfile.set(updated);
+    return true;
+  }
+
+  private buildFlashcard(input: CreateFlashcardInput, now: Date): Flashcard {
+    const iso = now.toISOString();
+    return {
+      id: this.generateId('fc'),
+      blockId: input.blockId,
+      topicId: input.topicId || undefined,
+      front: input.front.trim(),
+      back: input.back.trim(),
+      hint: input.hint?.trim() || undefined,
+      tags: Array.from(new Set((input.tags ?? []).map((t) => t.trim()).filter(Boolean))),
+      srs: createInitialSrsState(now),
+      createdAt: iso,
+      updatedAt: iso,
+    };
   }
 
   private buildQuestion(input: CreateQuestionInput, timestamp: string): Question {

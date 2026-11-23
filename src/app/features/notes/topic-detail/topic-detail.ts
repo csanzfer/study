@@ -10,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
 import {
+  CreateFlashcardInput,
   CreateQuestionInput,
   TOPIC_STATUS_LABELS,
   TOPIC_STATUS_LIST,
@@ -32,6 +33,10 @@ import {
   NoteImportDialogResult,
 } from '../import-dialog/note-import-dialog';
 import { NoteImportService } from '../services/note-import.service';
+import {
+  FlashcardEditorDialog,
+  FlashcardEditorDialogData,
+} from '../../flashcards/flashcard-editor-dialog/flashcard-editor-dialog';
 import {
   TopicQuestionGeneratorDialog,
   TopicQuestionGeneratorDialogData,
@@ -499,6 +504,45 @@ export class TopicDetail {
       'Cerrar',
       { duration: 3500 },
     );
+  }
+
+  protected async openCreateFlashcardDialog(selectedText = ''): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    const ref = this.dialog.open<
+      FlashcardEditorDialog,
+      FlashcardEditorDialogData,
+      CreateFlashcardInput
+    >(FlashcardEditorDialog, {
+      width: '620px',
+      maxWidth: '95vw',
+      data: {
+        blockId: current.blockId,
+        topicId: current.id,
+        selectedText,
+        initialTags: current.tags,
+      },
+    });
+
+    const input = await firstValueFrom(ref.afterClosed());
+    if (!input) {
+      return;
+    }
+
+    await this.store.createFlashcard(input);
+    this.snackBar
+      .open(`Flashcard creada y vinculada a "${current.title}".`, 'Repasar', {
+        duration: 3200,
+      })
+      .onAction()
+      .subscribe(() => {
+        void this.router.navigate(['/flashcards'], {
+          queryParams: { tab: 'review', blockId: current.blockId, topicId: current.id },
+        });
+      });
   }
 
   protected async deleteTopic(): Promise<void> {

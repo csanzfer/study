@@ -88,7 +88,13 @@
                   <mat-icon class="!text-[20px] !h-5 !w-5">{{ item.icon }}</mat-icon>
                   <span>{{ item.label }}</span>
                 </span>
-                @if (item.phaseBadge) {
+                @if (item.route === '/flashcards' && store.dueFlashcardsCount() > 0) {
+                  <span
+                    class="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-blue-950/70 dark:text-blue-300"
+                  >
+                    {{ store.dueFlashcardsCount() }}
+                  </span>
+                } @else if (item.phaseBadge) {
                   <span
                     class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                   >
@@ -146,6 +152,16 @@
       </div>
 
       <div class="flex items-center gap-1.5">
+        <a
+          routerLink="/flashcards"
+          [queryParams]="{ tab: 'missions' }"
+          matTooltip="Racha flexible y misiones diarias"
+          class="hidden items-center gap-1 rounded-xl border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700 transition hover:bg-orange-100 sm:inline-flex dark:border-orange-900/50 dark:bg-orange-950/40 dark:text-orange-300"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[16px]">local_fire_department</mat-icon>
+          <span>{{ store.streakSummary().currentStreak }}d</span>
+        </a>
+
         @if (pomodoro.isActive()) {
           <div class="flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-300">
             <a

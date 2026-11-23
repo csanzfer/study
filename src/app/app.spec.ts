@@ -6,6 +6,8 @@ import { TAI_BLOCKS_SEED } from './core/db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
+  Flashcard,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlock,
@@ -24,6 +26,8 @@ class InMemoryStudyRepository implements StudyRepository {
   private caseStudies: CaseStudy[] = [];
   private questions: Question[] = [];
   private examAttempts: ExamAttempt[] = [];
+  private flashcards: Flashcard[] = [];
+  private profile?: GamificationProfile;
 
   async initialize(): Promise<void> {}
 
@@ -131,6 +135,24 @@ class InMemoryStudyRepository implements StudyRepository {
   async deleteExamAttempt(id: string): Promise<void> {
     this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
   }
+  async getFlashcards(): Promise<Flashcard[]> {
+    return [...this.flashcards];
+  }
+  async saveFlashcard(fc: Flashcard): Promise<void> {
+    this.flashcards = [fc, ...this.flashcards.filter((x) => x.id !== fc.id)];
+  }
+  async saveFlashcards(fcs: Flashcard[]): Promise<void> {
+    for (const f of fcs) await this.saveFlashcard(f);
+  }
+  async deleteFlashcard(id: string): Promise<void> {
+    this.flashcards = this.flashcards.filter((f) => f.id !== id);
+  }
+  async getGamificationProfile(): Promise<GamificationProfile | undefined> {
+    return this.profile;
+  }
+  async saveGamificationProfile(profile: GamificationProfile): Promise<void> {
+    this.profile = profile;
+  }
 
   async replaceAllData(
     blocks: TaiBlock[],
@@ -140,6 +162,8 @@ class InMemoryStudyRepository implements StudyRepository {
     caseStudies: CaseStudy[] = [],
     questions: Question[] = [],
     examAttempts: ExamAttempt[] = [],
+    flashcards: Flashcard[] = [],
+    gamificationProfile?: GamificationProfile,
   ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
@@ -148,6 +172,8 @@ class InMemoryStudyRepository implements StudyRepository {
     this.caseStudies = [...caseStudies];
     this.questions = [...questions];
     this.examAttempts = [...examAttempts];
+    this.flashcards = [...flashcards];
+    this.profile = gamificationProfile;
   }
 }
 

@@ -1,0 +1,208 @@
+<div class="p-6">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+        {{ isEditMode ? 'Editar flashcard' : 'Nueva flashcard' }}
+      </h2>
+      <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+        Consolida plazos, puertos, leyes o siglas con repetición espaciada SM-2.
+      </p>
+    </div>
+
+    <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800">
+      <button
+        type="button"
+        (click)="setCardMode('standard')"
+        class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+        [class.bg-white]="cardMode() === 'standard'"
+        [class.text-slate-900]="cardMode() === 'standard'"
+        [class.shadow-xs]="cardMode() === 'standard'"
+        [class.dark:bg-slate-700]="cardMode() === 'standard'"
+        [class.dark:text-white]="cardMode() === 'standard'"
+        [class.text-slate-600]="cardMode() !== 'standard'"
+        [class.dark:text-slate-400]="cardMode() !== 'standard'"
+      >
+        Estándar
+      </button>
+      <button
+        type="button"
+        (click)="setCardMode('acronym')"
+        class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+        [class.bg-white]="cardMode() === 'acronym'"
+        [class.text-blue-700]="cardMode() === 'acronym'"
+        [class.shadow-xs]="cardMode() === 'acronym'"
+        [class.dark:bg-slate-700]="cardMode() === 'acronym'"
+        [class.dark:text-blue-300]="cardMode() === 'acronym'"
+        [class.text-slate-600]="cardMode() !== 'acronym'"
+        [class.dark:text-slate-400]="cardMode() !== 'acronym'"
+      >
+        Sigla
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-5 space-y-4">
+    <!-- Bloque y Tema -->
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <label class="block">
+        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Bloque TAI</span>
+        <select
+          [ngModel]="blockId()"
+          (ngModelChange)="onBlockChange($event)"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          @for (block of store.blocks(); track block.id) {
+            <option [value]="block.id">{{ block.code }} · {{ block.shortTitle }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="block">
+        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Tema (opcional)</span>
+        <select
+          [ngModel]="topicId()"
+          (ngModelChange)="topicId.set($event)"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          <option value="">Sin tema específico</option>
+          @for (topic of availableTopics(); track topic.id) {
+            <option [value]="topic.id">{{ topic.order }}. {{ topic.title }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <!-- Anverso / Acrónimo -->
+    <div>
+      <div class="flex items-center justify-between">
+        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+          {{ cardMode() === 'acronym' ? 'Sigla / Acrónimo *' : 'Anverso (pregunta o concepto) *' }}
+        </label>
+        <button
+          type="button"
+          (click)="swapSides()"
+          class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[15px]">swap_vert</mat-icon>
+          Intercambiar
+        </button>
+      </div>
+      @if (cardMode() === 'acronym') {
+        <input
+          type="text"
+          [ngModel]="front()"
+          (ngModelChange)="front.set($event)"
+          placeholder="Ej.: DNS, ENS, ACID, BGP, OWASP..."
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        />
+      } @else {
+        <textarea
+          rows="2"
+          [ngModel]="front()"
+          (ngModelChange)="front.set($event)"
+          placeholder="Ej.: ¿Cuál es el plazo general para resolver un procedimiento administrativo según la Ley 39/2015?"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        ></textarea>
+      }
+    </div>
+
+    <!-- Reverso / Significado -->
+    <label class="block">
+      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+        {{ cardMode() === 'acronym' ? 'Significado completo *' : 'Reverso (respuesta) *' }}
+      </span>
+      <textarea
+        rows="3"
+        [ngModel]="back()"
+        (ngModelChange)="back.set($event)"
+        [placeholder]="
+          cardMode() === 'acronym'
+            ? 'Ej.: Domain Name System (Sistema de Nombres de Dominio)'
+            : 'Ej.: 3 meses si la norma reguladora no fija otro plazo (Art. 21.3 LPAC).'
+        "
+        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+      ></textarea>
+    </label>
+
+    <!-- Pista / Contexto -->
+    <label class="block">
+      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+        {{ cardMode() === 'acronym' ? 'Contexto, puerto o normativa (opcional)' : 'Pista o referencia (opcional)' }}
+      </span>
+      <input
+        type="text"
+        [ngModel]="hint()"
+        (ngModelChange)="hint.set($event)"
+        [placeholder]="
+          cardMode() === 'acronym'
+            ? 'Ej.: Puerto 53 UDP/TCP · Capa de Aplicación'
+            : 'Ej.: Art. 21 Ley 39/2015'
+        "
+        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+      />
+    </label>
+
+    <!-- Etiquetas -->
+    <div>
+      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Etiquetas</span>
+      <div class="mt-1.5 flex flex-wrap gap-1.5">
+        @for (tag of suggestedTags; track tag) {
+          <button
+            type="button"
+            (click)="toggleSuggestedTag(tag)"
+            class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+            [class.border-blue-500]="tags().includes(tag)"
+            [class.bg-blue-50]="tags().includes(tag)"
+            [class.text-blue-700]="tags().includes(tag)"
+            [class.dark:bg-blue-950/60]="tags().includes(tag)"
+            [class.dark:text-blue-300]="tags().includes(tag)"
+            [class.border-slate-200]="!tags().includes(tag)"
+            [class.text-slate-600]="!tags().includes(tag)"
+            [class.dark:border-slate-700]="!tags().includes(tag)"
+            [class.dark:text-slate-400]="!tags().includes(tag)"
+          >
+            #{{ tag }}
+          </button>
+        }
+      </div>
+
+      <div class="mt-2 flex gap-2">
+        <input
+          type="text"
+          [ngModel]="tagInput()"
+          (ngModelChange)="tagInput.set($event)"
+          (keydown.enter)="$event.preventDefault(); addCustomTag()"
+          placeholder="Añadir etiqueta personalizada..."
+          class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        />
+        <button mat-stroked-button type="button" (click)="addCustomTag()">Añadir</button>
+      </div>
+
+      @if (tags().length > 0) {
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          @for (tag of tags(); track tag) {
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              #{{ tag }}
+              <button
+                type="button"
+                (click)="removeTag(tag)"
+                class="text-slate-400 hover:text-red-500"
+                aria-label="Quitar etiqueta"
+              >
+                ×
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="mt-6 flex justify-end gap-2">
+    <button mat-stroked-button type="button" [mat-dialog-close]="undefined">Cancelar</button>
+    <button mat-flat-button type="button" [disabled]="!canSave()" (click)="save()">
+      <mat-icon>save</mat-icon>
+      {{ isEditMode ? 'Guardar cambios' : 'Crear flashcard' }}
+    </button>
+  </div>
+</div>

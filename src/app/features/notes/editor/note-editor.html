@@ -140,6 +140,23 @@
         <mat-icon class="!h-4 !w-4 !text-[16px]">warning_amber</mat-icon>
         <span class="hidden sm:inline">Ojo examen</span>
       </button>
+      <button
+        type="button"
+        (click)="requestCreateFlashcard()"
+        [matTooltip]="
+          hasSelection()
+            ? 'Crear flashcard desde el texto seleccionado (Ctrl+Shift+F)'
+            : 'Crear flashcard vinculada a este tema (Ctrl+Shift+F)'
+        "
+        class="toolbar-btn gap-1 px-2 text-xs font-semibold"
+        [class.!bg-violet-100]="hasSelection()"
+        [class.!text-violet-700]="hasSelection()"
+        [class.dark:!bg-violet-950/70]="hasSelection()"
+        [class.dark:!text-violet-300]="hasSelection()"
+      >
+        <mat-icon class="!h-4 !w-4 !text-[16px]">style</mat-icon>
+        <span class="hidden sm:inline">Crear flashcard</span>
+      </button>
     </div>
 
     <!-- Undo / Redo -->

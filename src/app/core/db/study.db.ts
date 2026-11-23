@@ -3,6 +3,8 @@ import Dexie, { Table } from 'dexie';
 import {
   CaseStudy,
   ExamAttempt,
+  Flashcard,
+  GamificationProfile,
   Question,
   StudySession,
   TaiBlock,
@@ -21,6 +23,8 @@ export class StudyDatabase extends Dexie {
   caseStudies!: Table<CaseStudy, string>;
   questions!: Table<Question, string>;
   examAttempts!: Table<ExamAttempt, string>;
+  flashcards!: Table<Flashcard, string>;
+  gamification!: Table<GamificationProfile, 'local-user'>;
 
   constructor() {
     super('TaiStudyDB');
@@ -45,6 +49,18 @@ export class StudyDatabase extends Dexie {
       caseStudies: 'id, blockId, updatedAt, *tags',
       questions: 'id, blockId, topicId, caseStudyId, flagged, updatedAt, *tags',
       examAttempts: 'id, date, mode, caseStudyId',
+    });
+
+    this.version(4).stores({
+      blocks: 'id, order',
+      topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
+      studySessions: 'id, topicId, blockId, startedAt, type',
+      weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
+      caseStudies: 'id, blockId, updatedAt, *tags',
+      questions: 'id, blockId, topicId, caseStudyId, flagged, updatedAt, *tags',
+      examAttempts: 'id, date, mode, caseStudyId',
+      flashcards: 'id, blockId, topicId, srs.dueDate, updatedAt, *tags',
+      gamification: 'id',
     });
   }
 
