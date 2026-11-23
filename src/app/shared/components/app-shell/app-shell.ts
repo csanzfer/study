@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -13,14 +14,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { BackupService } from '../../../core/services/backup.service';
+import { SearchService } from '../../../core/services/search.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { GlobalSearchDialog } from '../global-search-dialog/global-search-dialog';
 
 interface ToolNavItem {
   label: string;
   route: string;
   icon: string;
-  phaseBadge: string;
+  phaseBadge?: string;
 }
 
 @Component({
@@ -31,6 +34,7 @@ interface ToolNavItem {
     RouterLinkActive,
     RouterOutlet,
     MatButtonModule,
+    MatDialogModule,
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
@@ -39,6 +43,9 @@ interface ToolNavItem {
     MatToolbarModule,
     MatTooltipModule,
   ],
+  host: {
+    '(window:keydown)': 'onGlobalKeydown($event)',
+  },
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
@@ -46,8 +53,16 @@ export class AppShell {
   protected readonly store = inject(StudyStoreService);
   protected readonly theme = inject(ThemeService);
   protected readonly backup = inject(BackupService);
+  private readonly searchService = inject(SearchService);
+  private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly breakpointObserver = inject(BreakpointObserver);
+
+  private activeSearchDialogRef: MatDialogRef<GlobalSearchDialog> | null = null;
+  protected readonly shortcutHint =
+    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)
+      ? '⌘K'
+      : 'Ctrl K';
 
   protected readonly drawer = viewChild<MatSidenav>('drawer');
   protected readonly backupFileInput = viewChild<ElementRef<HTMLInputElement>>('backupFileInput');
@@ -62,7 +77,7 @@ export class AppShell {
   protected readonly isDark = computed(() => this.theme.mode() === 'dark');
 
   protected readonly upcomingTools: ToolNavItem[] = [
-    { label: 'Esquemas', route: '/schemas', icon: 'account_tree', phaseBadge: 'F1' },
+    { label: 'Esquemas', route: '/schemas', icon: 'account_tree' },
     { label: 'Planificador', route: '/planner', icon: 'view_kanban', phaseBadge: 'F2' },
     { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz', phaseBadge: 'F3' },
     { label: 'Flashcards', route: '/flashcards', icon: 'style', phaseBadge: 'F4' },
@@ -74,13 +89,38 @@ export class AppShell {
     }
   }
 
-  protected onSearchInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.store.searchQuery.set(input.value);
+  protected onGlobalKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (this.activeSearchDialogRef) {
+        this.activeSearchDialogRef.close();
+      } else {
+        this.openGlobalSearch();
+      }
+    }
   }
 
-  protected clearSearch(): void {
-    this.store.searchQuery.set('');
+  protected openGlobalSearch(): void {
+    if (this.activeSearchDialogRef) {
+      return;
+    }
+
+    // Ensure search service is active before opening.
+    void this.searchService.indexVersion();
+
+    const ref = this.dialog.open(GlobalSearchDialog, {
+      width: '640px',
+      maxWidth: '94vw',
+      autoFocus: false,
+      position: { top: '8vh' },
+    });
+
+    this.activeSearchDialogRef = ref;
+    ref.afterClosed().subscribe(() => {
+      if (this.activeSearchDialogRef === ref) {
+        this.activeSearchDialogRef = null;
+      }
+    });
   }
 
   protected async exportBackup(): Promise<void> {

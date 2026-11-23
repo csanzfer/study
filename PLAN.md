@@ -194,32 +194,32 @@ export interface GamificationProfile {
 
 ---
 
-### Fase 1 (MVP) — Apuntes, Importador `.docx` y Esquemas Automáticos
+### Fase 1 (MVP) — Apuntes, Importador `.docx` y Esquemas Automáticos ✅
 **Objetivo:** Poder empezar a estudiar y construir tu temario TAI desde el primer momento.
 
 #### 1A. Gestión de Temas y Editor TipTap
-- [ ] CRUD completo de temas dentro de cada bloque (crear, renombrar, reordenar, etiquetar, eliminar).
-- [ ] Integrar **TipTap** en un componente reutilizable de Angular con:
+- [x] CRUD completo de temas dentro de cada bloque (crear, renombrar, reordenar, etiquetar, eliminar).
+- [x] Integrar **TipTap** en un componente reutilizable de Angular con:
   - Encabezados (`H1`–`H4`), negrita/cursiva/subrayado, listas anidadas y checklists.
   - Tablas (muy útiles para comparativas de leyes, OSI/TCP, SQL) y bloques de código.
   - Bloque destacado personalizado: **Callout "Ojo examen"** (para plazos, excepciones y trampas típicas).
   - Atajos tipo Markdown (`# `, `- `, `**texto**`, `` `código` ``).
   - **Autoguardado** con debounce (ej. 800 ms) + indicador visual *"Guardado"*.
-- [ ] Integrar **importación de Word (`.docx`) con `mammoth.js`**:
+- [x] Integrar **importación de Word (`.docx`) con `mammoth.js`**:
   - Subir archivo `.docx` mediante selector o drag & drop.
   - Opción de crear un tema nuevo a partir del `.docx` o insertar el contenido en un tema existente.
   - Limpieza automática de estilos basura de Word conservando la jerarquía semántica.
-- [ ] Implementar búsqueda global instantánea (**MiniSearch**) por título, etiquetas y contenido.
+- [x] Implementar búsqueda global instantánea (**MiniSearch**) por título, etiquetas y contenido.
 
 #### 1B. Esquemas Automáticos (Markmap)
-- [ ] Crear conversor `tiptapJsonToOutlineMarkdown()` que extraiga automáticamente encabezados (`H1`–`H4`) y listas del apunte.
-- [ ] Integrar **Markmap** en una vista de esquema asociada a cada tema (pestaña *"Apunte"* / *"Esquema"* o vista dividida en pantallas grandes).
-- [ ] Controles del mapa mental:
+- [x] Crear conversor `tiptapJsonToOutlineMarkdown()` que extraiga automáticamente encabezados (`H1`–`H4`) y listas del apunte.
+- [x] Integrar **Markmap** en una vista de esquema asociada a cada tema (pestaña *"Apunte"* / *"Esquema"* o vista dividida en pantallas grandes).
+- [x] Controles del mapa mental:
   - Zoom, centrado automático y modo pantalla completa.
   - Selector de profundidad (ej. *"Solo títulos"*, *"Hasta H3"*, *"Completo con viñetas"*).
   - Plegar/desplegar ramas para practicar memoria activa (ocultar subramas e intentar recordarlas).
   - Exportación del esquema a **SVG/PNG** (o vista imprimible).
-- [ ] Opción de activar un *"Esquema resumido propio"* por tema si en algún tema prefieres una versión más condensada que el apunte completo.
+- [x] Opción de activar un *"Esquema resumido propio"* por tema si en algún tema prefieres una versión más condensada que el apunte completo.
 
 **Criterio de hecho:** Puedes subir un `.docx` de un tema de tus libros, editarlo cómodamente en TipTap, buscar cualquier concepto y visualizar/estudiar su mapa mental automático al instante.
 
