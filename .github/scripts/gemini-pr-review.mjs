@@ -75,37 +75,61 @@ Estructura tu respuesta en Markdown con estas secciones:
 
 Evita elogios genéricos y no repitas el diff.`;
 
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_ATTEMPTS = 3;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function callGemini() {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
-      },
-    }),
-  });
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+        },
+      }),
+    });
 
-  if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text ?? '')
+        .join('')
+        .trim();
+
+      if (!text) {
+        throw new Error(`Respuesta vacía de Gemini API: ${JSON.stringify(data)}`);
+      }
+
+      return text;
+    }
+
     const errorBody = await response.text();
+    if (RETRYABLE_STATUSES.has(response.status)) {
+      if (attempt < MAX_ATTEMPTS) {
+        const delayMs = attempt * 10_000;
+        console.log(
+          `::warning::Gemini API devolvió ${response.status} (intento ${attempt}/${MAX_ATTEMPTS}). Reintentando en ${delayMs / 1000}s...`,
+        );
+        await sleep(delayMs);
+        continue;
+      }
+
+      const transientError = new Error(`Gemini API temporalmente no disponible (${response.status}): ${errorBody}`);
+      transientError.isTransient = true;
+      throw transientError;
+    }
+
     throw new Error(`Gemini API devolvió ${response.status}: ${errorBody}`);
   }
-
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts
-    ?.map((part) => part.text ?? '')
-    .join('')
-    .trim();
-
-  if (!text) {
-    throw new Error(`Respuesta vacía de Gemini API: ${JSON.stringify(data)}`);
-  }
-
-  return text;
 }
 
 async function upsertPrComment(body) {
@@ -160,6 +184,12 @@ try {
 
   await upsertPrComment(finalComment);
 } catch (error) {
+  if (error?.isTransient) {
+    console.log(
+      `::warning::Se omitió la revisión automática por indisponibilidad temporal de Gemini: ${error.message}`,
+    );
+    process.exit(0);
+  }
   console.error('Error durante la revisión con Gemini:', error);
   process.exit(1);
 }
