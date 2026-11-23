@@ -42,14 +42,20 @@ export const routes: Routes = [
   {
     path: 'tests',
     loadComponent: () =>
-      import('./features/coming-soon/coming-soon').then((m) => m.ComingSoon),
-    data: {
-      title: 'Motor de Tests y Simulacros TAI',
-      phase: 'Fase 3',
-      icon: 'quiz',
-      description:
-        'Banco de preguntas por bloque, simulacros oficiales con penalización (-1/3), supuestos prácticos y repaso de fallos.',
-    },
+      import('./features/tests/tests-page/tests-page').then((m) => m.TestsPage),
+  },
+  {
+    path: 'tests/session',
+    loadComponent: () =>
+      import('./features/tests/test-runner/test-runner').then((m) => m.TestRunner),
+    canDeactivate: [
+      async (component: unknown) => {
+        const { testRunnerCanDeactivateGuard } = await import(
+          './features/tests/test-runner/test-runner'
+        );
+        return (testRunnerCanDeactivateGuard as (c: unknown) => Promise<boolean>)(component);
+      },
+    ],
   },
   {
     path: 'flashcards',

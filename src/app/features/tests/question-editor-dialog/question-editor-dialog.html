@@ -1,0 +1,234 @@
+<div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+  <div>
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+      {{ isEdit ? 'Editar pregunta' : 'Nueva pregunta tipo test' }}
+    </h2>
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+      Asocia la pregunta a un bloque, tema o supuesto práctico y marca la respuesta correcta.
+    </p>
+  </div>
+  <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="!max-h-[75vh] !px-6 !py-5">
+  <div class="space-y-4">
+    <!-- Block / Topic / CaseStudy selectors -->
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Bloque TAI *
+        </label>
+        <select
+          [ngModel]="blockId()"
+          (ngModelChange)="onBlockChange($event)"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        >
+          @for (block of store.blocks(); track block.id) {
+            <option [value]="block.id">{{ block.code }} — {{ block.shortTitle }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Tema (opcional)
+        </label>
+        <select
+          [ngModel]="topicId()"
+          (ngModelChange)="topicId.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        >
+          <option value="">Sin tema específico</option>
+          @for (topic of topicsForSelectedBlock(); track topic.id) {
+            <option [value]="topic.id">#{{ topic.order }} {{ topic.title }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Supuesto práctico (opcional)
+        </label>
+        <select
+          [ngModel]="caseStudyId()"
+          (ngModelChange)="caseStudyId.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        >
+          <option value="">Pregunta independiente</option>
+          @for (cs of store.caseStudies(); track cs.id) {
+            <option [value]="cs.id">{{ cs.blockId }} · {{ cs.title }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Prompt -->
+    <div>
+      <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+        Enunciado de la pregunta *
+      </label>
+      <textarea
+        rows="3"
+        [ngModel]="prompt()"
+        (ngModelChange)="prompt.set($event)"
+        placeholder="Ej.: Según la Ley 39/2015, ¿cuál es el plazo para interponer recurso de alzada contra un acto expreso?"
+        class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+      ></textarea>
+    </div>
+
+    <!-- 4 Options with radio for correct answer -->
+    <div class="space-y-2.5">
+      <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+        Opciones de respuesta * (marca la correcta)
+      </label>
+
+      @for (letter of letters; track letter; let idx = $index) {
+        <div
+          class="flex items-center gap-2 rounded-xl border p-2 transition"
+          [class.border-emerald-400]="correctIndex() === idx"
+          [class.bg-emerald-50/50]="correctIndex() === idx"
+          [class.dark:border-emerald-700]="correctIndex() === idx"
+          [class.dark:bg-emerald-950/30]="correctIndex() === idx"
+          [class.border-slate-200]="correctIndex() !== idx"
+          [class.dark:border-slate-700]="correctIndex() !== idx"
+        >
+          <button
+            type="button"
+            (click)="correctIndex.set($any(idx))"
+            [attr.aria-label]="'Marcar opción ' + letter + ' como correcta'"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition"
+            [class.bg-emerald-600]="correctIndex() === idx"
+            [class.text-white]="correctIndex() === idx"
+            [class.bg-slate-100]="correctIndex() !== idx"
+            [class.text-slate-600]="correctIndex() !== idx"
+            [class.dark:bg-slate-800]="correctIndex() !== idx"
+            [class.dark:text-slate-300]="correctIndex() !== idx"
+          >
+            {{ letter }}
+          </button>
+
+          @switch (idx) {
+            @case (0) {
+              <input
+                type="text"
+                [ngModel]="optionA()"
+                (ngModelChange)="optionA.set($event)"
+                placeholder="Opción A"
+                class="w-full bg-transparent px-2 py-1 text-sm text-slate-900 outline-none dark:text-slate-100"
+              />
+            }
+            @case (1) {
+              <input
+                type="text"
+                [ngModel]="optionB()"
+                (ngModelChange)="optionB.set($event)"
+                placeholder="Opción B"
+                class="w-full bg-transparent px-2 py-1 text-sm text-slate-900 outline-none dark:text-slate-100"
+              />
+            }
+            @case (2) {
+              <input
+                type="text"
+                [ngModel]="optionC()"
+                (ngModelChange)="optionC.set($event)"
+                placeholder="Opción C"
+                class="w-full bg-transparent px-2 py-1 text-sm text-slate-900 outline-none dark:text-slate-100"
+              />
+            }
+            @case (3) {
+              <input
+                type="text"
+                [ngModel]="optionD()"
+                (ngModelChange)="optionD.set($event)"
+                placeholder="Opción D"
+                class="w-full bg-transparent px-2 py-1 text-sm text-slate-900 outline-none dark:text-slate-100"
+              />
+            }
+          }
+
+          @if (correctIndex() === idx) {
+            <span class="shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+              Correcta
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Explanation -->
+    <div>
+      <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+        Explicación / retroalimentación (opcional)
+      </label>
+      <textarea
+        rows="2"
+        [ngModel]="explanation()"
+        (ngModelChange)="explanation.set($event)"
+        placeholder="Por qué es correcta y trampas frecuentes de examen..."
+        class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+      ></textarea>
+    </div>
+
+    <!-- Reference, Source, Tags -->
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Referencia normativa / técnica
+        </label>
+        <input
+          type="text"
+          [ngModel]="reference()"
+          (ngModelChange)="reference.set($event)"
+          placeholder="Ej.: Art. 122 Ley 39/2015"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Origen / Convocatoria
+        </label>
+        <input
+          type="text"
+          [ngModel]="source()"
+          (ngModelChange)="source.set($event)"
+          placeholder="Ej.: INAP 2023"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Etiquetas (separadas por coma)
+        </label>
+        <input
+          type="text"
+          [ngModel]="tagsText()"
+          (ngModelChange)="tagsText.set($event)"
+          placeholder="plazos, leyes, trampa"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+    </div>
+
+    <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+      <input
+        type="checkbox"
+        [ngModel]="flagged()"
+        (ngModelChange)="flagged.set($event)"
+        class="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
+      />
+      <span>Marcar con bandera para repaso prioritario</span>
+    </label>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="border-t border-slate-200 !px-6 !py-3 dark:border-slate-800">
+  <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+  <button mat-flat-button type="button" [disabled]="!canSave()" (click)="save()">
+    <mat-icon>save</mat-icon>
+    {{ isEdit ? 'Guardar cambios' : 'Crear pregunta' }}
+  </button>
+</mat-dialog-actions>

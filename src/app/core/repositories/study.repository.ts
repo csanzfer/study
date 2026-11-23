@@ -1,6 +1,9 @@
 import { InjectionToken, Injectable, inject } from '@angular/core';
 import { StudyDatabase } from '../db/study.db';
 import {
+  CaseStudy,
+  ExamAttempt,
+  Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
@@ -23,11 +26,24 @@ export interface StudyRepository {
   saveWeeklyPlanItem(item: WeeklyPlanItem): Promise<void>;
   saveWeeklyPlanItems(items: WeeklyPlanItem[]): Promise<void>;
   deleteWeeklyPlanItem(id: string): Promise<void>;
+  getCaseStudies(): Promise<CaseStudy[]>;
+  saveCaseStudy(caseStudy: CaseStudy): Promise<void>;
+  deleteCaseStudy(id: string): Promise<void>;
+  getQuestions(): Promise<Question[]>;
+  saveQuestion(question: Question): Promise<void>;
+  saveQuestions(questions: Question[]): Promise<void>;
+  deleteQuestion(id: string): Promise<void>;
+  getExamAttempts(): Promise<ExamAttempt[]>;
+  saveExamAttempt(attempt: ExamAttempt): Promise<void>;
+  deleteExamAttempt(id: string): Promise<void>;
   replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
     studySessions?: StudySession[],
     weeklyPlanItems?: WeeklyPlanItem[],
+    caseStudies?: CaseStudy[],
+    questions?: Question[],
+    examAttempts?: ExamAttempt[],
   ): Promise<void>;
 }
 
@@ -74,10 +90,22 @@ export class IndexedDbStudyRepository implements StudyRepository {
   }
 
   async deleteTopic(id: string): Promise<void> {
-    await this.db.transaction('rw', this.db.topics, this.db.weeklyPlanItems, async () => {
-      await this.db.topics.delete(id);
-      await this.db.weeklyPlanItems.where('topicId').equals(id).delete();
-    });
+    await this.db.transaction(
+      'rw',
+      this.db.topics,
+      this.db.weeklyPlanItems,
+      this.db.questions,
+      async () => {
+        await this.db.topics.delete(id);
+        await this.db.weeklyPlanItems.where('topicId').equals(id).delete();
+        const linkedQuestions = await this.db.questions.where('topicId').equals(id).toArray();
+        if (linkedQuestions.length > 0) {
+          await this.db.questions.bulkPut(
+            linkedQuestions.map((q) => ({ ...q, topicId: undefined })),
+          );
+        }
+      },
+    );
   }
 
   async getStudySessions(): Promise<StudySession[]> {
@@ -123,23 +151,90 @@ export class IndexedDbStudyRepository implements StudyRepository {
     await this.db.weeklyPlanItems.delete(id);
   }
 
+  async getCaseStudies(): Promise<CaseStudy[]> {
+    const items = await this.db.caseStudies.toArray();
+    return items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  async saveCaseStudy(caseStudy: CaseStudy): Promise<void> {
+    await this.db.caseStudies.put(caseStudy);
+  }
+
+  async deleteCaseStudy(id: string): Promise<void> {
+    await this.db.transaction('rw', this.db.caseStudies, this.db.questions, async () => {
+      await this.db.caseStudies.delete(id);
+      const linkedQuestions = await this.db.questions.where('caseStudyId').equals(id).toArray();
+      if (linkedQuestions.length > 0) {
+        await this.db.questions.bulkPut(
+          linkedQuestions.map((q) => ({ ...q, caseStudyId: undefined })),
+        );
+      }
+    });
+  }
+
+  async getQuestions(): Promise<Question[]> {
+    const items = await this.db.questions.toArray();
+    return items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  async saveQuestion(question: Question): Promise<void> {
+    await this.db.questions.put(question);
+  }
+
+  async saveQuestions(questions: Question[]): Promise<void> {
+    if (questions.length === 0) {
+      return;
+    }
+    await this.db.transaction('rw', this.db.questions, async () => {
+      await this.db.questions.bulkPut(questions);
+    });
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    await this.db.questions.delete(id);
+  }
+
+  async getExamAttempts(): Promise<ExamAttempt[]> {
+    const items = await this.db.examAttempts.toArray();
+    return items.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  async saveExamAttempt(attempt: ExamAttempt): Promise<void> {
+    await this.db.examAttempts.put(attempt);
+  }
+
+  async deleteExamAttempt(id: string): Promise<void> {
+    await this.db.examAttempts.delete(id);
+  }
+
   async replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
+    caseStudies: CaseStudy[] = [],
+    questions: Question[] = [],
+    examAttempts: ExamAttempt[] = [],
   ): Promise<void> {
     await this.db.transaction(
       'rw',
-      this.db.blocks,
-      this.db.topics,
-      this.db.studySessions,
-      this.db.weeklyPlanItems,
+      [
+        this.db.blocks,
+        this.db.topics,
+        this.db.studySessions,
+        this.db.weeklyPlanItems,
+        this.db.caseStudies,
+        this.db.questions,
+        this.db.examAttempts,
+      ],
       async () => {
         await this.db.blocks.clear();
         await this.db.topics.clear();
         await this.db.studySessions.clear();
         await this.db.weeklyPlanItems.clear();
+        await this.db.caseStudies.clear();
+        await this.db.questions.clear();
+        await this.db.examAttempts.clear();
         if (blocks.length > 0) {
           await this.db.blocks.bulkPut(blocks);
         }
@@ -151,6 +246,15 @@ export class IndexedDbStudyRepository implements StudyRepository {
         }
         if (weeklyPlanItems.length > 0) {
           await this.db.weeklyPlanItems.bulkPut(weeklyPlanItems);
+        }
+        if (caseStudies.length > 0) {
+          await this.db.caseStudies.bulkPut(caseStudies);
+        }
+        if (questions.length > 0) {
+          await this.db.questions.bulkPut(questions);
+        }
+        if (examAttempts.length > 0) {
+          await this.db.examAttempts.bulkPut(examAttempts);
         }
       },
     );

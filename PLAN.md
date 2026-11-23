@@ -238,16 +238,16 @@ export interface GamificationProfile {
 
 ---
 
-### Fase 3 — Motor de Tests y Simulacros TAI
+### Fase 3 — Motor de Tests y Simulacros TAI ✅
 **Objetivo:** Practicar preguntas tipo examen oficial con penalización real y seguimiento de fallos.
 
-- [ ] **Gestor de banco de preguntas:** creación manual + importador rápido (CSV / JSON / texto formateado para pegar tandas de preguntas de exámenes INAP o libros).
-- [ ] **Modos de test:**
+- [x] **Gestor de banco de preguntas:** creación manual + importador rápido (CSV / JSON / texto formateado para pegar tandas de preguntas de exámenes INAP o libros).
+- [x] **Modos de test:**
   - *Práctica por tema o bloque:* corrección inmediata mostrando explicación y referencia.
   - *Simulacro oficial TAI:* cronómetro, distribución configurable por bloques, opción en blanco y penalización configurable (`-1/3` por defecto).
   - *Repaso inteligente de fallos y marcadas:* genera un test solo con preguntas falladas anteriormente o marcadas con bandera.
   - *Supuestos prácticos:* vista dividida con enunciado común fijo y batería de preguntas asociadas.
-- [ ] **Panel de analítica de tests:** evolución de nota neta, porcentaje de acierto por bloque/tema y listado de temas más débiles.
+- [x] **Panel de analítica de tests:** evolución de nota neta, porcentaje de acierto por bloque/tema y listado de temas más débiles.
 
 **Criterio de hecho:** Puedes hacer tests por tema o simulacros completos con nota neta real e identificar automáticamente tus puntos débiles.
 

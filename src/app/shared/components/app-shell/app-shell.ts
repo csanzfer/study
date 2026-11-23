@@ -81,7 +81,7 @@ export class AppShell {
   protected readonly upcomingTools: ToolNavItem[] = [
     { label: 'Esquemas', route: '/schemas', icon: 'account_tree' },
     { label: 'Planificador', route: '/planner', icon: 'view_kanban' },
-    { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz', phaseBadge: 'F3' },
+    { label: 'Tests y Simulacros', route: '/tests', icon: 'quiz' },
     { label: 'Flashcards', route: '/flashcards', icon: 'style', phaseBadge: 'F4' },
   ];
 
@@ -157,7 +157,7 @@ export class AppShell {
       const result = await this.backup.importBackupFile(file);
       await this.store.refresh();
       this.snackBar.open(
-        `Backup restaurado: ${result.blocksCount} bloques y ${result.topicsCount} temas.`,
+        `Backup restaurado: ${result.blocksCount} bloques, ${result.topicsCount} temas y ${result.questionsCount} preguntas.`,
         'Cerrar',
         { duration: 4000 },
       );

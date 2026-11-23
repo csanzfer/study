@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
+  CaseStudy,
+  ExamAttempt,
+  Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
@@ -15,6 +18,9 @@ class InMemoryStudyRepository implements StudyRepository {
   topics: Topic[] = [];
   sessions: StudySession[] = [];
   weeklyPlan: WeeklyPlanItem[] = [];
+  caseStudies: CaseStudy[] = [];
+  questions: Question[] = [];
+  examAttempts: ExamAttempt[] = [];
 
   async initialize(): Promise<void> {}
 
@@ -49,6 +55,7 @@ class InMemoryStudyRepository implements StudyRepository {
   async deleteTopic(id: string): Promise<void> {
     this.topics = this.topics.filter((t) => t.id !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.topicId !== id);
+    this.questions = this.questions.map((q) => (q.topicId === id ? { ...q, topicId: undefined } : q));
   }
 
   async getStudySessions(): Promise<StudySession[]> {
@@ -99,16 +106,62 @@ class InMemoryStudyRepository implements StudyRepository {
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.id !== id);
   }
 
+  async getCaseStudies(): Promise<CaseStudy[]> {
+    return [...this.caseStudies].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+  async saveCaseStudy(cs: CaseStudy): Promise<void> {
+    const idx = this.caseStudies.findIndex((c) => c.id === cs.id);
+    if (idx >= 0) this.caseStudies[idx] = cs;
+    else this.caseStudies.push(cs);
+  }
+  async deleteCaseStudy(id: string): Promise<void> {
+    this.caseStudies = this.caseStudies.filter((c) => c.id !== id);
+    this.questions = this.questions.map((q) =>
+      q.caseStudyId === id ? { ...q, caseStudyId: undefined } : q,
+    );
+  }
+  async getQuestions(): Promise<Question[]> {
+    return [...this.questions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+  async saveQuestion(q: Question): Promise<void> {
+    const idx = this.questions.findIndex((x) => x.id === q.id);
+    if (idx >= 0) this.questions[idx] = q;
+    else this.questions.push(q);
+  }
+  async saveQuestions(qs: Question[]): Promise<void> {
+    for (const q of qs) await this.saveQuestion(q);
+  }
+  async deleteQuestion(id: string): Promise<void> {
+    this.questions = this.questions.filter((q) => q.id !== id);
+  }
+  async getExamAttempts(): Promise<ExamAttempt[]> {
+    return [...this.examAttempts].sort((a, b) => b.date.localeCompare(a.date));
+  }
+  async saveExamAttempt(attempt: ExamAttempt): Promise<void> {
+    const idx = this.examAttempts.findIndex((a) => a.id === attempt.id);
+    if (idx >= 0) this.examAttempts[idx] = attempt;
+    else this.examAttempts.push(attempt);
+  }
+  async deleteExamAttempt(id: string): Promise<void> {
+    this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
+  }
+
   async replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
+    caseStudies: CaseStudy[] = [],
+    questions: Question[] = [],
+    examAttempts: ExamAttempt[] = [],
   ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
     this.sessions = [...studySessions];
     this.weeklyPlan = [...weeklyPlanItems];
+    this.caseStudies = [...caseStudies];
+    this.questions = [...questions];
+    this.examAttempts = [...examAttempts];
   }
 }
 
@@ -247,5 +300,111 @@ describe('StudyStoreService', () => {
 
     await store.deleteTopic(topic.id);
     expect(store.getWeeklyPlanForWeek('2026-11-23').length).toBe(0);
+  });
+
+  it('should manage case studies, questions, flags, and unlink questions when deleting topic or case study', async () => {
+    const topic = await store.createTopic({ blockId: 'B3', title: 'SQL Avanzado' });
+    const cs = await store.createCaseStudy({
+      blockId: 'B3',
+      title: 'Supuesto Base de Datos',
+      statement: 'Se dispone de un esquema relacional...',
+      tags: ['sql', 'inap'],
+    });
+
+    const q = await store.createQuestion({
+      blockId: 'B3',
+      topicId: topic.id,
+      caseStudyId: cs.id,
+      prompt: '¿Qué cláusula filtra grupos en SQL?',
+      options: ['WHERE', 'HAVING', 'GROUP BY', 'ORDER BY'],
+      correctIndex: 1,
+      reference: 'ISO SQL:2016',
+    });
+
+    expect(store.totalQuestions()).toBe(1);
+    expect(store.questionCountByBlock().B3).toBe(1);
+    expect(store.questionCountByTopic()[topic.id]).toBe(1);
+    expect(store.getQuestionsForCaseStudy(cs.id).length).toBe(1);
+
+    await store.toggleQuestionFlag(q.id);
+    expect(store.flaggedQuestions().length).toBe(1);
+
+    await store.deleteCaseStudy(cs.id);
+    expect(store.caseStudies().length).toBe(0);
+    expect(store.getQuestionById(q.id)?.caseStudyId).toBeUndefined();
+
+    await store.deleteTopic(topic.id);
+    expect(store.getQuestionById(q.id)?.topicId).toBeUndefined();
+    expect(store.totalQuestions()).toBe(1);
+  });
+
+  it('should record exam attempts, update question stats, and log study session for tests >= 60s', async () => {
+    const topic = await store.createTopic({ blockId: 'B1', title: 'Ley 39/2015' });
+    const [q1, q2] = await store.bulkCreateQuestions([
+      {
+        blockId: 'B1',
+        topicId: topic.id,
+        prompt: 'Plazo general de resolución',
+        options: ['1 mes', '3 meses', '6 meses', '15 días'],
+        correctIndex: 1,
+      },
+      {
+        blockId: 'B1',
+        topicId: topic.id,
+        prompt: 'Recurso de alzada (acto expreso)',
+        options: ['10 días', '1 mes', '2 meses', '3 meses'],
+        correctIndex: 1,
+      },
+    ]);
+
+    const attempt = await store.recordExamAttempt({
+      title: 'Práctica Ley 39/2015',
+      mode: 'practice',
+      penaltyRatio: 1 / 3,
+      answers: [
+        {
+          questionId: q1.id,
+          blockId: 'B1',
+          topicId: topic.id,
+          selectedIndex: 1,
+          correctIndex: 1,
+          isCorrect: true,
+        },
+        {
+          questionId: q2.id,
+          blockId: 'B1',
+          topicId: topic.id,
+          selectedIndex: 0,
+          correctIndex: 1,
+          isCorrect: false,
+        },
+      ],
+      correctCount: 1,
+      wrongCount: 1,
+      blankCount: 0,
+      netScore: 2 / 3,
+      maxScore: 2,
+      scoreOn10: 3.33,
+      durationSec: 120,
+    });
+
+    expect(store.examAttempts().length).toBe(1);
+    expect(store.latestExamAttempt()?.id).toBe(attempt.id);
+    expect(store.getQuestionById(q1.id)?.stats).toMatchObject({
+      attempts: 1,
+      correct: 1,
+      lastResult: 'correct',
+    });
+    expect(store.getQuestionById(q2.id)?.stats).toMatchObject({
+      attempts: 1,
+      correct: 0,
+      lastResult: 'wrong',
+    });
+    expect(store.failedQuestions().map((q) => q.id)).toEqual([q2.id]);
+    expect(store.overallTestAccuracy()).toBe(50);
+    expect(store.studySessions().length).toBe(1);
+    expect(store.studySessions()[0].type).toBe('test');
+    expect(store.studySessions()[0].durationMinutes).toBe(2);
+    expect(store.getTopicById(topic.id)?.lastReviewedAt).toBeDefined();
   });
 });

@@ -1,0 +1,95 @@
+<div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+  <div>
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+      {{ isEdit ? 'Editar supuesto práctico' : 'Nuevo supuesto práctico' }}
+    </h2>
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+      Define el enunciado común (Bloque III Desarrollo o Bloque IV Sistemas) al que vincularás preguntas.
+    </p>
+  </div>
+  <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="!max-h-[75vh] !px-6 !py-5">
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Bloque *
+        </label>
+        <select
+          [ngModel]="blockId()"
+          (ngModelChange)="blockId.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        >
+          @for (block of store.blocks(); track block.id) {
+            <option [value]="block.id">{{ block.code }} — {{ block.shortTitle }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Título del supuesto *
+        </label>
+        <input
+          type="text"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          placeholder="Ej.: Supuesto 1 — Migración a microservicios y BBDD"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+        Enunciado común *
+      </label>
+      <textarea
+        rows="8"
+        [ngModel]="statement()"
+        (ngModelChange)="statement.set($event)"
+        placeholder="Describe la arquitectura, tablas SQL, requisitos de red, esquema de servidores o escenario del supuesto..."
+        class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+      ></textarea>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Convocatoria / Origen
+        </label>
+        <input
+          type="text"
+          [ngModel]="source()"
+          (ngModelChange)="source.set($event)"
+          placeholder="Ej.: INAP 2023 · Supuesto B"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          Etiquetas (separadas por coma)
+        </label>
+        <input
+          type="text"
+          [ngModel]="tagsText()"
+          (ngModelChange)="tagsText.set($event)"
+          placeholder="sql, rest, linux, redes"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="border-t border-slate-200 !px-6 !py-3 dark:border-slate-800">
+  <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+  <button mat-flat-button type="button" [disabled]="!canSave()" (click)="save()">
+    <mat-icon>save</mat-icon>
+    {{ isEdit ? 'Guardar cambios' : 'Crear supuesto' }}
+  </button>
+</mat-dialog-actions>

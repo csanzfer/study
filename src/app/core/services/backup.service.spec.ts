@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
+  CaseStudy,
+  ExamAttempt,
+  Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
@@ -49,6 +52,60 @@ class MockStudyRepository implements StudyRepository {
       order: 1,
       completed: false,
       targetPomodoros: 2,
+    },
+  ];
+  caseStudies: CaseStudy[] = [
+    {
+      id: 'cs-1',
+      blockId: 'B3',
+      title: 'Supuesto REST API',
+      statement: 'Una entidad pública expone un API REST...',
+      tags: ['rest'],
+      createdAt: '2026-11-23T10:00:00.000Z',
+      updatedAt: '2026-11-23T10:00:00.000Z',
+    },
+  ];
+  questions: Question[] = [
+    {
+      id: 'q-1',
+      blockId: 'B1',
+      topicId: 't-1',
+      prompt: '¿En qué año se aprobó la Constitución Española?',
+      options: ['1975', '1978', '1981', '1979'],
+      correctIndex: 1,
+      explanation: 'Aprobada en referéndum el 6 de diciembre de 1978.',
+      reference: 'CE 1978',
+      tags: ['ce'],
+      flagged: false,
+      stats: { attempts: 1, correct: 1, lastResult: 'correct' },
+      createdAt: '2026-11-23T10:00:00.000Z',
+      updatedAt: '2026-11-23T10:00:00.000Z',
+    },
+  ];
+  examAttempts: ExamAttempt[] = [
+    {
+      id: 'a-1',
+      title: 'Práctica Bloque I',
+      date: '2026-11-23T11:00:00.000Z',
+      mode: 'practice',
+      penaltyRatio: 1 / 3,
+      answers: [
+        {
+          questionId: 'q-1',
+          blockId: 'B1',
+          topicId: 't-1',
+          selectedIndex: 1,
+          correctIndex: 1,
+          isCorrect: true,
+        },
+      ],
+      correctCount: 1,
+      wrongCount: 0,
+      blankCount: 0,
+      netScore: 1,
+      maxScore: 1,
+      scoreOn10: 10,
+      durationSec: 45,
     },
   ];
 
@@ -103,16 +160,52 @@ class MockStudyRepository implements StudyRepository {
   async deleteWeeklyPlanItem(id: string): Promise<void> {
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.id !== id);
   }
+  async getCaseStudies(): Promise<CaseStudy[]> {
+    return this.caseStudies;
+  }
+  async saveCaseStudy(cs: CaseStudy): Promise<void> {
+    this.caseStudies.push(cs);
+  }
+  async deleteCaseStudy(id: string): Promise<void> {
+    this.caseStudies = this.caseStudies.filter((c) => c.id !== id);
+  }
+  async getQuestions(): Promise<Question[]> {
+    return this.questions;
+  }
+  async saveQuestion(q: Question): Promise<void> {
+    this.questions.push(q);
+  }
+  async saveQuestions(qs: Question[]): Promise<void> {
+    this.questions.push(...qs);
+  }
+  async deleteQuestion(id: string): Promise<void> {
+    this.questions = this.questions.filter((q) => q.id !== id);
+  }
+  async getExamAttempts(): Promise<ExamAttempt[]> {
+    return this.examAttempts;
+  }
+  async saveExamAttempt(attempt: ExamAttempt): Promise<void> {
+    this.examAttempts.push(attempt);
+  }
+  async deleteExamAttempt(id: string): Promise<void> {
+    this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
+  }
   async replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
+    caseStudies: CaseStudy[] = [],
+    questions: Question[] = [],
+    examAttempts: ExamAttempt[] = [],
   ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
     this.sessions = [...studySessions];
     this.weeklyPlan = [...weeklyPlanItems];
+    this.caseStudies = [...caseStudies];
+    this.questions = [...questions];
+    this.examAttempts = [...examAttempts];
   }
 }
 
@@ -131,17 +224,20 @@ describe('BackupService', () => {
     service = TestBed.inject(BackupService);
   });
 
-  it('should create a valid v2 backup payload including sessions and weekly plan', async () => {
+  it('should create a valid v3 backup payload including tests, case studies, and exam attempts', async () => {
     const payload = await service.createBackupPayload();
     expect(payload.appName).toBe('tai-study');
-    expect(payload.schemaVersion).toBe(2);
+    expect(payload.schemaVersion).toBe(3);
     expect(payload.blocks.length).toBe(4);
     expect(payload.topics.length).toBe(1);
     expect(payload.studySessions?.length).toBe(1);
     expect(payload.weeklyPlanItems?.length).toBe(1);
+    expect(payload.caseStudies?.length).toBe(1);
+    expect(payload.questions?.length).toBe(1);
+    expect(payload.examAttempts?.length).toBe(1);
   });
 
-  it('should accept legacy v1 backup files for backward compatibility', async () => {
+  it('should accept legacy v1 and v2 backup files for backward compatibility', async () => {
     const legacyV1 = {
       schemaVersion: 1,
       appName: 'tai-study',
@@ -150,11 +246,29 @@ describe('BackupService', () => {
       topics: repo.topics,
     };
 
-    const parsed = service.parseBackupJson(JSON.stringify(legacyV1));
-    expect(parsed.schemaVersion).toBe(1);
-    expect(parsed.topics.length).toBe(1);
-    expect(parsed.studySessions).toEqual([]);
-    expect(parsed.weeklyPlanItems).toEqual([]);
+    const parsedV1 = service.parseBackupJson(JSON.stringify(legacyV1));
+    expect(parsedV1.schemaVersion).toBe(1);
+    expect(parsedV1.topics.length).toBe(1);
+    expect(parsedV1.studySessions).toEqual([]);
+    expect(parsedV1.weeklyPlanItems).toEqual([]);
+    expect(parsedV1.questions).toEqual([]);
+    expect(parsedV1.caseStudies).toEqual([]);
+    expect(parsedV1.examAttempts).toEqual([]);
+
+    const legacyV2 = {
+      schemaVersion: 2,
+      appName: 'tai-study',
+      exportedAt: '2026-11-21T12:00:00.000Z',
+      blocks: repo.blocks,
+      topics: repo.topics,
+      studySessions: repo.sessions,
+      weeklyPlanItems: repo.weeklyPlan,
+    };
+
+    const parsedV2 = service.parseBackupJson(JSON.stringify(legacyV2));
+    expect(parsedV2.schemaVersion).toBe(2);
+    expect(parsedV2.studySessions?.length).toBe(1);
+    expect(parsedV2.questions).toEqual([]);
   });
 
   it('should reject an invalid backup JSON', () => {
@@ -189,10 +303,11 @@ describe('BackupService', () => {
     const jsonString = JSON.stringify(exported);
 
     // Wipe repository before restoring
-    await repo.replaceAllData([], [], [], []);
+    await repo.replaceAllData([], [], [], [], [], [], []);
     expect((await repo.getTopics()).length).toBe(0);
     expect((await repo.getStudySessions()).length).toBe(0);
     expect((await repo.getWeeklyPlanItems()).length).toBe(0);
+    expect((await repo.getQuestions()).length).toBe(0);
 
     const file = new File([jsonString], 'tai-study-backup.json', { type: 'application/json' });
     const result = await service.importBackupFile(file);
@@ -201,6 +316,9 @@ describe('BackupService', () => {
     expect(result.topicsCount).toBe(1);
     expect(result.sessionsCount).toBe(1);
     expect(result.weeklyPlanItemsCount).toBe(1);
+    expect(result.caseStudiesCount).toBe(1);
+    expect(result.questionsCount).toBe(1);
+    expect(result.examAttemptsCount).toBe(1);
 
     const [restored] = await repo.getTopics();
     expect(restored.contentJson).toEqual(richContentJson);
@@ -236,5 +354,11 @@ describe('BackupService', () => {
       weeklyPlanItems: [{ ...base.weeklyPlanItems![0], dayOfWeek: 1.5 }],
     };
     expect(() => service.parseBackupJson(JSON.stringify(nonIntegerDayPayload))).toThrow();
+
+    const invalidQuestionPayload = {
+      ...base,
+      questions: [{ ...base.questions![0], correctIndex: 5 }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidQuestionPayload))).toThrow();
   });
 });

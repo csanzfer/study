@@ -8,15 +8,23 @@ import {
   isIsoTimestampInWeek,
 } from '../../shared/utils/week-date.util';
 import {
+  CaseStudy,
+  CreateCaseStudyInput,
+  CreateExamAttemptInput,
+  CreateQuestionInput,
   CreateStudySessionInput,
   CreateTopicInput,
   CreateWeeklyPlanItemInput,
+  ExamAttempt,
   IsoDayOfWeek,
+  Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
   Topic,
   TopicStatus,
+  UpdateCaseStudyPatch,
+  UpdateQuestionPatch,
   UpdateTopicPatch,
   WeeklyPlanItem,
 } from '../models/study.models';
@@ -35,6 +43,9 @@ export class StudyStoreService {
   readonly topics = signal<Topic[]>([]);
   readonly studySessions = signal<StudySession[]>([]);
   readonly weeklyPlanItems = signal<WeeklyPlanItem[]>([]);
+  readonly caseStudies = signal<CaseStudy[]>([]);
+  readonly questions = signal<Question[]>([]);
+  readonly examAttempts = signal<ExamAttempt[]>([]);
   readonly searchQuery = signal('');
   readonly loading = signal(false);
   readonly initialized = signal(false);
@@ -105,6 +116,56 @@ export class StudyStoreService {
     return totals;
   });
 
+  // --- Phase 3: Tests & Simulacros Computed Signals ---
+
+  readonly totalQuestions = computed(() => this.questions().length);
+
+  readonly flaggedQuestions = computed(() =>
+    this.questions().filter((question) => question.flagged),
+  );
+
+  readonly failedQuestions = computed(() =>
+    this.questions().filter(
+      (question) =>
+        question.stats.attempts > 0 &&
+        (question.stats.lastResult === 'wrong' ||
+          question.stats.correct < question.stats.attempts),
+    ),
+  );
+
+  readonly questionCountByBlock = computed(() => {
+    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    for (const question of this.questions()) {
+      counts[question.blockId] = (counts[question.blockId] ?? 0) + 1;
+    }
+    return counts;
+  });
+
+  readonly questionCountByTopic = computed(() => {
+    const counts: Record<string, number> = {};
+    for (const question of this.questions()) {
+      if (question.topicId) {
+        counts[question.topicId] = (counts[question.topicId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  });
+
+  readonly overallTestAccuracy = computed(() => {
+    let attempts = 0;
+    let correct = 0;
+    for (const question of this.questions()) {
+      attempts += question.stats.attempts;
+      correct += question.stats.correct;
+    }
+    if (attempts === 0) {
+      return null;
+    }
+    return Math.round((correct / attempts) * 100);
+  });
+
+  readonly latestExamAttempt = computed(() => this.examAttempts()[0] ?? null);
+
   async initialize(): Promise<void> {
     if (this.initialized()) {
       return;
@@ -129,16 +190,23 @@ export class StudyStoreService {
   }
 
   async refresh(): Promise<void> {
-    const [blocks, topics, studySessions, weeklyPlanItems] = await Promise.all([
-      this.repository.getBlocks(),
-      this.repository.getTopics(),
-      this.repository.getStudySessions(),
-      this.repository.getWeeklyPlanItems(),
-    ]);
+    const [blocks, topics, studySessions, weeklyPlanItems, caseStudies, questions, examAttempts] =
+      await Promise.all([
+        this.repository.getBlocks(),
+        this.repository.getTopics(),
+        this.repository.getStudySessions(),
+        this.repository.getWeeklyPlanItems(),
+        this.repository.getCaseStudies(),
+        this.repository.getQuestions(),
+        this.repository.getExamAttempts(),
+      ]);
     this.blocks.set(blocks);
     this.topics.set(topics);
     this.studySessions.set(studySessions);
     this.weeklyPlanItems.set(weeklyPlanItems);
+    this.caseStudies.set(caseStudies);
+    this.questions.set(questions);
+    this.examAttempts.set(examAttempts);
   }
 
   getBlockById(blockId: TaiBlockId): TaiBlock | undefined {
@@ -475,6 +543,280 @@ export class StudyStoreService {
   async deleteWeeklyPlanItem(id: string): Promise<void> {
     await this.repository.deleteWeeklyPlanItem(id);
     this.weeklyPlanItems.update((items) => items.filter((item) => item.id !== id));
+  }
+
+  // --- Case Studies (Supuestos prácticos) ---
+
+  getCaseStudyById(id: string): CaseStudy | undefined {
+    return this.caseStudies().find((item) => item.id === id);
+  }
+
+  getQuestionsForCaseStudy(caseStudyId: string): Question[] {
+    return this.questions().filter((q) => q.caseStudyId === caseStudyId);
+  }
+
+  async createCaseStudy(input: CreateCaseStudyInput): Promise<CaseStudy> {
+    const now = new Date().toISOString();
+    const caseStudy: CaseStudy = {
+      id: this.generateId('case'),
+      blockId: input.blockId,
+      title: input.title.trim(),
+      statement: input.statement.trim(),
+      source: input.source?.trim() || undefined,
+      tags: Array.from(new Set((input.tags ?? []).map((t) => t.trim()).filter(Boolean))),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await this.repository.saveCaseStudy(caseStudy);
+    this.caseStudies.update((items) => [caseStudy, ...items]);
+    return caseStudy;
+  }
+
+  async updateCaseStudy(id: string, patch: UpdateCaseStudyPatch): Promise<CaseStudy | undefined> {
+    const existing = this.getCaseStudyById(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: CaseStudy = {
+      ...existing,
+      ...patch,
+      title: patch.title !== undefined ? patch.title.trim() || existing.title : existing.title,
+      statement:
+        patch.statement !== undefined
+          ? patch.statement.trim() || existing.statement
+          : existing.statement,
+      source:
+        patch.source !== undefined ? patch.source.trim() || undefined : existing.source,
+      tags:
+        patch.tags !== undefined
+          ? Array.from(new Set(patch.tags.map((t) => t.trim()).filter(Boolean)))
+          : existing.tags,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.repository.saveCaseStudy(updated);
+    this.caseStudies.update((items) =>
+      items.map((item) => (item.id === id ? updated : item)),
+    );
+    return updated;
+  }
+
+  async deleteCaseStudy(id: string): Promise<void> {
+    await this.repository.deleteCaseStudy(id);
+    this.caseStudies.update((items) => items.filter((item) => item.id !== id));
+    this.questions.update((items) =>
+      items.map((q) => (q.caseStudyId === id ? { ...q, caseStudyId: undefined } : q)),
+    );
+  }
+
+  // --- Question Bank ---
+
+  getQuestionById(id: string): Question | undefined {
+    return this.questions().find((q) => q.id === id);
+  }
+
+  async createQuestion(input: CreateQuestionInput): Promise<Question> {
+    const now = new Date().toISOString();
+    const question = this.buildQuestion(input, now);
+    await this.repository.saveQuestion(question);
+    this.questions.update((items) => [question, ...items]);
+    return question;
+  }
+
+  async bulkCreateQuestions(inputs: CreateQuestionInput[]): Promise<Question[]> {
+    if (inputs.length === 0) {
+      return [];
+    }
+    const now = new Date().toISOString();
+    const created = inputs.map((input) => this.buildQuestion(input, now));
+    await this.repository.saveQuestions(created);
+    this.questions.update((items) => [...created, ...items]);
+    return created;
+  }
+
+  async updateQuestion(id: string, patch: UpdateQuestionPatch): Promise<Question | undefined> {
+    const existing = this.getQuestionById(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: Question = {
+      ...existing,
+      ...patch,
+      prompt: patch.prompt !== undefined ? patch.prompt.trim() || existing.prompt : existing.prompt,
+      options:
+        patch.options !== undefined
+          ? (patch.options.map((opt) => opt.trim()) as [string, string, string, string])
+          : existing.options,
+      explanation:
+        patch.explanation !== undefined
+          ? patch.explanation.trim() || undefined
+          : existing.explanation,
+      reference:
+        patch.reference !== undefined ? patch.reference.trim() || undefined : existing.reference,
+      source: patch.source !== undefined ? patch.source.trim() || undefined : existing.source,
+      topicId: patch.topicId !== undefined ? patch.topicId || undefined : existing.topicId,
+      caseStudyId:
+        patch.caseStudyId !== undefined ? patch.caseStudyId || undefined : existing.caseStudyId,
+      tags:
+        patch.tags !== undefined
+          ? Array.from(new Set(patch.tags.map((t) => t.trim()).filter(Boolean)))
+          : existing.tags,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.repository.saveQuestion(updated);
+    this.questions.update((items) => items.map((q) => (q.id === id ? updated : q)));
+    return updated;
+  }
+
+  async toggleQuestionFlag(id: string): Promise<Question | undefined> {
+    const existing = this.getQuestionById(id);
+    if (!existing) {
+      return undefined;
+    }
+    return this.updateQuestion(id, { flagged: !existing.flagged });
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    await this.repository.deleteQuestion(id);
+    this.questions.update((items) => items.filter((q) => q.id !== id));
+  }
+
+  // --- Exam Attempts ---
+
+  async recordExamAttempt(input: CreateExamAttemptInput): Promise<ExamAttempt> {
+    const now = input.date ?? new Date().toISOString();
+    const attempt: ExamAttempt = {
+      id: this.generateId('attempt'),
+      title: input.title.trim() || 'Test TAI',
+      date: now,
+      mode: input.mode,
+      penaltyRatio: input.penaltyRatio,
+      caseStudyId: input.caseStudyId,
+      answers: input.answers,
+      correctCount: input.correctCount,
+      wrongCount: input.wrongCount,
+      blankCount: input.blankCount,
+      netScore: input.netScore,
+      maxScore: input.maxScore,
+      scoreOn10: input.scoreOn10,
+      durationSec: Math.max(0, Math.round(input.durationSec)),
+    };
+
+    await this.repository.saveExamAttempt(attempt);
+    this.examAttempts.update((items) =>
+      [attempt, ...items].sort((a, b) => b.date.localeCompare(a.date)),
+    );
+
+    // Update stats for every answered question in batch
+    const questionMap = new Map(this.questions().map((q) => [q.id, q]));
+    const updatedQuestions: Question[] = [];
+    const touchedTopicIds = new Set<string>();
+
+    for (const answer of attempt.answers) {
+      if (answer.topicId) {
+        touchedTopicIds.add(answer.topicId);
+      }
+
+      const existing = questionMap.get(answer.questionId);
+      if (!existing) {
+        continue;
+      }
+
+      const answered = answer.selectedIndex !== null;
+      const nextStats = {
+        attempts: existing.stats.attempts + (answered ? 1 : 0),
+        correct: existing.stats.correct + (answer.isCorrect ? 1 : 0),
+        lastAnsweredAt: now,
+        lastResult: answered
+          ? ((answer.isCorrect ? 'correct' : 'wrong') as 'correct' | 'wrong')
+          : ('blank' as const),
+      };
+
+      const updatedQ: Question = {
+        ...existing,
+        stats: nextStats,
+        updatedAt: now,
+      };
+      questionMap.set(existing.id, updatedQ);
+      updatedQuestions.push(updatedQ);
+    }
+
+    if (updatedQuestions.length > 0) {
+      await this.repository.saveQuestions(updatedQuestions);
+      const updatedMap = new Map(updatedQuestions.map((q) => [q.id, q]));
+      this.questions.update((items) => items.map((q) => updatedMap.get(q.id) ?? q));
+    }
+
+    // Update lastReviewedAt for topics practiced
+    for (const topicId of touchedTopicIds) {
+      if (this.getTopicById(topicId)) {
+        await this.logTopicReview(topicId, false);
+      }
+    }
+
+    // Log a StudySession (type 'test') when test duration >= 60s
+    if (input.logStudySession !== false && attempt.durationSec >= 60) {
+      const durationMinutes = Math.max(1, Math.round(attempt.durationSec / 60));
+      const dominantBlock = this.getDominantBlock(attempt.answers);
+      const primaryTopicId =
+        touchedTopicIds.size === 1 ? Array.from(touchedTopicIds)[0] : '';
+      await this.addStudySession({
+        topicId: primaryTopicId,
+        blockId: dominantBlock,
+        endedAt: now,
+        durationMinutes,
+        type: 'test',
+        notes: `${attempt.title} (${attempt.correctCount}/${attempt.maxScore} aciertos)`,
+      });
+    }
+
+    return attempt;
+  }
+
+  async deleteExamAttempt(id: string): Promise<void> {
+    await this.repository.deleteExamAttempt(id);
+    this.examAttempts.update((items) => items.filter((item) => item.id !== id));
+  }
+
+  private buildQuestion(input: CreateQuestionInput, timestamp: string): Question {
+    return {
+      id: this.generateId('q'),
+      blockId: input.blockId,
+      topicId: input.topicId || undefined,
+      caseStudyId: input.caseStudyId || undefined,
+      prompt: input.prompt.trim(),
+      options: input.options.map((opt) => opt.trim()) as [string, string, string, string],
+      correctIndex: input.correctIndex,
+      explanation: input.explanation?.trim() || undefined,
+      reference: input.reference?.trim() || undefined,
+      source: input.source?.trim() || undefined,
+      tags: Array.from(new Set((input.tags ?? []).map((t) => t.trim()).filter(Boolean))),
+      flagged: input.flagged ?? false,
+      stats: {
+        attempts: 0,
+        correct: 0,
+      },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  }
+
+  private getDominantBlock(answers: ExamAttempt['answers']): TaiBlockId {
+    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    for (const answer of answers) {
+      counts[answer.blockId] = (counts[answer.blockId] ?? 0) + 1;
+    }
+    let best: TaiBlockId = 'B1';
+    for (const id of ['B1', 'B2', 'B3', 'B4'] as TaiBlockId[]) {
+      if (counts[id] > counts[best]) {
+        best = id;
+      }
+    }
+    return best;
   }
 
   private generateId(prefix: string): string {

@@ -2,6 +2,9 @@ import { Injectable, inject, signal } from '@angular/core';
 import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   BackupPayload,
+  CaseStudy,
+  ExamAttempt,
+  Question,
   StudySession,
   TaiBlockId,
   Topic,
@@ -17,6 +20,9 @@ export interface BackupImportResult {
   topicsCount: number;
   sessionsCount: number;
   weeklyPlanItemsCount: number;
+  caseStudiesCount: number;
+  questionsCount: number;
+  examAttemptsCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -25,21 +31,28 @@ export class BackupService {
   readonly lastBackupAt = signal<string | null>(this.readLastBackupDate());
 
   async createBackupPayload(): Promise<BackupPayload> {
-    const [blocks, topics, studySessions, weeklyPlanItems] = await Promise.all([
-      this.repository.getBlocks(),
-      this.repository.getTopics(),
-      this.repository.getStudySessions(),
-      this.repository.getWeeklyPlanItems(),
-    ]);
+    const [blocks, topics, studySessions, weeklyPlanItems, caseStudies, questions, examAttempts] =
+      await Promise.all([
+        this.repository.getBlocks(),
+        this.repository.getTopics(),
+        this.repository.getStudySessions(),
+        this.repository.getWeeklyPlanItems(),
+        this.repository.getCaseStudies(),
+        this.repository.getQuestions(),
+        this.repository.getExamAttempts(),
+      ]);
 
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       appName: 'tai-study',
       exportedAt: new Date().toISOString(),
       blocks: blocks.length > 0 ? blocks : TAI_BLOCKS_SEED,
       topics,
       studySessions,
       weeklyPlanItems,
+      caseStudies,
+      questions,
+      examAttempts,
     };
   }
 
@@ -76,10 +89,12 @@ export class BackupService {
     const candidate = parsed as Partial<BackupPayload>;
     if (
       candidate.appName !== 'tai-study' ||
-      (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2)
+      (candidate.schemaVersion !== 1 &&
+        candidate.schemaVersion !== 2 &&
+        candidate.schemaVersion !== 3)
     ) {
       throw new Error(
-        'Este archivo no corresponde a un backup compatible de TAI Study (v1/v2).',
+        'Este archivo no corresponde a un backup compatible de TAI Study (v1/v2/v3).',
       );
     }
 
@@ -94,6 +109,9 @@ export class BackupService {
 
     let studySessions: StudySession[] = [];
     let weeklyPlanItems: WeeklyPlanItem[] = [];
+    let caseStudies: CaseStudy[] = [];
+    let questions: Question[] = [];
+    let examAttempts: ExamAttempt[] = [];
 
     if (candidate.studySessions !== undefined) {
       if (
@@ -115,6 +133,36 @@ export class BackupService {
       weeklyPlanItems = candidate.weeklyPlanItems;
     }
 
+    if (candidate.caseStudies !== undefined) {
+      if (
+        !Array.isArray(candidate.caseStudies) ||
+        !candidate.caseStudies.every((cs) => this.isValidCaseStudy(cs))
+      ) {
+        throw new Error('Algunos supuestos prácticos del backup tienen una estructura inválida.');
+      }
+      caseStudies = candidate.caseStudies;
+    }
+
+    if (candidate.questions !== undefined) {
+      if (
+        !Array.isArray(candidate.questions) ||
+        !candidate.questions.every((q) => this.isValidQuestion(q))
+      ) {
+        throw new Error('Algunas preguntas del backup tienen una estructura inválida.');
+      }
+      questions = candidate.questions;
+    }
+
+    if (candidate.examAttempts !== undefined) {
+      if (
+        !Array.isArray(candidate.examAttempts) ||
+        !candidate.examAttempts.every((attempt) => this.isValidExamAttempt(attempt))
+      ) {
+        throw new Error('Algunos intentos de test del backup tienen una estructura inválida.');
+      }
+      examAttempts = candidate.examAttempts;
+    }
+
     return {
       schemaVersion: candidate.schemaVersion,
       appName: 'tai-study',
@@ -126,6 +174,9 @@ export class BackupService {
       topics: candidate.topics,
       studySessions,
       weeklyPlanItems,
+      caseStudies,
+      questions,
+      examAttempts,
     };
   }
 
@@ -135,13 +186,27 @@ export class BackupService {
 
     const sessions = payload.studySessions ?? [];
     const planItems = payload.weeklyPlanItems ?? [];
+    const caseStudies = payload.caseStudies ?? [];
+    const questions = payload.questions ?? [];
+    const examAttempts = payload.examAttempts ?? [];
 
-    await this.repository.replaceAllData(payload.blocks, payload.topics, sessions, planItems);
+    await this.repository.replaceAllData(
+      payload.blocks,
+      payload.topics,
+      sessions,
+      planItems,
+      caseStudies,
+      questions,
+      examAttempts,
+    );
     return {
       blocksCount: payload.blocks.length,
       topicsCount: payload.topics.length,
       sessionsCount: sessions.length,
       weeklyPlanItemsCount: planItems.length,
+      caseStudiesCount: caseStudies.length,
+      questionsCount: questions.length,
+      examAttemptsCount: examAttempts.length,
     };
   }
 
@@ -201,6 +266,65 @@ export class BackupService {
       typeof planItem.order === 'number' &&
       Number.isFinite(planItem.order) &&
       typeof planItem.completed === 'boolean'
+    );
+  }
+
+  private isValidCaseStudy(item: unknown): item is CaseStudy {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+    const cs = item as Partial<CaseStudy>;
+    return (
+      typeof cs.id === 'string' &&
+      typeof cs.blockId === 'string' &&
+      VALID_BLOCK_IDS.has(cs.blockId as TaiBlockId) &&
+      typeof cs.title === 'string' &&
+      typeof cs.statement === 'string' &&
+      Array.isArray(cs.tags)
+    );
+  }
+
+  private isValidQuestion(item: unknown): item is Question {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+    const q = item as Partial<Question>;
+    return (
+      typeof q.id === 'string' &&
+      typeof q.blockId === 'string' &&
+      VALID_BLOCK_IDS.has(q.blockId as TaiBlockId) &&
+      typeof q.prompt === 'string' &&
+      Array.isArray(q.options) &&
+      q.options.length === 4 &&
+      q.options.every((opt) => typeof opt === 'string') &&
+      typeof q.correctIndex === 'number' &&
+      Number.isInteger(q.correctIndex) &&
+      q.correctIndex >= 0 &&
+      q.correctIndex <= 3 &&
+      typeof q.flagged === 'boolean' &&
+      Array.isArray(q.tags) &&
+      !!q.stats &&
+      typeof q.stats.attempts === 'number' &&
+      typeof q.stats.correct === 'number'
+    );
+  }
+
+  private isValidExamAttempt(item: unknown): item is ExamAttempt {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+    const a = item as Partial<ExamAttempt>;
+    return (
+      typeof a.id === 'string' &&
+      typeof a.title === 'string' &&
+      typeof a.date === 'string' &&
+      typeof a.mode === 'string' &&
+      typeof a.penaltyRatio === 'number' &&
+      Number.isFinite(a.penaltyRatio) &&
+      Array.isArray(a.answers) &&
+      typeof a.netScore === 'number' &&
+      typeof a.maxScore === 'number' &&
+      typeof a.durationSec === 'number'
     );
   }
 

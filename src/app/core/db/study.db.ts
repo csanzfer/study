@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
 import {
+  CaseStudy,
+  ExamAttempt,
+  Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
@@ -15,6 +18,9 @@ export class StudyDatabase extends Dexie {
   topics!: Table<Topic, string>;
   studySessions!: Table<StudySession, string>;
   weeklyPlanItems!: Table<WeeklyPlanItem, string>;
+  caseStudies!: Table<CaseStudy, string>;
+  questions!: Table<Question, string>;
+  examAttempts!: Table<ExamAttempt, string>;
 
   constructor() {
     super('TaiStudyDB');
@@ -29,6 +35,16 @@ export class StudyDatabase extends Dexie {
       topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
       studySessions: 'id, topicId, blockId, startedAt, type',
       weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
+    });
+
+    this.version(3).stores({
+      blocks: 'id, order',
+      topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
+      studySessions: 'id, topicId, blockId, startedAt, type',
+      weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
+      caseStudies: 'id, blockId, updatedAt, *tags',
+      questions: 'id, blockId, topicId, caseStudyId, flagged, updatedAt, *tags',
+      examAttempts: 'id, date, mode, caseStudyId',
     });
   }
 

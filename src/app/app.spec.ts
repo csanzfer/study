@@ -4,6 +4,9 @@ import { App } from './app';
 import { routes } from './app.routes';
 import { TAI_BLOCKS_SEED } from './core/db/tai-seed';
 import {
+  CaseStudy,
+  ExamAttempt,
+  Question,
   StudySession,
   TaiBlock,
   TaiBlockId,
@@ -18,6 +21,9 @@ class InMemoryStudyRepository implements StudyRepository {
   private topics: Topic[] = [];
   private sessions: StudySession[] = [];
   private weeklyPlan: WeeklyPlanItem[] = [];
+  private caseStudies: CaseStudy[] = [];
+  private questions: Question[] = [];
+  private examAttempts: ExamAttempt[] = [];
 
   async initialize(): Promise<void> {}
 
@@ -95,16 +101,53 @@ class InMemoryStudyRepository implements StudyRepository {
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.id !== id);
   }
 
+  async getCaseStudies(): Promise<CaseStudy[]> {
+    return [...this.caseStudies];
+  }
+  async saveCaseStudy(cs: CaseStudy): Promise<void> {
+    this.caseStudies = [cs, ...this.caseStudies.filter((c) => c.id !== cs.id)];
+  }
+  async deleteCaseStudy(id: string): Promise<void> {
+    this.caseStudies = this.caseStudies.filter((c) => c.id !== id);
+  }
+  async getQuestions(): Promise<Question[]> {
+    return [...this.questions];
+  }
+  async saveQuestion(q: Question): Promise<void> {
+    this.questions = [q, ...this.questions.filter((x) => x.id !== q.id)];
+  }
+  async saveQuestions(qs: Question[]): Promise<void> {
+    for (const q of qs) await this.saveQuestion(q);
+  }
+  async deleteQuestion(id: string): Promise<void> {
+    this.questions = this.questions.filter((q) => q.id !== id);
+  }
+  async getExamAttempts(): Promise<ExamAttempt[]> {
+    return [...this.examAttempts];
+  }
+  async saveExamAttempt(attempt: ExamAttempt): Promise<void> {
+    this.examAttempts = [attempt, ...this.examAttempts.filter((a) => a.id !== attempt.id)];
+  }
+  async deleteExamAttempt(id: string): Promise<void> {
+    this.examAttempts = this.examAttempts.filter((a) => a.id !== id);
+  }
+
   async replaceAllData(
     blocks: TaiBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
+    caseStudies: CaseStudy[] = [],
+    questions: Question[] = [],
+    examAttempts: ExamAttempt[] = [],
   ): Promise<void> {
     this.blocks = [...blocks];
     this.topics = [...topics];
     this.sessions = [...studySessions];
     this.weeklyPlan = [...weeklyPlanItems];
+    this.caseStudies = [...caseStudies];
+    this.questions = [...questions];
+    this.examAttempts = [...examAttempts];
   }
 }
 
