@@ -1,0 +1,479 @@
+<div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+  <div class="flex items-center gap-2.5">
+    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+      <mat-icon class="!h-5 !w-5 !text-[20px]">picture_as_pdf</mat-icon>
+    </div>
+    <div>
+      <h2 class="text-base font-bold text-slate-900 dark:text-white">
+        Asistente PDF de Convocatorias INAP
+      </h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Paso {{ step() }} de 2 · Procesamiento 100% local en tu navegador
+      </p>
+    </div>
+  </div>
+  <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="!max-h-[72vh] !px-6 !py-5">
+  @if (extractionError(); as error) {
+    <div class="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+      <mat-icon class="!h-4 !w-4 shrink-0 !text-[16px]">error_outline</mat-icon>
+      <span>{{ error }}</span>
+    </div>
+  }
+
+  @if (step() === 1) {
+    <div class="space-y-5">
+      <!-- Mode selector -->
+      <div>
+        <label class="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Tipo de ejercicio del INAP
+        </label>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            (click)="mode.set('questionnaire')"
+            class="flex items-start gap-2.5 rounded-xl border p-3 text-left transition"
+            [class.border-blue-500]="mode() === 'questionnaire'"
+            [class.bg-blue-50/70]="mode() === 'questionnaire'"
+            [class.dark:bg-blue-950/40]="mode() === 'questionnaire'"
+            [class.border-slate-200]="mode() !== 'questionnaire'"
+            [class.dark:border-slate-800]="mode() !== 'questionnaire'"
+          >
+            <mat-icon class="mt-0.5 text-blue-600 dark:text-blue-400">quiz</mat-icon>
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">
+                Primera parte · Cuestionario tipo test
+              </div>
+              <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                Detecta preguntas numeradas (1–80), opciones a)–d) y preguntas de reserva.
+              </p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            (click)="mode.set('case_study')"
+            class="flex items-start gap-2.5 rounded-xl border p-3 text-left transition"
+            [class.border-violet-500]="mode() === 'case_study'"
+            [class.bg-violet-50/70]="mode() === 'case_study'"
+            [class.dark:bg-violet-950/40]="mode() === 'case_study'"
+            [class.border-slate-200]="mode() !== 'case_study'"
+            [class.dark:border-slate-800]="mode() !== 'case_study'"
+          >
+            <mat-icon class="mt-0.5 text-violet-600 dark:text-violet-400">assignment</mat-icon>
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">
+                Segunda parte · Supuesto práctico
+              </div>
+              <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                Extrae el enunciado común del supuesto y vincula todas sus preguntas.
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- PDF uploads -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <!-- Questionnaire PDF -->
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-100">
+              1. PDF del Cuestionario *
+            </span>
+            @if (questionnaireFileName()) {
+              <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                {{ questionnairePageCount() }} págs.
+              </span>
+            }
+          </div>
+          <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Cuadernillo oficial publicado por el INAP (con texto seleccionable).
+          </p>
+          <input
+            #questionnaireInput
+            type="file"
+            accept=".pdf,application/pdf"
+            class="hidden"
+            (change)="onQuestionnaireFileSelected($event)"
+          />
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="extractingPdf()"
+            (click)="triggerQuestionnaireSelect()"
+            class="mt-3 w-full !rounded-xl !text-xs"
+          >
+            <mat-icon>upload_file</mat-icon>
+            {{ questionnaireFileName() || 'Seleccionar PDF del examen' }}
+          </button>
+        </div>
+
+        <!-- Answer Key PDF -->
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-100">
+              2. Plantilla de Respuestas (opcional)
+            </span>
+            @if (answerKeyFileName()) {
+              <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                Cargada
+              </span>
+            }
+          </div>
+          <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Cruza respuestas correctas y detecta preguntas anuladas automáticamente.
+          </p>
+          <input
+            #answerKeyInput
+            type="file"
+            accept=".pdf,application/pdf"
+            class="hidden"
+            (change)="onAnswerKeyFileSelected($event)"
+          />
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="extractingPdf()"
+            (click)="triggerAnswerKeySelect()"
+            class="mt-3 w-full !rounded-xl !text-xs"
+          >
+            <mat-icon>fact_check</mat-icon>
+            {{ answerKeyFileName() || 'Seleccionar PDF de plantilla' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Optional answer key text paste -->
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          O pega directamente la plantilla de respuestas (ej. <code>1 B  2 C  3 ANULADA  R1 A</code>)
+        </label>
+        <textarea
+          rows="2"
+          [ngModel]="answerKeyRawText()"
+          (ngModelChange)="answerKeyRawText.set($event)"
+          placeholder="1 A   2 C   3 D   4 ANULADA   R1 B..."
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        ></textarea>
+      </div>
+
+      <!-- Metadata -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Bloque por defecto
+          </label>
+          <select
+            [ngModel]="defaultBlockId()"
+            (ngModelChange)="defaultBlockId.set($event)"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          >
+            @for (block of store.blocks(); track block.id) {
+              <option [value]="block.id">{{ block.code }} · {{ block.shortTitle }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Convocatoria / Origen
+          </label>
+          <input
+            type="text"
+            [ngModel]="source()"
+            (ngModelChange)="source.set($event)"
+            placeholder="Ej. INAP TAI 2024 Libre"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Etiquetas (separadas por coma)
+          </label>
+          <input
+            type="text"
+            [ngModel]="tagsText()"
+            (ngModelChange)="tagsText.set($event)"
+            placeholder="inap, 2024, libre"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+      </div>
+
+      @if (extractingPdf()) {
+        <div class="flex items-center gap-2 rounded-xl bg-blue-50 px-3.5 py-2.5 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+          <mat-icon class="!h-4 !w-4 animate-spin !text-[16px]">sync</mat-icon>
+          Extrayendo texto del PDF en local...
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Step 2: Review & Edit -->
+    <div class="space-y-4">
+      @if (globalWarnings().length > 0) {
+        <div class="space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+          @for (warn of globalWarnings(); track warn) {
+            <div class="flex items-start gap-1.5">
+              <mat-icon class="!h-4 !w-4 shrink-0 !text-[16px]">warning_amber</mat-icon>
+              <span>{{ warn }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- KPI bar -->
+      <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+          <div class="text-[11px] text-slate-500 dark:text-slate-400">Detectadas</div>
+          <div class="text-lg font-bold text-slate-900 dark:text-white">{{ parsedQuestions().length }}</div>
+        </div>
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-2.5 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+          <div class="text-[11px] text-emerald-700 dark:text-emerald-300">Listas para importar</div>
+          <div class="text-lg font-bold text-emerald-800 dark:text-emerald-200">{{ importableQuestions().length }}</div>
+        </div>
+        <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 dark:border-amber-900/50 dark:bg-amber-950/30">
+          <div class="text-[11px] text-amber-700 dark:text-amber-300">Sin respuesta</div>
+          <div class="text-lg font-bold text-amber-800 dark:text-amber-200">{{ missingAnswerCount() }}</div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+          <div class="text-[11px] text-slate-500 dark:text-slate-400">Anuladas / Duplicadas</div>
+          <div class="text-lg font-bold text-slate-800 dark:text-slate-200">
+            {{ annulledCount() }} / {{ duplicateIds().size }}
+          </div>
+        </div>
+      </div>
+
+      @if (mode() === 'case_study') {
+        <div class="space-y-2 rounded-2xl border border-violet-200 bg-violet-50/40 p-3.5 dark:border-violet-900/50 dark:bg-violet-950/20">
+          <div class="text-xs font-bold text-violet-800 dark:text-violet-300">
+            Enunciado del Supuesto Práctico
+          </div>
+          <input
+            type="text"
+            [ngModel]="caseStudyTitle()"
+            (ngModelChange)="caseStudyTitle.set($event)"
+            placeholder="Título del supuesto práctico"
+            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          />
+          <textarea
+            rows="4"
+            [ngModel]="caseStudyStatement()"
+            (ngModelChange)="caseStudyStatement.set($event)"
+            placeholder="Texto del enunciado común del supuesto..."
+            class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          ></textarea>
+        </div>
+      }
+
+      <!-- Controls -->
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+          <button
+            type="button"
+            (click)="reviewFilter.set('all')"
+            class="rounded-lg px-2.5 py-1 font-medium"
+            [class.bg-white]="reviewFilter() === 'all'"
+            [class.dark:bg-slate-900]="reviewFilter() === 'all'"
+          >
+            Todas ({{ parsedQuestions().length }})
+          </button>
+          <button
+            type="button"
+            (click)="reviewFilter.set('issues')"
+            class="rounded-lg px-2.5 py-1 font-medium"
+            [class.bg-white]="reviewFilter() === 'issues'"
+            [class.dark:bg-slate-900]="reviewFilter() === 'issues'"
+          >
+            Con avisos
+          </button>
+          <button
+            type="button"
+            (click)="reviewFilter.set('selected')"
+            class="rounded-lg px-2.5 py-1 font-medium"
+            [class.bg-white]="reviewFilter() === 'selected'"
+            [class.dark:bg-slate-900]="reviewFilter() === 'selected'"
+          >
+            Seleccionadas
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <label class="inline-flex cursor-pointer items-center gap-1.5 text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              [ngModel]="skipDuplicates()"
+              (ngModelChange)="skipDuplicates.set($event)"
+            />
+            Omitir duplicadas
+          </label>
+          <button
+            type="button"
+            (click)="selectAllValid()"
+            class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Seleccionar válidas
+          </button>
+          <button
+            type="button"
+            (click)="deselectAll()"
+            class="text-slate-500 hover:underline dark:text-slate-400"
+          >
+            Limpiar selección
+          </button>
+        </div>
+      </div>
+
+      <!-- Questions list -->
+      <div class="space-y-3">
+        @for (q of filteredQuestions(); track q.id) {
+          <article
+            class="rounded-2xl border p-3.5 transition"
+            [class.border-slate-200]="q.selected"
+            [class.bg-white]="q.selected"
+            [class.dark:border-slate-800]="q.selected"
+            [class.dark:bg-slate-900]="q.selected"
+            [class.border-slate-200/60]="!q.selected"
+            [class.bg-slate-50/70]="!q.selected"
+            [class.opacity-70]="!q.selected"
+            [class.dark:bg-slate-900/40]="!q.selected"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  [checked]="q.selected"
+                  (change)="updateQuestion(q.id, { selected: $any($event.target).checked })"
+                />
+                <span class="rounded-md bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  #{{ q.numberLabel }}
+                </span>
+                @if (q.isReserve) {
+                  <span class="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                    Reserva
+                  </span>
+                }
+                @if (q.isAnnulled) {
+                  <span class="rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                    Anulada
+                  </span>
+                }
+                @if (duplicateIds().has(q.id)) {
+                  <span class="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                    Ya en el banco
+                  </span>
+                }
+              </div>
+
+              <div class="flex items-center gap-2">
+                <select
+                  [ngModel]="q.blockId"
+                  (ngModelChange)="updateQuestion(q.id, { blockId: $event })"
+                  aria-label="Bloque de la pregunta"
+                  class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  @for (block of store.blocks(); track block.id) {
+                    <option [value]="block.id">{{ block.id }}</option>
+                  }
+                </select>
+
+                <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
+                  @for (letter of letters; track letter; let idx = $index) {
+                    <button
+                      type="button"
+                      (click)="setCorrectOption(q.id, $any(idx))"
+                      class="h-6 w-6 rounded-md text-[11px] font-bold transition"
+                      [class.bg-emerald-600]="q.correctIndex === idx"
+                      [class.text-white]="q.correctIndex === idx"
+                      [class.text-slate-500]="q.correctIndex !== idx"
+                      [class.hover:bg-slate-200]="q.correctIndex !== idx"
+                      [class.dark:hover:bg-slate-700]="q.correctIndex !== idx"
+                    >
+                      {{ letter }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <textarea
+              rows="2"
+              [ngModel]="q.prompt"
+              (ngModelChange)="updateQuestion(q.id, { prompt: $event })"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-xs font-medium text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+            ></textarea>
+
+            <div class="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+              @for (opt of q.options; track $index) {
+                <div class="flex items-center gap-1.5">
+                  <span
+                    class="w-5 text-center text-[11px] font-bold"
+                    [class.text-emerald-600]="q.correctIndex === $index"
+                    [class.text-slate-400]="q.correctIndex !== $index"
+                  >
+                    {{ letters[$index] }})
+                  </span>
+                  <input
+                    type="text"
+                    [ngModel]="opt"
+                    (ngModelChange)="updateOption(q.id, $any($index), $event)"
+                    class="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                  />
+                </div>
+              }
+            </div>
+
+            @if (q.warnings.length > 0) {
+              <div class="mt-2 flex flex-wrap gap-1.5 text-[11px] text-amber-700 dark:text-amber-300">
+                @for (w of q.warnings; track w) {
+                  <span class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 dark:bg-amber-950/40">
+                    <mat-icon class="!h-3.5 !w-3.5 !text-[13px]">info</mat-icon>
+                    {{ w }}
+                  </span>
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="!border-t !border-slate-200 !px-6 !py-3 dark:!border-slate-800">
+  @if (step() === 1) {
+    <button mat-stroked-button type="button" mat-dialog-close class="!rounded-xl">
+      Cancelar
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="extractingPdf() || !questionnaireRawText().trim()"
+      (click)="analyzeAndContinue()"
+      class="!rounded-xl"
+    >
+      Analizar PDF
+      <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+    </button>
+  } @else {
+    <button mat-stroked-button type="button" (click)="step.set(1)" class="!rounded-xl">
+      <mat-icon>arrow_back</mat-icon>
+      Volver
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="importableQuestions().length === 0"
+      (click)="confirmImport()"
+      class="!rounded-xl"
+    >
+      <mat-icon>download_done</mat-icon>
+      Importar {{ importableQuestions().length }} preguntas
+    </button>
+  }
+</mat-dialog-actions>

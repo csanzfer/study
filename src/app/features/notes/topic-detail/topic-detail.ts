@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
@@ -33,6 +34,7 @@ import {
   NoteImportDialogResult,
 } from '../import-dialog/note-import-dialog';
 import { NoteImportService } from '../services/note-import.service';
+import { TopicExportService } from '../services/topic-export.service';
 import {
   FlashcardEditorDialog,
   FlashcardEditorDialogData,
@@ -57,6 +59,7 @@ const AUTOSAVE_DEBOUNCE_MS = 800;
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    MatMenuModule,
     MatSnackBarModule,
     MatTooltipModule,
     MarkmapViewer,
@@ -71,6 +74,7 @@ export class TopicDetail {
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
   private readonly importService = inject(NoteImportService);
+  private readonly exportService = inject(TopicExportService);
   private readonly noteEditor = viewChild(NoteEditor);
   protected readonly store = inject(StudyStoreService);
   private readonly pomodoro = inject(PomodoroService);
@@ -577,6 +581,51 @@ export class TopicDetail {
     await this.store.deleteTopic(current.id);
     this.snackBar.open(`Tema "${current.title}" eliminado.`, 'Cerrar', { duration: 2500 });
     await this.router.navigate(['/blocks', this.blockId()]);
+  }
+
+  protected async exportTopicMarkdown(): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    await this.flushPendingSave();
+    const latest = this.topic() ?? current;
+    const filename = this.exportService.downloadTopicMarkdown(latest, this.block());
+    this.snackBar.open(`Apunte exportado como ${filename}.`, 'Cerrar', { duration: 2800 });
+  }
+
+  protected async copyTopicMarkdown(): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    await this.flushPendingSave();
+    const latest = this.topic() ?? current;
+    try {
+      const copied = await this.exportService.copyTopicMarkdown(latest, this.block());
+      this.snackBar.open(
+        copied
+          ? 'Apunte copiado en formato Markdown.'
+          : 'El portapapeles no está disponible en este navegador.',
+        'Cerrar',
+        { duration: 2500 },
+      );
+    } catch {
+      this.snackBar.open('No se pudo copiar al portapapeles.', 'Cerrar', { duration: 2500 });
+    }
+  }
+
+  protected async printTopicPdf(): Promise<void> {
+    const current = this.topic();
+    if (!current) {
+      return;
+    }
+
+    await this.flushPendingSave();
+    const latest = this.topic() ?? current;
+    this.exportService.printTopicPdf(latest, this.block());
   }
 }
 

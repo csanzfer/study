@@ -239,6 +239,32 @@
           </button>
 
           <button
+            mat-stroked-button
+            type="button"
+            [matMenuTriggerFor]="exportTopicMenu"
+            matTooltip="Exportar apunte a Markdown o PDF imprimible"
+            class="!rounded-xl !text-xs"
+          >
+            <mat-icon class="!text-[18px]">download</mat-icon>
+            Exportar
+          </button>
+
+          <mat-menu #exportTopicMenu="matMenu">
+            <button mat-menu-item type="button" (click)="exportTopicMarkdown()">
+              <mat-icon>description</mat-icon>
+              <span>Descargar Markdown (.md)</span>
+            </button>
+            <button mat-menu-item type="button" (click)="copyTopicMarkdown()">
+              <mat-icon>content_copy</mat-icon>
+              <span>Copiar como Markdown</span>
+            </button>
+            <button mat-menu-item type="button" (click)="printTopicPdf()">
+              <mat-icon>picture_as_pdf</mat-icon>
+              <span>Imprimir / Guardar PDF</span>
+            </button>
+          </mat-menu>
+
+          <button
             mat-icon-button
             type="button"
             aria-label="Eliminar tema"

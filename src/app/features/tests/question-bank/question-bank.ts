@@ -17,6 +17,11 @@ import {
   ConfirmDialogData,
 } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import {
+  InapPdfImportDialog,
+  InapPdfImportDialogData,
+  InapPdfImportDialogResult,
+} from '../inap-pdf-import-dialog/inap-pdf-import-dialog';
+import {
   QuestionEditorDialog,
   QuestionEditorDialogData,
 } from '../question-editor-dialog/question-editor-dialog';
@@ -169,6 +174,42 @@ export class QuestionBank {
     this.snackBar.open(`${imported.length} preguntas importadas al banco.`, 'Cerrar', {
       duration: 3500,
     });
+  }
+
+  protected async openInapPdfImportDialog(): Promise<void> {
+    const data: InapPdfImportDialogData = {
+      defaultBlockId: this.blockFilter() === 'ALL' ? 'B1' : (this.blockFilter() as TaiBlockId),
+    };
+    const ref = this.dialog.open<
+      InapPdfImportDialog,
+      InapPdfImportDialogData,
+      InapPdfImportDialogResult
+    >(InapPdfImportDialog, {
+      width: '920px',
+      maxWidth: '96vw',
+      data,
+    });
+    const result = await firstValueFrom(ref.afterClosed());
+    if (!result || result.questions.length === 0) return;
+
+    let caseStudyId: string | undefined;
+    if (result.caseStudy) {
+      const createdCaseStudy = await this.store.createCaseStudy(result.caseStudy);
+      caseStudyId = createdCaseStudy.id;
+    }
+
+    const questionsToSave = caseStudyId
+      ? result.questions.map((q) => ({ ...q, caseStudyId }))
+      : result.questions;
+
+    await this.store.bulkCreateQuestions(questionsToSave);
+    this.snackBar.open(
+      caseStudyId
+        ? `Supuesto práctico y ${questionsToSave.length} preguntas importadas desde PDF INAP.`
+        : `${questionsToSave.length} preguntas importadas desde PDF oficial del INAP.`,
+      'Cerrar',
+      { duration: 4000 },
+    );
   }
 
   protected async openGeneratorDialog(): Promise<void> {

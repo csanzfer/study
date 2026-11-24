@@ -13,9 +13,10 @@ flowchart TD
     subgraph UI["Capa de Presentación (Angular 22)"]
         Shell["AppShell Component\n(Sidebar, Header, Search)"]
         Dashboard["Dashboard Component"]
-        BlockView["BlockView Component\n(Topic List & Drag-Drop)"]
-        TopicDetail["TopicDetail Component\n(Editor, Metadata, Outline)"]
-        ComingSoon["ComingSoon Component\n(Fases 2, 3, 4)"]
+        BlockView["BlockView Component\n(Topic List, Drag-Drop & Block Export)"]
+        TopicDetail["TopicDetail Component\n(Editor, Metadata, Outline & MD/PDF Export)"]
+        Tests["Tests & INAP PDF Importer\n(pdfjs-dist local worker)"]
+        Flashcards["Flashcards SRS & Gamification"]
     end
 
     subgraph State["Capa de Estado Reactivo"]
@@ -41,7 +42,8 @@ flowchart TD
     Dashboard --> Store
     BlockView --> Store
     TopicDetail --> Store
-    ComingSoon --> Store
+    Tests --> Store
+    Flashcards --> Store
 
     Shell --> Backup
     Shell --> Theme

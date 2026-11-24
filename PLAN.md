@@ -273,8 +273,8 @@ export interface GamificationProfile {
 
 ### Fase 5 (Opcional / Futuro) — Evolución y Extras
 - [ ] Sincronización multidispositivo (Supabase o Firebase) implementando un nuevo `CloudStudyRepository`.
-- [ ] Exportación de apuntes a Markdown/PDF para impresión.
-- [ ] Asistente de importación desde PDFs de convocatorias oficiales del INAP.
+- [x] Exportación de apuntes a Markdown/PDF para impresión.
+- [x] Asistente de importación desde PDFs de convocatorias oficiales del INAP.
 
 ---
 
