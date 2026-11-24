@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { generateWithGemini } from './gemini-client.mjs';
 
 const COMMENT_MARKER = '<!-- tai-study-gemini-pr-review -->';
 const MAX_DIFF_CHARS = 90_000;
@@ -17,7 +18,7 @@ const prNumber = process.env.PR_NUMBER;
 const prTitle = process.env.PR_TITLE ?? '';
 const prBody = process.env.PR_BODY ?? '';
 const headSha = (process.env.HEAD_SHA ?? '').slice(0, 7);
-const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
+const configuredModel = process.env.GEMINI_MODEL?.trim() || '';
 
 if (!githubToken || !repo || !prNumber) {
   console.error('Faltan variables de entorno de GitHub (GITHUB_TOKEN, GITHUB_REPOSITORY o PR_NUMBER).');
@@ -75,63 +76,6 @@ Estructura tu respuesta en Markdown con estas secciones:
 
 Evita elogios genéricos y no repitas el diff.`;
 
-const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
-const MAX_ATTEMPTS = 3;
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function callGemini() {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 2048,
-        },
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text ?? '')
-        .join('')
-        .trim();
-
-      if (!text) {
-        throw new Error(`Respuesta vacía de Gemini API: ${JSON.stringify(data)}`);
-      }
-
-      return text;
-    }
-
-    const errorBody = await response.text();
-    if (RETRYABLE_STATUSES.has(response.status)) {
-      if (attempt < MAX_ATTEMPTS) {
-        const delayMs = attempt * 10_000;
-        console.log(
-          `::warning::Gemini API devolvió ${response.status} (intento ${attempt}/${MAX_ATTEMPTS}). Reintentando en ${delayMs / 1000}s...`,
-        );
-        await sleep(delayMs);
-        continue;
-      }
-
-      const transientError = new Error(`Gemini API temporalmente no disponible (${response.status}): ${errorBody}`);
-      transientError.isTransient = true;
-      throw transientError;
-    }
-
-    throw new Error(`Gemini API devolvió ${response.status}: ${errorBody}`);
-  }
-}
-
 async function upsertPrComment(body) {
   const headers = {
     Authorization: `Bearer ${githubToken}`,
@@ -170,13 +114,20 @@ async function upsertPrComment(body) {
 }
 
 try {
-  const reviewMarkdown = await callGemini();
+  const { text: reviewMarkdown, usedModel } = await generateWithGemini({
+    apiKey,
+    prompt,
+    configuredModel,
+    preferredTier: 'flash',
+    temperature: 0.2,
+    maxOutputTokens: 2048,
+  });
   const footerNote = truncated
     ? `\n\n> ℹ️ El diff superó ${MAX_DIFF_CHARS.toLocaleString('es-ES')} caracteres y fue truncado para la revisión.`
     : '';
   const finalComment = [
     COMMENT_MARKER,
-    `## 🤖 Revisión automática con Gemini (\`${model}\`)`,
+    `## 🤖 Revisión automática con Gemini (\`${usedModel}\`)`,
     `_Commit revisado: \`${headSha || 'HEAD'}\`_`,
     '',
     reviewMarkdown + footerNote,

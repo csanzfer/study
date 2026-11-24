@@ -1,11 +1,10 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { generateWithGemini } from './gemini-client.mjs';
 
 const COMMENT_MARKER = '<!-- tai-study-issue-analysis -->';
 const MAX_CONTEXT_CHARS = 100_000;
 const MAX_SINGLE_FILE_CHARS = 14_000;
-const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
-const MAX_ATTEMPTS = 3;
 
 const cliArgs = process.argv.slice(2);
 const dryRun = cliArgs.includes('--dry-run');
@@ -22,10 +21,10 @@ if (!apiKey) {
 const githubToken = process.env.GITHUB_TOKEN?.trim();
 const repo = process.env.GITHUB_REPOSITORY?.trim();
 const issueNumber = process.env.ISSUE_NUMBER?.trim() || positionalArgs[0]?.trim();
-const model =
+const configuredModel =
   process.env.GEMINI_ISSUE_MODEL?.trim() ||
   process.env.GEMINI_MODEL?.trim() ||
-  'gemini-3.8-pro';
+  '';
 
 if (!issueNumber || !/^\d+$/.test(issueNumber)) {
   console.error(
@@ -45,10 +44,6 @@ const githubHeaders = {
   'Content-Type': 'application/json',
   'X-GitHub-Api-Version': '2022-11-28',
 };
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function readTruncated(filePath, maxChars = MAX_SINGLE_FILE_CHARS) {
   if (!existsSync(filePath)) return '';
@@ -219,55 +214,14 @@ async function fetchIssueAndComments() {
 }
 
 async function callGemini(prompt) {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 4096,
-        },
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text ?? '')
-        .join('')
-        .trim();
-
-      if (!text) {
-        throw new Error(`Respuesta vacía de Gemini API: ${JSON.stringify(data)}`);
-      }
-
-      return text;
-    }
-
-    const errorBody = await response.text();
-    if (RETRYABLE_STATUSES.has(response.status)) {
-      if (attempt < MAX_ATTEMPTS) {
-        const delayMs = attempt * 10_000;
-        console.log(
-          `::warning::Gemini API devolvió ${response.status} (intento ${attempt}/${MAX_ATTEMPTS}). Reintentando en ${delayMs / 1000}s...`,
-        );
-        await sleep(delayMs);
-        continue;
-      }
-
-      const transientError = new Error(
-        `Gemini API temporalmente no disponible (${response.status}): ${errorBody}`,
-      );
-      transientError.isTransient = true;
-      throw transientError;
-    }
-
-    throw new Error(`Gemini API devolvió ${response.status}: ${errorBody}`);
-  }
+  return generateWithGemini({
+    apiKey,
+    prompt,
+    configuredModel,
+    preferredTier: 'pro',
+    temperature: 0.2,
+    maxOutputTokens: 4096,
+  });
 }
 
 async function upsertIssueComment(existingAnalysis, body) {
@@ -355,7 +309,7 @@ Si la issue está clara, indica "Ninguna". Si falta alguna definición funcional
 
 No inventes archivos que no existen como si existieran, no repitas el enunciado literalmente y sé conciso pero completo.`;
 
-  const analysisMarkdown = await callGemini(prompt);
+  const { text: analysisMarkdown, usedModel } = await callGemini(prompt);
   const inspectedNote =
     matchedFilePaths.length > 0
       ? `\n\n<details>\n<summary>Archivos de features/shared inspeccionados automáticamente (${matchedFilePaths.length})</summary>\n\n${matchedFilePaths.map((p) => `- \`${p}\``).join('\n')}\n</details>`
@@ -363,7 +317,7 @@ No inventes archivos que no existen como si existieran, no repitas el enunciado 
 
   const finalComment = [
     COMMENT_MARKER,
-    `## 🧭 Análisis técnico y plan de implementación (\`${model}\`)`,
+    `## 🧭 Análisis técnico y plan de implementación (\`${usedModel}\`)`,
     `_Generado automáticamente para facilitar la implementación con un modelo más ligero. Puedes re-ejecutarlo comentando \`/analyze\`._`,
     '',
     analysisMarkdown + inspectedNote,
