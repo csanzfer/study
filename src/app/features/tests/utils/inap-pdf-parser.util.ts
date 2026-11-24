@@ -110,7 +110,6 @@ export function parseInapQuestionnaireText(
 
   let current: DraftQuestion | null = null;
   let inReserveSection = false;
-  let reserveCounter = 0;
 
   const finalizeCurrent = () => {
     if (!current) {
@@ -189,7 +188,6 @@ export function parseInapQuestionnaireText(
           numericOrder = Number(explicitReserveNum);
           numberLabel = `R${numericOrder}`;
         } else if (inReserveSection) {
-          reserveCounter += 1;
           numericOrder = Number(regularNum);
           numberLabel = numericOrder <= 10 ? `R${numericOrder}` : String(numericOrder);
         } else {
@@ -271,17 +269,18 @@ export function parseInapAnswerKeyText(rawText: string): Map<string, InapAnswerK
   }
 
   const pairRegex =
-    /\b(R(?:eserva)?\s*\.?\s*\d{1,2}|\d{1,3})\s*(?:[.):\-]+|\s)\s*(ANULADA|ANUL\.?|[A-D])\b/gi;
+    /\b([Rr](?:[Ee][Ss][Ee][Rr][Vv][Aa])?\s*\.?\s*\d{1,2}|\d{1,3})\s*(?:[.):\-]+\s*([A-Da-d]|[Aa][Nn][Uu][Ll](?:[Aa][Dd][Aa]|\.)?)|\s+([A-D]|[Aa][Nn][Uu][Ll](?:[Aa][Dd][Aa]|\.)?))\b/g;
 
   for (const match of cleaned.matchAll(pairRegex)) {
     const rawNum = match[1].replace(/\s+/g, '').toUpperCase();
-    const rawVal = match[2].toUpperCase();
+    const rawVal = (match[2] ?? match[3] ?? '').toUpperCase();
+    const digitsMatch = rawNum.match(/\d+/);
+    if (!digitsMatch || !rawVal) {
+      continue;
+    }
 
-    const normalizedKey = rawNum.startsWith('RESERVA')
-      ? `R${rawNum.replace(/^RESERVA\.?/, '')}`
-      : rawNum.startsWith('R')
-        ? `R${Number(rawNum.slice(1))}`
-        : String(Number(rawNum));
+    const numeric = Number(digitsMatch[0]);
+    const normalizedKey = rawNum.startsWith('R') ? `R${numeric}` : String(numeric);
 
     if (rawVal.startsWith('ANUL')) {
       result.set(normalizedKey, 'ANULADA');
@@ -304,12 +303,7 @@ export function applyInapAnswerKey(
   let annulledCount = 0;
 
   const updated = questions.map((question) => {
-    const direct = answerKey.get(question.numberLabel.toUpperCase());
-    const fallback =
-      direct === undefined && question.isReserve
-        ? answerKey.get(String(question.numericOrder))
-        : undefined;
-    const entry = direct ?? fallback;
+    const entry = answerKey.get(question.numberLabel.toUpperCase());
 
     const cleanWarnings = question.warnings.filter(
       (w) => !w.includes('anulada') && !w.includes('Sin respuesta'),

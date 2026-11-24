@@ -24,29 +24,33 @@ export class PdfTextExtractorService {
 
     const buffer = await file.arrayBuffer();
     const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
-    const pdf = await loadingTask.promise;
+    try {
+      const pdf = await loadingTask.promise;
 
-    const pageTexts: string[] = [];
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber);
-      const content = await page.getTextContent();
-      const items: PdfTextItemLike[] = [];
-      for (const item of content.items) {
-        if ('str' in item && typeof item.str === 'string') {
-          items.push({
-            str: item.str,
-            transform: item.transform,
-            hasEOL: item.hasEOL,
-          });
+      const pageTexts: string[] = [];
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const content = await page.getTextContent();
+        const items: PdfTextItemLike[] = [];
+        for (const item of content.items) {
+          if ('str' in item && typeof item.str === 'string') {
+            items.push({
+              str: item.str,
+              transform: item.transform,
+              hasEOL: item.hasEOL,
+            });
+          }
         }
+        pageTexts.push(this.reconstructLinesFromTextItems(items));
       }
-      pageTexts.push(this.reconstructLinesFromTextItems(items));
-    }
 
-    return {
-      text: pageTexts.join('\n\n'),
-      pageCount: pdf.numPages,
-    };
+      return {
+        text: pageTexts.join('\n\n'),
+        pageCount: pdf.numPages,
+      };
+    } finally {
+      await loadingTask.destroy();
+    }
   }
 
   reconstructLinesFromTextItems(items: PdfTextItemLike[]): string {

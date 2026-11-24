@@ -10,6 +10,8 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class TopicExportService {
+  private activePrintFrame: HTMLIFrameElement | null = null;
+  private activePrintCleanupTimer: ReturnType<typeof setTimeout> | null = null;
   downloadTopicMarkdown(
     topic: Topic,
     block?: TaiBlock,
@@ -71,13 +73,13 @@ export class TopicExportService {
   }
 
   buildPrintableHtml(title: string, subtitle: string, markdown: string): string {
-    const safeMarkdown = this.sanitizeRawHtml(markdown);
-    const rawHtml = marked.parse(safeMarkdown, {
+    const rawHtml = marked.parse(markdown, {
       async: false,
       gfm: true,
       breaks: false,
     }) as string;
-    const enhancedHtml = this.enhanceExamCallouts(rawHtml);
+    const sanitizedHtml = this.sanitizeRenderedHtml(rawHtml);
+    const enhancedHtml = this.enhanceExamCallouts(sanitizedHtml);
     const exportedDate = new Date().toLocaleDateString('es-ES', {
       day: '2-digit',
       month: '2-digit',
@@ -253,11 +255,35 @@ export class TopicExportService {
 </html>`;
   }
 
-  private sanitizeRawHtml(markdown: string): string {
-    return markdown
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<iframe[\s\S]*?<\/iframe>/gi, '');
+  private sanitizeRenderedHtml(html: string): string {
+    if (typeof DOMParser === 'undefined') {
+      return html
+        .replace(/<(script|style|iframe|object|embed|form)\b[\s\S]*?<\/\1>/gi, '')
+        .replace(/<(script|style|iframe|object|embed|form|base|meta|link)\b[^>]*\/?>/gi, '');
+    }
+
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const forbiddenTags = 'script, style, iframe, object, embed, form, base, meta, link';
+    doc.body.querySelectorAll(forbiddenTags).forEach((el) => el.remove());
+
+    const dangerousUrlPattern = /^\s*(?:javascript|vbscript|data\s*:\s*text\/html)/i;
+    doc.body.querySelectorAll('*').forEach((el) => {
+      for (const attr of Array.from(el.attributes)) {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith('on') || name === 'srcdoc') {
+          el.removeAttribute(attr.name);
+          continue;
+        }
+        if (
+          (name === 'href' || name === 'src' || name === 'xlink:href' || name === 'formaction') &&
+          dangerousUrlPattern.test(attr.value.replace(/[\u0000-\u001f]+/g, ''))
+        ) {
+          el.removeAttribute(attr.name);
+        }
+      }
+    });
+
+    return doc.body.innerHTML;
   }
 
   private enhanceExamCallouts(html: string): string {
@@ -279,6 +305,8 @@ export class TopicExportService {
   }
 
   private openPrintFrame(html: string): void {
+    this.cleanupActivePrintFrame();
+
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -289,9 +317,12 @@ export class TopicExportService {
     iframe.setAttribute('aria-hidden', 'true');
 
     document.body.appendChild(iframe);
+    this.activePrintFrame = iframe;
 
     const cleanup = () => {
-      if (iframe.parentNode) {
+      if (this.activePrintFrame === iframe) {
+        this.cleanupActivePrintFrame();
+      } else if (iframe.parentNode) {
         iframe.parentNode.removeChild(iframe);
       }
     };
@@ -309,15 +340,26 @@ export class TopicExportService {
 
     let printed = false;
     const runPrint = () => {
-      if (printed) return;
+      if (printed || this.activePrintFrame !== iframe) return;
       printed = true;
       win.focus();
       win.print();
-      setTimeout(cleanup, 1000);
+      this.activePrintCleanupTimer = setTimeout(cleanup, 60_000);
     };
 
     win.addEventListener('afterprint', cleanup, { once: true });
     setTimeout(runPrint, 120);
+  }
+
+  private cleanupActivePrintFrame(): void {
+    if (this.activePrintCleanupTimer !== null) {
+      clearTimeout(this.activePrintCleanupTimer);
+      this.activePrintCleanupTimer = null;
+    }
+    if (this.activePrintFrame?.parentNode) {
+      this.activePrintFrame.parentNode.removeChild(this.activePrintFrame);
+    }
+    this.activePrintFrame = null;
   }
 
   private escapeHtml(value: string): string {

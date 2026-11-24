@@ -387,6 +387,8 @@
                     <button
                       type="button"
                       (click)="setCorrectOption(q.id, $any(idx))"
+                      [attr.aria-label]="'Marcar opción ' + letter + ' como correcta'"
+                      [attr.aria-pressed]="q.correctIndex === idx"
                       class="h-6 w-6 rounded-md text-[11px] font-bold transition"
                       [class.bg-emerald-600]="q.correctIndex === idx"
                       [class.text-white]="q.correctIndex === idx"
@@ -439,6 +441,10 @@
               </div>
             }
           </article>
+        } @empty {
+          <div class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            No hay preguntas que coincidan con este filtro.
+          </div>
         }
       </div>
     </div>

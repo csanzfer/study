@@ -60,6 +60,26 @@ describe('TopicExportService', () => {
     expect(html).not.toContain('<script>');
   });
 
+  it('sanitizes XSS vectors in raw HTML while preserving escaped script examples inside code blocks', () => {
+    TestBed.configureTestingModule({});
+    const service = TestBed.inject(TopicExportService);
+
+    const md = [
+      '```html',
+      '<script>console.log("ok")</script>',
+      '```',
+      '',
+      '<img src="x" onerror="alert(1)" />',
+      '<a href="javascript:alert(2)">clic</a>',
+    ].join('\n');
+
+    const html = service.buildPrintableHtml('HTML y JS', 'Bloque III', md);
+
+    expect(html).toContain('&lt;script&gt;console.log("ok")&lt;/script&gt;');
+    expect(html).not.toContain('onerror=');
+    expect(html).not.toContain('javascript:alert');
+  });
+
   it('triggers a .md file download with sanitized filename', () => {
     TestBed.configureTestingModule({});
     const service = TestBed.inject(TopicExportService);

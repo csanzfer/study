@@ -132,4 +132,27 @@ describe('inap-pdf-parser.util', () => {
       normalizePromptForDuplicateCheck('Que es la Constitucion Espanola'),
     );
   });
+
+  it('normalizes R.1 / Reserva 01 keys and ignores Spanish preposition "a" in headers', () => {
+    const key = parseInapAnswerKeyText(
+      'Primera parte (preguntas 1 a 80)\n1 B  R.1 C  Reserva 02: d  10 a 12 horas',
+    );
+
+    expect(key.get('1')).toBe(1);
+    expect(key.get('R1')).toBe(2);
+    expect(key.get('R2')).toBe(3);
+    expect(key.has('10')).toBe(false);
+    expect(key.has('R0.1')).toBe(false);
+  });
+
+  it('does not assign regular question 1 answer to reserve question R1 when R1 is missing', () => {
+    const parsed = parseInapQuestionnaireText(SAMPLE_INAP_CUESTIONARIO);
+    const keyWithoutReserve = parseInapAnswerKeyText('1 B  2 C');
+
+    const merged = applyInapAnswerKey(parsed.questions, keyWithoutReserve);
+    expect(merged.questions[0].correctIndex).toBe(1);
+    expect(merged.questions[2].numberLabel).toBe('R1');
+    expect(merged.questions[2].correctIndex).toBeNull();
+    expect(merged.questions[2].warnings.some((w) => w.includes('Sin respuesta'))).toBe(true);
+  });
 });
