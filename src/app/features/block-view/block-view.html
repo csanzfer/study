@@ -10,23 +10,49 @@
         Volver al panel
       </a>
 
-      <div class="mt-3 flex items-start gap-4">
-        <div
-          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-xs"
-          [style.background-color]="currentBlock.color"
-        >
-          <mat-icon>{{ currentBlock.icon }}</mat-icon>
+      <div class="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div class="flex items-start gap-4">
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-xs"
+            [style.background-color]="currentBlock.color"
+          >
+            <mat-icon>{{ currentBlock.icon }}</mat-icon>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider" [style.color]="currentBlock.color">
+              {{ currentBlock.code }}
+            </p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+              {{ currentBlock.title }}
+            </h1>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {{ currentBlock.description }}
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider" [style.color]="currentBlock.color">
-            {{ currentBlock.code }}
-          </p>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-            {{ currentBlock.title }}
-          </h1>
-          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {{ currentBlock.description }}
-          </p>
+
+        <div class="flex shrink-0 items-center gap-2">
+          <button
+            mat-stroked-button
+            type="button"
+            [matMenuTriggerFor]="exportBlockMenu"
+            [disabled]="store.getTopicsForBlock(blockId()).length === 0"
+            matTooltip="Exportar todos los temas de este bloque como cuaderno"
+            class="!rounded-xl !text-xs"
+          >
+            <mat-icon class="!text-[18px]">download</mat-icon>
+            Exportar bloque
+          </button>
+          <mat-menu #exportBlockMenu="matMenu">
+            <button mat-menu-item type="button" (click)="exportBlockMarkdown()">
+              <mat-icon>description</mat-icon>
+              <span>Cuaderno Markdown (.md)</span>
+            </button>
+            <button mat-menu-item type="button" (click)="printBlockPdf()">
+              <mat-icon>picture_as_pdf</mat-icon>
+              <span>Imprimir / Guardar PDF</span>
+            </button>
+          </mat-menu>
         </div>
       </div>
     </div>

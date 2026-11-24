@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -34,6 +35,7 @@ import {
   NoteImportDialogData,
   NoteImportDialogResult,
 } from '../notes/import-dialog/note-import-dialog';
+import { TopicExportService } from '../notes/services/topic-export.service';
 
 @Component({
   selector: 'app-block-view',
@@ -48,6 +50,7 @@ import {
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    MatMenuModule,
     MatSnackBarModule,
     MatTooltipModule,
   ],
@@ -57,6 +60,7 @@ export class BlockView {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly exportService = inject(TopicExportService);
   protected readonly store = inject(StudyStoreService);
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
@@ -213,6 +217,31 @@ export class BlockView {
       this.editingTopicId.set(null);
     }
     this.snackBar.open(`Tema "${topic.title}" eliminado.`, 'Cerrar', { duration: 2500 });
+  }
+
+  protected exportBlockMarkdown(): void {
+    const currentBlock = this.block();
+    const allTopics = this.store.getTopicsForBlock(this.blockId());
+    if (!currentBlock || allTopics.length === 0) {
+      return;
+    }
+
+    const filename = this.exportService.downloadBlockMarkdown(currentBlock, allTopics);
+    this.snackBar.open(
+      `Cuaderno de ${currentBlock.code} exportado como ${filename}.`,
+      'Cerrar',
+      { duration: 3000 },
+    );
+  }
+
+  protected printBlockPdf(): void {
+    const currentBlock = this.block();
+    const allTopics = this.store.getTopicsForBlock(this.blockId());
+    if (!currentBlock || allTopics.length === 0) {
+      return;
+    }
+
+    this.exportService.printBlockPdf(currentBlock, allTopics);
   }
 
   private parseTags(raw: string): string[] {
