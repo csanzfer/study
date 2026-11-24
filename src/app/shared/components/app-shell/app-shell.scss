@@ -2,3 +2,9 @@
   display: block;
   height: 100%;
 }
+
+mat-sidenav-content {
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden !important;
+}
