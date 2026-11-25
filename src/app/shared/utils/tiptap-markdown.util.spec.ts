@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TaiBlock, Topic } from '../../core/models/study.models';
+import { StudyBlock, Topic } from '../../core/models/study.models';
 import {
   buildBlockMarkdownDocument,
   buildTopicMarkdownDocument,
@@ -7,7 +7,7 @@ import {
   tiptapJsonToMarkdown,
 } from './tiptap-markdown.util';
 
-const sampleBlock: TaiBlock = {
+const sampleBlock: StudyBlock = {
   id: 'B1',
   code: 'Bloque I',
   title: 'Organización del Estado y Administración Electrónica',

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { CreateQuestionInput, TaiBlockId } from '../../../core/models/study.models';
+import { CreateQuestionInput, StudyBlockId } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
   parseQuestionsFromJson,
@@ -19,7 +19,7 @@ import {
 
 export interface TopicQuestionGeneratorDialogData {
   topicId?: string;
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
 }
 
 type GeneratorTab = 'local' | 'ai_prompt';

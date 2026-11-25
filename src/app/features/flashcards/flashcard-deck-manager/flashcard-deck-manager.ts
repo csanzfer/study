@@ -7,9 +7,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import {
   CreateFlashcardInput,
+  FLASHCARD_SUGGESTED_TAGS,
   Flashcard,
-  TAI_FLASHCARD_SUGGESTED_TAGS,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
@@ -41,15 +41,15 @@ export class FlashcardDeckManager {
 
   readonly openImportRequest = output<FlashcardImportTab>();
   readonly startReviewWithFilter = output<{
-    blockId: 'ALL' | TaiBlockId;
+    blockId: 'ALL' | StudyBlockId;
     topicId: string;
     tag: string;
   }>();
 
-  protected readonly quickTags = TAI_FLASHCARD_SUGGESTED_TAGS;
+  protected readonly quickTags = FLASHCARD_SUGGESTED_TAGS;
 
   protected readonly searchText = signal('');
-  protected readonly blockFilter = signal<'ALL' | TaiBlockId>('ALL');
+  protected readonly blockFilter = signal<'ALL' | StudyBlockId>('ALL');
   protected readonly topicFilter = signal<string>('ALL');
   protected readonly tagFilter = signal<string>('');
   protected readonly statusFilter = signal<DeckStatusFilter>('all');
@@ -86,7 +86,7 @@ export class FlashcardDeckManager {
     });
   });
 
-  protected onBlockFilterChange(next: 'ALL' | TaiBlockId): void {
+  protected onBlockFilterChange(next: 'ALL' | StudyBlockId): void {
     this.blockFilter.set(next);
     this.topicFilter.set('ALL');
   }
@@ -127,7 +127,10 @@ export class FlashcardDeckManager {
       maxWidth: '95vw',
       data: {
         mode,
-        blockId: this.blockFilter() === 'ALL' ? 'B1' : (this.blockFilter() as TaiBlockId),
+        blockId:
+          this.blockFilter() === 'ALL'
+            ? this.store.defaultBlockId()
+            : (this.blockFilter() as StudyBlockId),
         topicId: this.topicFilter() === 'ALL' ? undefined : this.topicFilter(),
       },
     });

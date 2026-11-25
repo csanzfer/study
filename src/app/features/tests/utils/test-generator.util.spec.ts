@@ -1,9 +1,9 @@
-import { Question, TaiBlockId } from '../../../core/models/study.models';
+import { Question, StudyBlockId } from '../../../core/models/study.models';
 import { generateTestQuestions } from './test-generator.util';
 
 function makeQ(
   id: string,
-  blockId: TaiBlockId,
+  blockId: StudyBlockId,
   opts: Partial<Question> = {},
 ): Question {
   return {

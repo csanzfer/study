@@ -466,14 +466,3 @@ export interface BackupPayload {
   flashcards?: Flashcard[];
   gamificationProfile?: GamificationProfile;
 }
-
-// --- Alias temporales de transición (se eliminarán al completar las Fases 2–5) ---
-
-/** @deprecated Usar `StudyBlockId`. Se eliminará al completar la migración a CrisIsStudent. */
-export type TaiBlockId = StudyBlockId;
-
-/** @deprecated Usar `StudyBlock`. Se eliminará al completar la migración a CrisIsStudent. */
-export type TaiBlock = StudyBlock;
-
-/** @deprecated Usar `FLASHCARD_SUGGESTED_TAGS`. Se eliminará al completar la migración a CrisIsStudent. */
-export const TAI_FLASHCARD_SUGGESTED_TAGS = FLASHCARD_SUGGESTED_TAGS;

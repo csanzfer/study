@@ -9,7 +9,7 @@ import {
   CaseStudy,
   CreateCaseStudyInput,
   CreateQuestionInput,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
@@ -47,7 +47,7 @@ export class CaseStudiesPanel {
 
   readonly launchCaseStudy = output<CaseStudy>();
 
-  protected getBlockColor(blockId: TaiBlockId): string {
+  protected getBlockColor(blockId: StudyBlockId): string {
     return this.store.getBlockById(blockId)?.color ?? '#7c3aed';
   }
 

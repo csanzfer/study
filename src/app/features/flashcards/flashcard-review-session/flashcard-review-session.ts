@@ -11,7 +11,7 @@ import {
   FLASHCARD_RATING_LABELS,
   Flashcard,
   FlashcardRating,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
@@ -39,7 +39,7 @@ export class FlashcardReviewSession {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly initialBlockId = input<'ALL' | TaiBlockId>('ALL');
+  readonly initialBlockId = input<'ALL' | StudyBlockId>('ALL');
   readonly initialTopicId = input<string>('');
   readonly initialTag = input<string>('');
   readonly openImportRequest = output<'extract' | 'batch'>();
@@ -47,7 +47,7 @@ export class FlashcardReviewSession {
   protected readonly ratingLabels = FLASHCARD_RATING_LABELS;
 
   // Filters
-  protected readonly blockFilter = signal<'ALL' | TaiBlockId>('ALL');
+  protected readonly blockFilter = signal<'ALL' | StudyBlockId>('ALL');
   protected readonly topicFilter = signal<string>('');
   protected readonly tagFilter = signal<string>('');
   protected readonly queueMode = signal<ReviewQueueMode>('due');
@@ -71,7 +71,7 @@ export class FlashcardReviewSession {
   protected readonly reviewedTotal = signal(0);
   protected readonly xpEarned = signal(0);
   protected readonly submittingRating = signal(false);
-  private reviewedBlockCounts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+  private reviewedBlockCounts: Record<StudyBlockId, number> = {};
 
   protected readonly topicsForBlock = computed(() => {
     const block = this.blockFilter();
@@ -157,7 +157,7 @@ export class FlashcardReviewSession {
     this.reviewedTotal.set(0);
     this.xpEarned.set(0);
     this.submittingRating.set(false);
-    this.reviewedBlockCounts = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    this.reviewedBlockCounts = {};
     this.ratingCounts.set({ again: 0, hard: 0, good: 0, easy: 0 });
     this.sessionStartedAt.set(Date.now());
     this.sessionFinished.set(false);
@@ -299,22 +299,26 @@ export class FlashcardReviewSession {
       const block =
         this.blockFilter() === 'ALL'
           ? this.getDominantReviewedBlock()
-          : (this.blockFilter() as TaiBlockId);
-      await this.store.addStudySession({
-        topicId: this.topicFilter(),
-        blockId: block,
-        durationMinutes,
-        type: 'flashcards',
-        notes: `Repaso SRS: ${this.reviewedTotal()} tarjetas${this.tagFilter() ? ` (#${this.tagFilter()})` : ''}`,
-      });
+          : (this.blockFilter() as StudyBlockId);
+      if (block) {
+        await this.store.addStudySession({
+          topicId: this.topicFilter(),
+          blockId: block,
+          durationMinutes,
+          type: 'flashcards',
+          notes: `Repaso SRS: ${this.reviewedTotal()} tarjetas${this.tagFilter() ? ` (#${this.tagFilter()})` : ''}`,
+        });
+      }
     }
   }
 
-  private getDominantReviewedBlock(): TaiBlockId {
-    let best: TaiBlockId = 'B1';
-    for (const id of ['B1', 'B2', 'B3', 'B4'] as TaiBlockId[]) {
-      if (this.reviewedBlockCounts[id] > this.reviewedBlockCounts[best]) {
+  private getDominantReviewedBlock(): StudyBlockId {
+    let best: StudyBlockId = this.store.defaultBlockId();
+    let bestCount = -1;
+    for (const [id, count] of Object.entries(this.reviewedBlockCounts)) {
+      if (count > bestCount) {
         best = id;
+        bestCount = count;
       }
     }
     return best;

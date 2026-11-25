@@ -12,13 +12,13 @@ import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
-import { TOPIC_STATUS_LABELS, TaiBlock, Topic } from '../../../core/models/study.models';
+import { TOPIC_STATUS_LABELS, StudyBlock, Topic } from '../../../core/models/study.models';
 import { SearchService, TopicSearchResult } from '../../../core/services/search.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 
 interface RecentTopicItem {
   topic: Topic;
-  block?: TaiBlock;
+  block?: StudyBlock;
 }
 
 @Component({

@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { CaseStudy, ExamMode, TaiBlockId } from '../../../core/models/study.models';
+import { CaseStudy, ExamMode, StudyBlockId } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { CaseStudiesPanel } from '../case-studies-panel/case-studies-panel';
 import { QuestionBank } from '../question-bank/question-bank';
@@ -17,7 +17,6 @@ export type TestsTab = 'launcher' | 'bank' | 'cases' | 'analytics';
 
 const VALID_TABS = new Set<TestsTab>(['launcher', 'bank', 'cases', 'analytics']);
 const VALID_MODES = new Set<ExamMode>(['practice', 'simulation', 'mistakes', 'case_study']);
-const VALID_BLOCKS = new Set<TaiBlockId>(['B1', 'B2', 'B3', 'B4']);
 
 interface TestsTabMeta {
   id: TestsTab;
@@ -65,7 +64,7 @@ export class TestsPage {
 
   protected readonly activeTab = signal<TestsTab>('launcher');
   protected readonly launcherMode = signal<ExamMode | null>(null);
-  protected readonly launcherBlockId = signal<TaiBlockId | null>(null);
+  protected readonly launcherBlockId = signal<StudyBlockId | null>(null);
   protected readonly launcherTopicId = signal<string | null>(null);
 
   constructor() {
@@ -77,8 +76,8 @@ export class TestsPage {
       if (q.mode && VALID_MODES.has(q.mode as ExamMode)) {
         this.launcherMode.set(q.mode as ExamMode);
       }
-      if (q.blockId && VALID_BLOCKS.has(q.blockId as TaiBlockId)) {
-        this.launcherBlockId.set(q.blockId as TaiBlockId);
+      if (q.blockId && this.store.getBlockById(q.blockId)) {
+        this.launcherBlockId.set(q.blockId);
       }
       if (q.topicId) {
         this.launcherTopicId.set(q.topicId);

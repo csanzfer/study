@@ -1,14 +1,14 @@
 import {
   ExamAttempt,
   Question,
-  TaiBlock,
-  TaiBlockId,
+  StudyBlock,
+  StudyBlockId,
   Topic,
 } from '../../../core/models/study.models';
 import { roundScore } from './test-scoring.util';
 
 export interface BlockPerformance {
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   code: string;
   shortTitle: string;
   color: string;
@@ -20,7 +20,7 @@ export interface BlockPerformance {
 
 export interface TopicPerformance {
   topicId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   title: string;
   totalQuestions: number;
   attempts: number;
@@ -40,7 +40,7 @@ export interface AttemptTrendPoint {
 }
 
 export function computeBlockPerformance(
-  blocks: readonly TaiBlock[],
+  blocks: readonly StudyBlock[],
   questions: readonly Question[],
 ): BlockPerformance[] {
   return blocks.map((block) => {

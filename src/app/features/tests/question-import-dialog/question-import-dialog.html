@@ -212,7 +212,7 @@
   <button
     mat-flat-button
     type="button"
-    [disabled]="parseResult().valid.length === 0"
+    [disabled]="!canImport()"
     (click)="confirmImport()"
   >
     <mat-icon>download_done</mat-icon>

@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
-import { CreateFlashcardInput, TaiBlockId } from '../../../core/models/study.models';
+import { CreateFlashcardInput, StudyBlockId } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { CampaignMap } from '../campaign-map/campaign-map';
 import { FlashcardDeckManager } from '../flashcard-deck-manager/flashcard-deck-manager';
@@ -49,11 +49,8 @@ export class FlashcardsPage {
           rawTab === 'deck' || rawTab === 'campaign' || rawTab === 'missions'
             ? rawTab
             : 'review';
-        const rawBlock = params.get('blockId');
-        const blockId: 'ALL' | TaiBlockId =
-          rawBlock === 'B1' || rawBlock === 'B2' || rawBlock === 'B3' || rawBlock === 'B4'
-            ? rawBlock
-            : 'ALL';
+        const rawBlock = params.get('blockId')?.trim() ?? '';
+        const blockId: 'ALL' | StudyBlockId = rawBlock || 'ALL';
         return {
           tab,
           blockId,
@@ -65,7 +62,7 @@ export class FlashcardsPage {
     {
       initialValue: {
         tab: 'review' as FlashcardsTab,
-        blockId: 'ALL' as 'ALL' | TaiBlockId,
+        blockId: 'ALL' as 'ALL' | StudyBlockId,
         topicId: '',
         tag: '',
       },
@@ -73,13 +70,17 @@ export class FlashcardsPage {
   );
 
   protected readonly activeTab = computed(() => this.queryState().tab);
-  protected readonly reviewBlockId = signal<'ALL' | TaiBlockId>('ALL');
+  protected readonly reviewBlockId = signal<'ALL' | StudyBlockId>('ALL');
   protected readonly reviewTopicId = signal<string>('');
   protected readonly reviewTag = signal<string>('');
 
-  protected readonly effectiveBlockId = computed(() =>
-    this.queryState().blockId !== 'ALL' ? this.queryState().blockId : this.reviewBlockId(),
-  );
+  protected readonly effectiveBlockId = computed<'ALL' | StudyBlockId>(() => {
+    const queryBlock = this.queryState().blockId;
+    if (queryBlock !== 'ALL' && this.store.getBlockById(queryBlock)) {
+      return queryBlock;
+    }
+    return this.reviewBlockId();
+  });
   protected readonly effectiveTopicId = computed(() =>
     this.queryState().topicId || this.reviewTopicId(),
   );
@@ -120,7 +121,7 @@ export class FlashcardsPage {
   }
 
   protected onStartReviewWithFilter(filter: {
-    blockId: 'ALL' | TaiBlockId;
+    blockId: 'ALL' | StudyBlockId;
     topicId: string;
     tag: string;
   }): void {

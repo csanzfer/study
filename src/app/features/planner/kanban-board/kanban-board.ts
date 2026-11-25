@@ -16,8 +16,8 @@ import { RouterLink } from '@angular/router';
 import {
   TOPIC_STATUS_LABELS,
   TOPIC_STATUS_LIST,
-  TaiBlock,
-  TaiBlockId,
+  StudyBlock,
+  StudyBlockId,
   Topic,
   TopicStatus,
 } from '../../../core/models/study.models';
@@ -93,12 +93,12 @@ export class KanbanBoard {
   protected readonly statusList = TOPIC_STATUS_LIST;
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
 
-  protected readonly selectedBlock = signal<TaiBlockId | 'ALL'>('ALL');
+  protected readonly selectedBlock = signal<StudyBlockId | 'ALL'>('ALL');
   protected readonly filterQuery = signal('');
   protected readonly onlyRusty = signal(false);
 
   protected readonly blockMap = computed(() => {
-    const map = new Map<TaiBlockId, TaiBlock>();
+    const map = new Map<StudyBlockId, StudyBlock>();
     for (const block of this.store.blocks()) {
       map.set(block.id, block);
     }
@@ -143,11 +143,11 @@ export class KanbanBoard {
     return grouped;
   });
 
-  protected getBlockColor(blockId: TaiBlockId): string {
+  protected getBlockColor(blockId: StudyBlockId): string {
     return this.blockMap().get(blockId)?.color ?? '#64748b';
   }
 
-  protected getBlockCode(blockId: TaiBlockId): string {
+  protected getBlockCode(blockId: StudyBlockId): string {
     return this.blockMap().get(blockId)?.id ?? blockId;
   }
 

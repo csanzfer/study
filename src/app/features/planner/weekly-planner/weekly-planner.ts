@@ -16,8 +16,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import {
   IsoDayOfWeek,
-  TaiBlock,
-  TaiBlockId,
+  StudyBlock,
+  StudyBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../../../core/models/study.models';
@@ -55,7 +55,7 @@ export class WeeklyPlanner {
 
   protected readonly currentWeekStart = signal(getWeekStartDate());
   protected readonly addingToDay = signal<IsoDayOfWeek | null>(null);
-  protected readonly pickerBlockFilter = signal<TaiBlockId | 'ALL'>('ALL');
+  protected readonly pickerBlockFilter = signal<StudyBlockId | 'ALL'>('ALL');
   protected readonly pickerTopicId = signal('');
   protected readonly pickerTargetPomodoros = signal(2);
 
@@ -98,7 +98,7 @@ export class WeeklyPlanner {
   });
 
   protected readonly blockMap = computed(() => {
-    const map = new Map<TaiBlockId, TaiBlock>();
+    const map = new Map<StudyBlockId, StudyBlock>();
     for (const b of this.store.blocks()) {
       map.set(b.id, b);
     }
@@ -146,7 +146,7 @@ export class WeeklyPlanner {
     }
   }
 
-  protected onPickerBlockChange(block: TaiBlockId | 'ALL'): void {
+  protected onPickerBlockChange(block: StudyBlockId | 'ALL'): void {
     this.pickerBlockFilter.set(block);
     const available = this.pickerTopics();
     this.pickerTopicId.set(available[0]?.id ?? '');
@@ -227,7 +227,7 @@ export class WeeklyPlanner {
     return this.topicMap().get(item.topicId)?.title ?? 'Tema eliminado';
   }
 
-  protected getBlockColor(blockId: TaiBlockId): string {
+  protected getBlockColor(blockId: StudyBlockId): string {
     return this.blockMap().get(blockId)?.color ?? '#64748b';
   }
 }

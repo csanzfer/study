@@ -101,9 +101,15 @@ export class QuestionImportDialog {
     this.rawText.set(text);
   }
 
+  protected readonly canImport = computed(
+    () =>
+      this.defaultBlockId().trim().length > 0 &&
+      this.parseResult().valid.length > 0 &&
+      this.parseResult().valid.every((q) => q.blockId.trim().length > 0),
+  );
+
   protected confirmImport(): void {
-    const valid = this.parseResult().valid;
-    if (valid.length === 0) return;
-    this.dialogRef.close(valid);
+    if (!this.canImport()) return;
+    this.dialogRef.close(this.parseResult().valid);
   }
 }

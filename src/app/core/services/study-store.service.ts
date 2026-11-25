@@ -342,8 +342,9 @@ export class StudyStoreService {
     const shortTitle = input.shortTitle?.trim() || title;
     const description = input.description?.trim() ?? '';
 
+    const rawId = this.generateId('block');
     const block: StudyBlock = {
-      id: `block-${this.generateId('block')}`,
+      id: rawId.startsWith('block-') ? rawId : `block-${rawId}`,
       code,
       title,
       shortTitle,

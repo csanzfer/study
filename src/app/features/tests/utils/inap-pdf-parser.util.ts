@@ -1,4 +1,4 @@
-import { QuestionOptionIndex, TaiBlockId } from '../../../core/models/study.models';
+import { QuestionOptionIndex, StudyBlockId } from '../../../core/models/study.models';
 
 export type InapImportMode = 'questionnaire' | 'case_study';
 export type InapAnswerKeyEntry = QuestionOptionIndex | 'ANULADA';
@@ -12,13 +12,13 @@ export interface ParsedInapQuestion {
   options: [string, string, string, string];
   correctIndex: QuestionOptionIndex | null;
   isAnnulled: boolean;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   selected: boolean;
   warnings: string[];
 }
 
 export interface InapQuestionnaireParseOptions {
-  defaultBlockId?: TaiBlockId;
+  defaultBlockId?: StudyBlockId;
   mode?: InapImportMode;
 }
 
@@ -86,7 +86,7 @@ export function parseInapQuestionnaireText(
   rawText: string,
   options: InapQuestionnaireParseOptions = {},
 ): InapQuestionnaireParseResult {
-  const defaultBlockId: TaiBlockId = options.defaultBlockId ?? 'B1';
+  const defaultBlockId: StudyBlockId = options.defaultBlockId ?? 'B1';
   const mode: InapImportMode = options.mode ?? 'questionnaire';
   const cleaned = cleanInapPdfText(rawText);
 

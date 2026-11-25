@@ -9,7 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   CreateQuestionInput,
   Question,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
@@ -56,7 +56,7 @@ export class QuestionBank {
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly letters = OPTION_LETTERS;
-  protected readonly blockFilter = signal<TaiBlockId | 'ALL'>('ALL');
+  protected readonly blockFilter = signal<StudyBlockId | 'ALL'>('ALL');
   protected readonly topicFilter = signal<string>('ALL');
   protected readonly statusFilter = signal<BankStatusFilter>('all');
   protected readonly searchText = signal('');
@@ -92,7 +92,7 @@ export class QuestionBank {
     });
   });
 
-  protected onBlockFilterChange(next: TaiBlockId | 'ALL'): void {
+  protected onBlockFilterChange(next: StudyBlockId | 'ALL'): void {
     this.blockFilter.set(next);
     this.topicFilter.set('ALL');
   }
@@ -111,13 +111,16 @@ export class QuestionBank {
     return this.store.getCaseStudyById(caseStudyId)?.title ?? null;
   }
 
-  protected getBlockColor(blockId: TaiBlockId): string {
+  protected getBlockColor(blockId: StudyBlockId): string {
     return this.store.getBlockById(blockId)?.color ?? '#2563eb';
   }
 
   protected async openCreateDialog(): Promise<void> {
     const data: QuestionEditorDialogData = {
-      defaultBlockId: this.blockFilter() === 'ALL' ? 'B1' : (this.blockFilter() as TaiBlockId),
+      defaultBlockId:
+        this.blockFilter() === 'ALL'
+          ? this.store.defaultBlockId()
+          : (this.blockFilter() as StudyBlockId),
       defaultTopicId: this.topicFilter() === 'ALL' ? undefined : this.topicFilter(),
     };
     const ref = this.dialog.open<
@@ -155,7 +158,10 @@ export class QuestionBank {
 
   protected async openImportDialog(): Promise<void> {
     const data: QuestionImportDialogData = {
-      defaultBlockId: this.blockFilter() === 'ALL' ? 'B1' : (this.blockFilter() as TaiBlockId),
+      defaultBlockId:
+        this.blockFilter() === 'ALL'
+          ? this.store.defaultBlockId()
+          : (this.blockFilter() as StudyBlockId),
       defaultTopicId: this.topicFilter() === 'ALL' ? undefined : this.topicFilter(),
     };
     const ref = this.dialog.open<
@@ -178,7 +184,10 @@ export class QuestionBank {
 
   protected async openInapPdfImportDialog(): Promise<void> {
     const data: InapPdfImportDialogData = {
-      defaultBlockId: this.blockFilter() === 'ALL' ? 'B1' : (this.blockFilter() as TaiBlockId),
+      defaultBlockId:
+        this.blockFilter() === 'ALL'
+          ? this.store.defaultBlockId()
+          : (this.blockFilter() as StudyBlockId),
     };
     const ref = this.dialog.open<
       InapPdfImportDialog,
@@ -214,7 +223,7 @@ export class QuestionBank {
 
   protected async openGeneratorDialog(): Promise<void> {
     const data: TopicQuestionGeneratorDialogData = {
-      blockId: this.blockFilter() === 'ALL' ? undefined : (this.blockFilter() as TaiBlockId),
+      blockId: this.blockFilter() === 'ALL' ? undefined : (this.blockFilter() as StudyBlockId),
       topicId: this.topicFilter() === 'ALL' ? undefined : this.topicFilter(),
     };
     const ref = this.dialog.open<

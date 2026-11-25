@@ -15,7 +15,7 @@ import {
   CreateQuestionInput,
   TOPIC_STATUS_LABELS,
   TOPIC_STATUS_LIST,
-  TaiBlockId,
+  StudyBlockId,
   TopicStatus,
   UpdateTopicPatch,
 } from '../../../core/models/study.models';

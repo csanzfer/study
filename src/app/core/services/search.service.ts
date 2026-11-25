@@ -1,6 +1,6 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
 import MiniSearch from 'minisearch';
-import { TaiBlock, Topic } from '../models/study.models';
+import { StudyBlock, Topic } from '../models/study.models';
 import { StudyStoreService } from './study-store.service';
 
 export interface SnippetSegment {
@@ -10,7 +10,7 @@ export interface SnippetSegment {
 
 export interface TopicSearchResult {
   topic: Topic;
-  block?: TaiBlock;
+  block?: StudyBlock;
   score: number;
   matchedTerms: string[];
   matchedFields: string[];

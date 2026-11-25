@@ -111,6 +111,7 @@ export class InapPdfImportDialog {
     const dups = this.duplicateIds();
     return this.parsedQuestions().filter((q) => {
       if (!q.selected || q.correctIndex === null) return false;
+      if (!q.blockId.trim()) return false;
       if (!q.prompt.trim() || q.options.some((opt) => !opt.trim())) return false;
       if (skipDups && dups.has(q.id)) return false;
       return true;

@@ -9,7 +9,7 @@ import {
   EXAM_MODE_LABELS,
   Question,
   QuestionOptionIndex,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
