@@ -65,6 +65,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'guide',
+    loadComponent: () =>
+      import('./features/guide/guide-page').then((m) => m.GuidePage),
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },
