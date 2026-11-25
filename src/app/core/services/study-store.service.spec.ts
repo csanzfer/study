@@ -32,6 +32,31 @@ class InMemoryStudyRepository implements StudyRepository {
     return [...this.blocks].sort((a, b) => a.order - b.order);
   }
 
+  async saveBlock(block: TaiBlock): Promise<void> {
+    const idx = this.blocks.findIndex((b) => b.id === block.id);
+    if (idx >= 0) {
+      this.blocks[idx] = block;
+    } else {
+      this.blocks.push(block);
+    }
+  }
+
+  async saveBlocks(blocks: TaiBlock[]): Promise<void> {
+    for (const block of blocks) {
+      await this.saveBlock(block);
+    }
+  }
+
+  async deleteBlock(id: TaiBlockId): Promise<void> {
+    this.blocks = this.blocks.filter((b) => b.id !== id);
+    this.topics = this.topics.filter((t) => t.blockId !== id);
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
+    this.sessions = this.sessions.filter((s) => s.blockId !== id);
+    this.caseStudies = this.caseStudies.filter((c) => c.blockId !== id);
+    this.questions = this.questions.filter((q) => q.blockId !== id);
+    this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
+  }
+
   async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
     const list = blockId ? this.topics.filter((t) => t.blockId === blockId) : [...this.topics];
     return list.sort((a, b) => a.blockId.localeCompare(b.blockId) || a.order - b.order);
@@ -301,7 +326,7 @@ describe('StudyStoreService', () => {
 
     expect(store.studySessions().length).toBe(1);
     expect(store.studyMinutesThisWeek()).toBe(25);
-    expect(store.studyMinutesByBlockThisWeek().B4).toBe(25);
+    expect(store.studyMinutesByBlockThisWeek()['B4']).toBe(25);
 
     await store.deleteStudySession(session.id);
     expect(store.studySessions().length).toBe(0);
@@ -351,7 +376,7 @@ describe('StudyStoreService', () => {
     });
 
     expect(store.totalQuestions()).toBe(1);
-    expect(store.questionCountByBlock().B3).toBe(1);
+    expect(store.questionCountByBlock()['B3']).toBe(1);
     expect(store.questionCountByTopic()[topic.id]).toBe(1);
     expect(store.getQuestionsForCaseStudy(cs.id).length).toBe(1);
 

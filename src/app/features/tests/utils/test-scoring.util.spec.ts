@@ -53,9 +53,9 @@ describe('test-scoring.util', () => {
     expect(result.netScore).toBeCloseTo(1.67, 2);
     expect(result.scoreOn10).toBeCloseTo(4.17, 2);
     expect(result.accuracyPercent).toBe(67);
-    expect(result.byBlock.B1.correct).toBe(1);
-    expect(result.byBlock.B1.wrong).toBe(1);
-    expect(result.byBlock.B2.blank).toBe(1);
+    expect(result.byBlock['B1'].correct).toBe(1);
+    expect(result.byBlock['B1'].wrong).toBe(1);
+    expect(result.byBlock['B2'].blank).toBe(1);
     expect(result.byTopic['t1'].total).toBe(2);
   });
 

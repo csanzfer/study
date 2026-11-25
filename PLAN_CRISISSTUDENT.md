@@ -19,7 +19,7 @@
 
 ## 📊 Resumen de Progreso
 
-- [ ] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
+- [x] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
 - [ ] **Fase 2:** Store reactivo dinámico y BackupService compatible
 - [ ] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
 - [ ] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
@@ -33,8 +33,8 @@
 
 ### Tareas
 
-- [ ] **Modelos (`src/app/core/models/study.models.ts`):**
-  - Reemplazar `TaiBlockId = 'B1' | 'B2' | 'B3' | 'B4'` por `StudyBlockId = string` (y `TaiBlock` por `StudyBlock`).
+- [x] **Modelos (`src/app/core/models/study.models.ts`):**
+  - Reemplazar `TaiBlockId = 'B1' | 'B2' | 'B3' | 'B4'` por `StudyBlockId = string` (y `TaiBlock` por `StudyBlock`). *(Alias `@deprecated` temporales mantenidos hasta completar Fases 2–5.)*
   - Definir `CreateBlockInput` (`code`, `title`, `shortTitle?`, `description?`, `color`, `icon`) y `UpdateBlockPatch`.
   - Definir paleta de colores e iconos Material recomendados para elegir al crear un bloque (constantes `BLOCK_COLOR_PRESETS` y `BLOCK_ICON_PRESETS`).
   - Generalizar constantes de dominio:
@@ -42,11 +42,11 @@
     - `PENALTY_PRESETS`: `'Penalización -1/3'`, `'-1/4'`, `'-1/2'`, `'Sin penalización (0)'`.
     - Renombrar `TAI_FLASHCARD_SUGGESTED_TAGS` a `FLASHCARD_SUGGESTED_TAGS` con etiquetas genéricas (`definiciones`, `fechas`, `fórmulas`, `siglas`, `conceptos`, `vocabulario`, `ejemplos`, `resumen`).
   - Actualizar `BackupPayload` para soportar `schemaVersion: 1 | 2 | 3 | 4 | 5` y `appName: 'tai-study' | 'crisisstudent'`.
-- **Base de datos (`src/app/core/db/study.db.ts`):**
+- [x] **Base de datos (`src/app/core/db/study.db.ts`):**
   - Cambiar el tipado de `blocks!: Table<StudyBlock, StudyBlockId>`.
   - Eliminar la llamada a `TAI_BLOCKS_SEED` en `ensureSeeded()` (dejar la tabla vacía en instalaciones nuevas; los usuarios existentes mantienen sus bloques actuales intactos).
-  - Eliminar `src/app/core/db/tai-seed.ts` una vez migradas todas sus referencias en código y tests.
-- **Repositorio (`src/app/core/repositories/study.repository.ts`):**
+  - *Pendiente de Fases 2 y 4:* eliminar físicamente `src/app/core/db/tai-seed.ts` una vez migradas todas sus referencias en `BackupService` y tests.
+- [x] **Repositorio (`src/app/core/repositories/study.repository.ts`):**
   - Añadir a `StudyRepository` e implementar en `IndexedDbStudyRepository`:
     - `saveBlock(block: StudyBlock): Promise<void>`
     - `saveBlocks(blocks: StudyBlock[]): Promise<void>`

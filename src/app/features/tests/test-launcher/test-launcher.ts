@@ -158,10 +158,10 @@ export class TestLauncher {
 
   protected applyAvailableQuotas(): void {
     const counts = this.store.questionCountByBlock();
-    this.quotaB1.set(counts.B1);
-    this.quotaB2.set(counts.B2);
-    this.quotaB3.set(counts.B3);
-    this.quotaB4.set(counts.B4);
+    this.quotaB1.set(counts['B1'] ?? 0);
+    this.quotaB2.set(counts['B2'] ?? 0);
+    this.quotaB3.set(counts['B3'] ?? 0);
+    this.quotaB4.set(counts['B4'] ?? 0);
   }
 
   protected applyOfficialInapQuotas(): void {

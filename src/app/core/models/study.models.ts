@@ -1,4 +1,4 @@
-export type TaiBlockId = 'B1' | 'B2' | 'B3' | 'B4';
+export type StudyBlockId = string;
 
 export type TopicStatus =
   | 'pending'
@@ -23,8 +23,8 @@ export const TOPIC_STATUS_LABELS: Record<TopicStatus, string> = {
   mastered: 'Dominado',
 };
 
-export interface TaiBlock {
-  id: TaiBlockId;
+export interface StudyBlock {
+  id: StudyBlockId;
   code: string;
   title: string;
   shortTitle: string;
@@ -34,9 +34,76 @@ export interface TaiBlock {
   order: number;
 }
 
+export interface CreateBlockInput {
+  code: string;
+  title: string;
+  shortTitle?: string;
+  description?: string;
+  color: string;
+  icon: string;
+}
+
+export interface UpdateBlockPatch {
+  code?: string;
+  title?: string;
+  shortTitle?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  order?: number;
+}
+
+export interface BlockColorPreset {
+  name: string;
+  hex: string;
+}
+
+export const BLOCK_COLOR_PRESETS: BlockColorPreset[] = [
+  { name: 'Azul', hex: '#2563eb' },
+  { name: 'Cian', hex: '#0891b2' },
+  { name: 'Violeta', hex: '#7c3aed' },
+  { name: 'Esmeralda', hex: '#059669' },
+  { name: 'Índigo', hex: '#4f46e5' },
+  { name: 'Rosa', hex: '#db2777' },
+  { name: 'Rojo', hex: '#dc2626' },
+  { name: 'Naranja', hex: '#ea580c' },
+  { name: 'Ámbar', hex: '#d97706' },
+  { name: 'Verde', hex: '#16a34a' },
+  { name: 'Turquesa', hex: '#0d9488' },
+  { name: 'Pizarra', hex: '#475569' },
+];
+
+export interface BlockIconPreset {
+  name: string;
+  label: string;
+}
+
+export const BLOCK_ICON_PRESETS: BlockIconPreset[] = [
+  { name: 'menu_book', label: 'Libro' },
+  { name: 'school', label: 'Académico' },
+  { name: 'science', label: 'Ciencia' },
+  { name: 'code', label: 'Código' },
+  { name: 'lan', label: 'Redes' },
+  { name: 'memory', label: 'Hardware' },
+  { name: 'account_balance', label: 'Derecho / Estado' },
+  { name: 'gavel', label: 'Legislación' },
+  { name: 'calculate', label: 'Matemáticas' },
+  { name: 'translate', label: 'Idiomas' },
+  { name: 'history_edu', label: 'Historia' },
+  { name: 'psychology', label: 'Psicología' },
+  { name: 'biotech', label: 'Biología' },
+  { name: 'architecture', label: 'Arquitectura' },
+  { name: 'public', label: 'Geografía / Mundo' },
+  { name: 'terminal', label: 'Terminal' },
+  { name: 'storage', label: 'Bases de datos' },
+  { name: 'security', label: 'Seguridad' },
+  { name: 'palette', label: 'Arte y Diseño' },
+  { name: 'folder', label: 'General' },
+];
+
 export interface Topic {
   id: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   order: number;
   title: string;
   status: TopicStatus;
@@ -51,7 +118,7 @@ export interface Topic {
 }
 
 export interface CreateTopicInput {
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   title: string;
   tags?: string[];
   status?: TopicStatus;
@@ -84,7 +151,7 @@ export const STUDY_SESSION_TYPE_LABELS: Record<StudySessionType, string> = {
 export interface StudySession {
   id: string;
   topicId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   startedAt: string;
   endedAt: string;
   durationMinutes: number;
@@ -94,7 +161,7 @@ export interface StudySession {
 
 export interface CreateStudySessionInput {
   topicId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   startedAt?: string;
   endedAt?: string;
   durationMinutes: number;
@@ -109,7 +176,7 @@ export interface WeeklyPlanItem {
   weekStartDate: string; // Lunes de la semana: YYYY-MM-DD
   dayOfWeek: IsoDayOfWeek;
   topicId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   order: number;
   completed: boolean;
   completedAt?: string;
@@ -120,7 +187,7 @@ export interface CreateWeeklyPlanItemInput {
   weekStartDate: string;
   dayOfWeek: IsoDayOfWeek;
   topicId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   targetPomodoros?: number;
 }
 
@@ -140,14 +207,14 @@ export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
   soundEnabled: true,
 };
 
-// --- Fase 3: Motor de Tests y Simulacros TAI ---
+// --- Fase 3: Motor de Tests y Simulacros ---
 
 export type ExamMode = 'practice' | 'simulation' | 'mistakes' | 'case_study';
 export type QuestionOptionIndex = 0 | 1 | 2 | 3;
 
 export const EXAM_MODE_LABELS: Record<ExamMode, string> = {
   practice: 'Práctica por tema / bloque',
-  simulation: 'Simulacro oficial TAI',
+  simulation: 'Simulacro de examen',
   mistakes: 'Repaso de fallos y marcadas',
   case_study: 'Supuesto práctico',
 };
@@ -159,7 +226,7 @@ export interface PenaltyPreset {
 }
 
 export const PENALTY_PRESETS: PenaltyPreset[] = [
-  { label: 'Oficial INAP (-1/3)', shortLabel: '-1/3', ratio: 1 / 3 },
+  { label: 'Penalización -1/3', shortLabel: '-1/3', ratio: 1 / 3 },
   { label: 'Penalización -1/4', shortLabel: '-1/4', ratio: 0.25 },
   { label: 'Penalización -1/2', shortLabel: '-1/2', ratio: 0.5 },
   { label: 'Sin penalización (0)', shortLabel: '0', ratio: 0 },
@@ -167,7 +234,7 @@ export const PENALTY_PRESETS: PenaltyPreset[] = [
 
 export interface CaseStudy {
   id: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   title: string;
   statement: string;
   source?: string;
@@ -177,7 +244,7 @@ export interface CaseStudy {
 }
 
 export interface CreateCaseStudyInput {
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   title: string;
   statement: string;
   source?: string;
@@ -185,7 +252,7 @@ export interface CreateCaseStudyInput {
 }
 
 export interface UpdateCaseStudyPatch {
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
   title?: string;
   statement?: string;
   source?: string;
@@ -201,7 +268,7 @@ export interface QuestionStats {
 
 export interface Question {
   id: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   topicId?: string;
   caseStudyId?: string;
   prompt: string;
@@ -218,7 +285,7 @@ export interface Question {
 }
 
 export interface CreateQuestionInput {
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   topicId?: string;
   caseStudyId?: string;
   prompt: string;
@@ -232,7 +299,7 @@ export interface CreateQuestionInput {
 }
 
 export interface UpdateQuestionPatch {
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
   topicId?: string;
   caseStudyId?: string;
   prompt?: string;
@@ -248,7 +315,7 @@ export interface UpdateQuestionPatch {
 
 export interface ExamAnswer {
   questionId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   topicId?: string;
   selectedIndex: QuestionOptionIndex | null;
   correctIndex: QuestionOptionIndex;
@@ -300,15 +367,15 @@ export const FLASHCARD_RATING_LABELS: Record<FlashcardRating, string> = {
   easy: 'Fácil',
 };
 
-export const TAI_FLASHCARD_SUGGESTED_TAGS: string[] = [
+export const FLASHCARD_SUGGESTED_TAGS: string[] = [
+  'definiciones',
+  'fechas',
+  'fórmulas',
   'siglas',
-  'plazos',
-  'puertos',
-  'comandos',
-  'leyes',
-  'protocolos',
-  'sql',
-  'seguridad',
+  'conceptos',
+  'vocabulario',
+  'ejemplos',
+  'resumen',
 ];
 
 export interface FlashcardSrsState {
@@ -322,7 +389,7 @@ export interface FlashcardSrsState {
 
 export interface Flashcard {
   id: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   topicId?: string;
   front: string;
   back: string;
@@ -334,7 +401,7 @@ export interface Flashcard {
 }
 
 export interface CreateFlashcardInput {
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   topicId?: string;
   front: string;
   back: string;
@@ -343,7 +410,7 @@ export interface CreateFlashcardInput {
 }
 
 export interface UpdateFlashcardPatch {
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
   topicId?: string;
   front?: string;
   back?: string;
@@ -386,10 +453,10 @@ export function createDefaultGamificationProfile(
 }
 
 export interface BackupPayload {
-  schemaVersion: 1 | 2 | 3 | 4;
-  appName: 'tai-study';
+  schemaVersion: 1 | 2 | 3 | 4 | 5;
+  appName: 'tai-study' | 'crisisstudent';
   exportedAt: string;
-  blocks: TaiBlock[];
+  blocks: StudyBlock[];
   topics: Topic[];
   studySessions?: StudySession[];
   weeklyPlanItems?: WeeklyPlanItem[];
@@ -399,3 +466,14 @@ export interface BackupPayload {
   flashcards?: Flashcard[];
   gamificationProfile?: GamificationProfile;
 }
+
+// --- Alias temporales de transición (se eliminarán al completar las Fases 2–5) ---
+
+/** @deprecated Usar `StudyBlockId`. Se eliminará al completar la migración a CrisIsStudent. */
+export type TaiBlockId = StudyBlockId;
+
+/** @deprecated Usar `StudyBlock`. Se eliminará al completar la migración a CrisIsStudent. */
+export type TaiBlock = StudyBlock;
+
+/** @deprecated Usar `FLASHCARD_SUGGESTED_TAGS`. Se eliminará al completar la migración a CrisIsStudent. */
+export const TAI_FLASHCARD_SUGGESTED_TAGS = FLASHCARD_SUGGESTED_TAGS;

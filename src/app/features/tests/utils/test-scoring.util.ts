@@ -137,10 +137,10 @@ export function scoreExamAnswers(
     answeredTotal > 0 ? Math.round((correctCount / answeredTotal) * 100) : 0;
 
   const byBlock: Record<TaiBlockId, ScoreBreakdown> = {
-    B1: finalizeBreakdown(byBlockRaw.B1, penaltyRatio),
-    B2: finalizeBreakdown(byBlockRaw.B2, penaltyRatio),
-    B3: finalizeBreakdown(byBlockRaw.B3, penaltyRatio),
-    B4: finalizeBreakdown(byBlockRaw.B4, penaltyRatio),
+    B1: finalizeBreakdown(byBlockRaw['B1'], penaltyRatio),
+    B2: finalizeBreakdown(byBlockRaw['B2'], penaltyRatio),
+    B3: finalizeBreakdown(byBlockRaw['B3'], penaltyRatio),
+    B4: finalizeBreakdown(byBlockRaw['B4'], penaltyRatio),
   };
 
   const byTopic: Record<string, ScoreBreakdown> = {};
