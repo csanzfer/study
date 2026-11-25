@@ -2,7 +2,7 @@ import {
   ExamAnswer,
   Question,
   QuestionOptionIndex,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 
 export interface ScoreBreakdown {
@@ -24,7 +24,7 @@ export interface ExamScoreResult {
   maxScore: number;
   scoreOn10: number;
   accuracyPercent: number;
-  byBlock: Record<TaiBlockId, ScoreBreakdown>;
+  byBlock: Record<StudyBlockId, ScoreBreakdown>;
   byTopic: Record<string, ScoreBreakdown>;
 }
 
@@ -82,12 +82,7 @@ export function scoreExamAnswers(
   let wrongCount = 0;
   let blankCount = 0;
 
-  const byBlockRaw: Record<TaiBlockId, ScoreBreakdown> = {
-    B1: createEmptyBreakdown(),
-    B2: createEmptyBreakdown(),
-    B3: createEmptyBreakdown(),
-    B4: createEmptyBreakdown(),
-  };
+  const byBlockRaw: Record<StudyBlockId, ScoreBreakdown> = {};
   const byTopicRaw: Record<string, ScoreBreakdown> = {};
 
   for (const question of questions) {
@@ -103,7 +98,8 @@ export function scoreExamAnswers(
       isCorrect,
     });
 
-    const blockBucket = byBlockRaw[question.blockId];
+    const blockBucket = byBlockRaw[question.blockId] ?? createEmptyBreakdown();
+    byBlockRaw[question.blockId] = blockBucket;
     blockBucket.total++;
 
     let topicBucket: ScoreBreakdown | undefined;
@@ -136,12 +132,10 @@ export function scoreExamAnswers(
   const accuracyPercent =
     answeredTotal > 0 ? Math.round((correctCount / answeredTotal) * 100) : 0;
 
-  const byBlock: Record<TaiBlockId, ScoreBreakdown> = {
-    B1: finalizeBreakdown(byBlockRaw.B1, penaltyRatio),
-    B2: finalizeBreakdown(byBlockRaw.B2, penaltyRatio),
-    B3: finalizeBreakdown(byBlockRaw.B3, penaltyRatio),
-    B4: finalizeBreakdown(byBlockRaw.B4, penaltyRatio),
-  };
+  const byBlock: Record<StudyBlockId, ScoreBreakdown> = {};
+  for (const [blockId, bucket] of Object.entries(byBlockRaw)) {
+    byBlock[blockId] = finalizeBreakdown(bucket, penaltyRatio);
+  }
 
   const byTopic: Record<string, ScoreBreakdown> = {};
   for (const [topicId, bucket] of Object.entries(byTopicRaw)) {

@@ -6,17 +6,16 @@ import {
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
-import { TAI_BLOCKS_SEED } from './tai-seed';
 
 @Injectable({ providedIn: 'root' })
 export class StudyDatabase extends Dexie {
-  blocks!: Table<TaiBlock, TaiBlockId>;
+  blocks!: Table<StudyBlock, StudyBlockId>;
   topics!: Table<Topic, string>;
   studySessions!: Table<StudySession, string>;
   weeklyPlanItems!: Table<WeeklyPlanItem, string>;
@@ -65,10 +64,9 @@ export class StudyDatabase extends Dexie {
   }
 
   async ensureSeeded(): Promise<void> {
-    const existingCount = await this.blocks.count();
-    if (existingCount === 0) {
-      await this.blocks.bulkPut(TAI_BLOCKS_SEED);
-    }
+    // Instalaciones nuevas arrancan limpias sin sembrar bloques por defecto.
+    // Los usuarios existentes conservan intactos los bloques guardados en TaiStudyDB.
+    await this.open();
   }
 
   async requestPersistentStorage(): Promise<boolean> {

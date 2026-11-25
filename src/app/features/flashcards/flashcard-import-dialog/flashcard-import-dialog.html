@@ -4,26 +4,12 @@
       Importar o generar flashcards
     </h2>
     <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-      Carga el pack oficial de siglas TAI, extrae conceptos de tus apuntes o pega listas en lote.
+      Extrae conceptos automáticamente de tus apuntes o pega listas en lote.
     </p>
   </div>
 
   <!-- Tabs -->
   <div class="mt-4 flex flex-wrap gap-1.5 border-b border-slate-200 pb-3 dark:border-slate-800">
-    <button
-      type="button"
-      (click)="activeTab.set('acronyms')"
-      class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
-      [class.bg-blue-600]="activeTab() === 'acronyms'"
-      [class.text-white]="activeTab() === 'acronyms'"
-      [class.bg-slate-100]="activeTab() !== 'acronyms'"
-      [class.text-slate-700]="activeTab() !== 'acronyms'"
-      [class.dark:bg-slate-800]="activeTab() !== 'acronyms'"
-      [class.dark:text-slate-300]="activeTab() !== 'acronyms'"
-    >
-      <mat-icon class="!h-4 !w-4 !text-[16px]">spellcheck</mat-icon>
-      Pack de Siglas TAI
-    </button>
     <button
       type="button"
       (click)="activeTab.set('extract')"
@@ -56,88 +42,7 @@
 
   <!-- Body -->
   <div class="mt-4 flex-1 overflow-y-auto pr-1">
-    @if (activeTab() === 'acronyms') {
-      <div class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              (click)="acronymBlockFilter.set('ALL')"
-              class="rounded-lg px-2.5 py-1 text-xs font-semibold"
-              [class.bg-slate-900]="acronymBlockFilter() === 'ALL'"
-              [class.text-white]="acronymBlockFilter() === 'ALL'"
-              [class.dark:bg-slate-100]="acronymBlockFilter() === 'ALL'"
-              [class.dark:text-slate-900]="acronymBlockFilter() === 'ALL'"
-              [class.bg-slate-100]="acronymBlockFilter() !== 'ALL'"
-              [class.text-slate-600]="acronymBlockFilter() !== 'ALL'"
-              [class.dark:bg-slate-800]="acronymBlockFilter() !== 'ALL'"
-              [class.dark:text-slate-300]="acronymBlockFilter() !== 'ALL'"
-            >
-              Todos
-            </button>
-            @for (block of store.blocks(); track block.id) {
-              <button
-                type="button"
-                (click)="acronymBlockFilter.set(block.id)"
-                class="rounded-lg px-2.5 py-1 text-xs font-semibold"
-                [class.bg-slate-900]="acronymBlockFilter() === block.id"
-                [class.text-white]="acronymBlockFilter() === block.id"
-                [class.dark:bg-slate-100]="acronymBlockFilter() === block.id"
-                [class.dark:text-slate-900]="acronymBlockFilter() === block.id"
-                [class.bg-slate-100]="acronymBlockFilter() !== block.id"
-                [class.text-slate-600]="acronymBlockFilter() !== block.id"
-                [class.dark:bg-slate-800]="acronymBlockFilter() !== block.id"
-                [class.dark:text-slate-300]="acronymBlockFilter() !== block.id"
-              >
-                {{ block.id }}
-              </button>
-            }
-          </div>
-          <span class="text-xs text-slate-500 dark:text-slate-400">
-            {{ selectedAcronymInputs().length }} nuevas seleccionadas
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          @for (item of filteredAcronymSeed(); track item.front) {
-            <label
-              class="flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition"
-              [class.opacity-55]="item.alreadyExists"
-              [class.border-blue-300]="isAcronymSelected(item)"
-              [class.bg-blue-50/40]="isAcronymSelected(item)"
-              [class.dark:border-blue-800]="isAcronymSelected(item)"
-              [class.dark:bg-blue-950/30]="isAcronymSelected(item)"
-              [class.border-slate-200]="!isAcronymSelected(item)"
-              [class.dark:border-slate-800]="!isAcronymSelected(item)"
-            >
-              <input
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 accent-blue-600"
-                [disabled]="item.alreadyExists"
-                [checked]="isAcronymSelected(item)"
-                (change)="toggleAcronymItem(item)"
-              />
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between gap-2">
-                  <span class="font-mono text-sm font-bold text-slate-900 dark:text-white">
-                    {{ item.front }}
-                  </span>
-                  <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {{ item.alreadyExists ? 'Ya en mazo' : item.blockId }}
-                  </span>
-                </div>
-                <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
-                  {{ item.back }}
-                </p>
-                @if (item.hint) {
-                  <p class="mt-0.5 text-[11px] text-slate-400">{{ item.hint }}</p>
-                }
-              </div>
-            </label>
-          }
-        </div>
-      </div>
-    } @else if (activeTab() === 'extract') {
+    @if (activeTab() === 'extract') {
       <div class="space-y-3">
         <label class="block">
           <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -149,7 +54,9 @@
             class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
             @for (topic of store.topics(); track topic.id) {
-              <option [value]="topic.id">{{ topic.blockId }} · {{ topic.title }}</option>
+              <option [value]="topic.id">
+                {{ store.getBlockById(topic.blockId)?.code ?? topic.blockId }} · {{ topic.title }}
+              </option>
             }
           </select>
         </label>
@@ -194,14 +101,14 @@
       <div class="space-y-3">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label class="block">
-            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Bloque por defecto</span>
+            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Asignatura por defecto</span>
             <select
               [ngModel]="batchBlockId()"
               (ngModelChange)="batchBlockId.set($event); batchTopicId.set('')"
               class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             >
               @for (block of store.blocks(); track block.id) {
-                <option [value]="block.id">{{ block.code }}</option>
+                <option [value]="block.id">{{ block.code }} · {{ block.shortTitle }}</option>
               }
             </select>
           </label>
@@ -224,7 +131,7 @@
               type="text"
               [ngModel]="batchDefaultTags()"
               (ngModelChange)="batchDefaultTags.set($event)"
-              placeholder="siglas, puertos..."
+              placeholder="definiciones, conceptos..."
               class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </label>
@@ -238,7 +145,7 @@
             rows="7"
             [ngModel]="batchRawText()"
             (ngModelChange)="batchRawText.set($event)"
-            placeholder="DNS :: Domain Name System :: Puerto 53 :: siglas, puertos&#10;SSH :: Secure Shell :: Puerto 22 TCP :: siglas, puertos"
+            placeholder="DNS :: Domain Name System :: Puerto 53 :: siglas, redes&#10;Fotosíntesis :: Proceso por el cual las plantas convierten luz en energía :: Cloroplastos :: biología"
             class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           ></textarea>
         </label>

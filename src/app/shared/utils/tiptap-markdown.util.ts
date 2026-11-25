@@ -1,6 +1,6 @@
 import {
   TOPIC_STATUS_LABELS,
-  TaiBlock,
+  StudyBlock,
   Topic,
 } from '../../core/models/study.models';
 
@@ -43,7 +43,7 @@ export function tiptapJsonToMarkdown(contentJson: unknown): string {
 
 export function buildTopicMarkdownDocument(
   topic: Topic,
-  block?: TaiBlock,
+  block?: StudyBlock,
   options: TopicMarkdownExportOptions = {},
 ): string {
   const includeMetadataHeader = options.includeMetadataHeader ?? true;
@@ -99,7 +99,7 @@ export function buildTopicMarkdownDocument(
 }
 
 export function buildBlockMarkdownDocument(
-  block: TaiBlock,
+  block: StudyBlock,
   topics: Topic[],
   options: TopicMarkdownExportOptions = {},
 ): string {
@@ -129,7 +129,7 @@ export function buildBlockMarkdownDocument(
   return parts.join('\n\n').trim() + '\n';
 }
 
-export function sanitizeExportFilename(value: string, fallback = 'apunte-tai'): string {
+export function sanitizeExportFilename(value: string, fallback = 'apunte'): string {
   const cleaned = value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

@@ -1,5 +1,4 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   BackupPayload,
   CaseStudy,
@@ -10,16 +9,19 @@ import {
   FlashcardSrsState,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
 import { STUDY_REPOSITORY } from '../repositories/study.repository';
 
-const LAST_BACKUP_STORAGE_KEY = 'tai-study:last-backup-at';
-const VALID_BLOCK_IDS = new Set<TaiBlockId>(['B1', 'B2', 'B3', 'B4']);
+const LAST_BACKUP_STORAGE_KEY = 'crisisstudent:last-backup-at';
+const LEGACY_LAST_BACKUP_STORAGE_KEY = 'tai-study:last-backup-at';
 const VALID_EXAM_MODES = new Set<ExamMode>(['practice', 'simulation', 'mistakes', 'case_study']);
+const VALID_SCHEMA_VERSIONS = new Set<BackupPayload['schemaVersion']>([1, 2, 3, 4, 5]);
+const VALID_APP_NAMES = new Set<BackupPayload['appName']>(['tai-study', 'crisisstudent']);
 
 export interface BackupImportResult {
   blocksCount: number;
@@ -61,10 +63,10 @@ export class BackupService {
     ]);
 
     return {
-      schemaVersion: 4,
-      appName: 'tai-study',
+      schemaVersion: 5,
+      appName: 'crisisstudent',
       exportedAt: new Date().toISOString(),
-      blocks: blocks.length > 0 ? blocks : TAI_BLOCKS_SEED,
+      blocks,
       topics,
       studySessions,
       weeklyPlanItems,
@@ -85,7 +87,7 @@ export class BackupService {
     const dateStamp = payload.exportedAt.slice(0, 10);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `tai-study-backup-${dateStamp}.json`;
+    anchor.download = `crisisstudent-backup-${dateStamp}.json`;
     anchor.click();
 
     URL.revokeObjectURL(url);
@@ -108,14 +110,13 @@ export class BackupService {
 
     const candidate = parsed as Partial<BackupPayload>;
     if (
-      candidate.appName !== 'tai-study' ||
-      (candidate.schemaVersion !== 1 &&
-        candidate.schemaVersion !== 2 &&
-        candidate.schemaVersion !== 3 &&
-        candidate.schemaVersion !== 4)
+      !candidate.appName ||
+      !VALID_APP_NAMES.has(candidate.appName) ||
+      !candidate.schemaVersion ||
+      !VALID_SCHEMA_VERSIONS.has(candidate.schemaVersion)
     ) {
       throw new Error(
-        'Este archivo no corresponde a un backup compatible de TAI Study (v1/v2/v3/v4).',
+        'Este archivo no corresponde a un backup compatible de CrisIsStudent / TAI Study (v1–v5).',
       );
     }
 
@@ -123,7 +124,14 @@ export class BackupService {
       throw new Error('Faltan las colecciones de bloques o temas en el backup.');
     }
 
-    const validTopics = candidate.topics.every((topic) => this.isValidTopic(topic));
+    const validBlocks = candidate.blocks.every((block) => this.isValidBlock(block));
+    if (!validBlocks) {
+      throw new Error('Algunos bloques del backup tienen una estructura incompleta o corrupta.');
+    }
+
+    const validBlockIds = new Set<StudyBlockId>(candidate.blocks.map((block) => block.id));
+
+    const validTopics = candidate.topics.every((topic) => this.isValidTopic(topic, validBlockIds));
     if (!validTopics) {
       throw new Error('Algunos temas del backup tienen una estructura incompleta o corrupta.');
     }
@@ -139,7 +147,9 @@ export class BackupService {
     if (candidate.studySessions !== undefined) {
       if (
         !Array.isArray(candidate.studySessions) ||
-        !candidate.studySessions.every((session) => this.isValidStudySession(session))
+        !candidate.studySessions.every((session) =>
+          this.isValidStudySession(session, validBlockIds),
+        )
       ) {
         throw new Error('Algunas sesiones de estudio del backup tienen una estructura inválida.');
       }
@@ -149,9 +159,13 @@ export class BackupService {
     if (candidate.weeklyPlanItems !== undefined) {
       if (
         !Array.isArray(candidate.weeklyPlanItems) ||
-        !candidate.weeklyPlanItems.every((item) => this.isValidWeeklyPlanItem(item))
+        !candidate.weeklyPlanItems.every((item) =>
+          this.isValidWeeklyPlanItem(item, validBlockIds),
+        )
       ) {
-        throw new Error('Algunos elementos del plan semanal del backup tienen una estructura inválida.');
+        throw new Error(
+          'Algunos elementos del plan semanal del backup tienen una estructura inválida.',
+        );
       }
       weeklyPlanItems = candidate.weeklyPlanItems;
     }
@@ -159,7 +173,7 @@ export class BackupService {
     if (candidate.caseStudies !== undefined) {
       if (
         !Array.isArray(candidate.caseStudies) ||
-        !candidate.caseStudies.every((cs) => this.isValidCaseStudy(cs))
+        !candidate.caseStudies.every((cs) => this.isValidCaseStudy(cs, validBlockIds))
       ) {
         throw new Error('Algunos supuestos prácticos del backup tienen una estructura inválida.');
       }
@@ -169,7 +183,7 @@ export class BackupService {
     if (candidate.questions !== undefined) {
       if (
         !Array.isArray(candidate.questions) ||
-        !candidate.questions.every((q) => this.isValidQuestion(q))
+        !candidate.questions.every((q) => this.isValidQuestion(q, validBlockIds))
       ) {
         throw new Error('Algunas preguntas del backup tienen una estructura inválida.');
       }
@@ -189,7 +203,7 @@ export class BackupService {
     if (candidate.flashcards !== undefined) {
       if (
         !Array.isArray(candidate.flashcards) ||
-        !candidate.flashcards.every((card) => this.isValidFlashcard(card))
+        !candidate.flashcards.every((card) => this.isValidFlashcard(card, validBlockIds))
       ) {
         throw new Error('Algunas flashcards del backup tienen una estructura inválida.');
       }
@@ -205,12 +219,12 @@ export class BackupService {
 
     return {
       schemaVersion: candidate.schemaVersion,
-      appName: 'tai-study',
+      appName: candidate.appName,
       exportedAt:
         typeof candidate.exportedAt === 'string'
           ? candidate.exportedAt
           : new Date().toISOString(),
-      blocks: candidate.blocks.length > 0 ? candidate.blocks : TAI_BLOCKS_SEED,
+      blocks: candidate.blocks,
       topics: candidate.topics,
       studySessions,
       weeklyPlanItems,
@@ -256,178 +270,178 @@ export class BackupService {
     };
   }
 
-  private isValidTopic(item: unknown): item is Topic {
-    if (!item || typeof item !== 'object') {
+  private isValidBlock(item: unknown): item is StudyBlock {
+    if (!this.isRecord(item)) {
+      return false;
+    }
+
+    const block = item as Partial<StudyBlock>;
+    return (
+      this.isNonEmptyString(block.id) &&
+      this.isString(block.code) &&
+      this.isString(block.title) &&
+      this.isString(block.shortTitle) &&
+      this.isString(block.description) &&
+      this.isString(block.color) &&
+      this.isString(block.icon) &&
+      this.isFiniteNumber(block.order)
+    );
+  }
+
+  private isValidTopic(item: unknown, validBlockIds: ReadonlySet<StudyBlockId>): item is Topic {
+    if (!this.isRecord(item)) {
       return false;
     }
 
     const topic = item as Partial<Topic>;
     return (
-      typeof topic.id === 'string' &&
-      typeof topic.title === 'string' &&
-      typeof topic.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(topic.blockId as TaiBlockId) &&
-      typeof topic.order === 'number' &&
-      typeof topic.status === 'string' &&
+      this.isString(topic.id) &&
+      this.isString(topic.title) &&
+      this.isValidBlockId(topic.blockId, validBlockIds) &&
+      this.isFiniteNumber(topic.order) &&
+      this.isString(topic.status) &&
       Array.isArray(topic.tags)
     );
   }
 
-  private isValidStudySession(item: unknown): item is StudySession {
-    if (!item || typeof item !== 'object') {
+  private isValidStudySession(
+    item: unknown,
+    validBlockIds: ReadonlySet<StudyBlockId>,
+  ): item is StudySession {
+    if (!this.isRecord(item)) {
       return false;
     }
 
     const session = item as Partial<StudySession>;
     return (
-      typeof session.id === 'string' &&
-      typeof session.topicId === 'string' &&
-      typeof session.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(session.blockId as TaiBlockId) &&
-      typeof session.startedAt === 'string' &&
-      typeof session.endedAt === 'string' &&
+      this.isString(session.id) &&
+      this.isString(session.topicId) &&
+      this.isValidBlockId(session.blockId, validBlockIds) &&
+      this.isString(session.startedAt) &&
+      this.isString(session.endedAt) &&
       typeof session.durationMinutes === 'number' &&
       Number.isFinite(session.durationMinutes) &&
       session.durationMinutes > 0 &&
-      typeof session.type === 'string'
+      this.isString(session.type)
     );
   }
 
-  private isValidWeeklyPlanItem(item: unknown): item is WeeklyPlanItem {
-    if (!item || typeof item !== 'object') {
+  private isValidWeeklyPlanItem(
+    item: unknown,
+    validBlockIds: ReadonlySet<StudyBlockId>,
+  ): item is WeeklyPlanItem {
+    if (!this.isRecord(item)) {
       return false;
     }
 
     const planItem = item as Partial<WeeklyPlanItem>;
     return (
-      typeof planItem.id === 'string' &&
-      typeof planItem.weekStartDate === 'string' &&
-      typeof planItem.dayOfWeek === 'number' &&
-      Number.isInteger(planItem.dayOfWeek) &&
-      planItem.dayOfWeek >= 1 &&
-      planItem.dayOfWeek <= 7 &&
-      typeof planItem.topicId === 'string' &&
-      typeof planItem.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(planItem.blockId as TaiBlockId) &&
-      typeof planItem.order === 'number' &&
-      Number.isFinite(planItem.order) &&
+      this.isString(planItem.id) &&
+      this.isString(planItem.weekStartDate) &&
+      this.isIntInRange(planItem.dayOfWeek, 1, 7) &&
+      this.isString(planItem.topicId) &&
+      this.isValidBlockId(planItem.blockId, validBlockIds) &&
+      this.isFiniteNumber(planItem.order) &&
       typeof planItem.completed === 'boolean'
     );
   }
 
-  private isValidCaseStudy(item: unknown): item is CaseStudy {
-    if (!item || typeof item !== 'object') {
+  private isValidCaseStudy(
+    item: unknown,
+    validBlockIds: ReadonlySet<StudyBlockId>,
+  ): item is CaseStudy {
+    if (!this.isRecord(item)) {
       return false;
     }
     const cs = item as Partial<CaseStudy>;
     return (
-      typeof cs.id === 'string' &&
-      typeof cs.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(cs.blockId as TaiBlockId) &&
-      typeof cs.title === 'string' &&
-      typeof cs.statement === 'string' &&
+      this.isString(cs.id) &&
+      this.isValidBlockId(cs.blockId, validBlockIds) &&
+      this.isString(cs.title) &&
+      this.isString(cs.statement) &&
       Array.isArray(cs.tags) &&
-      typeof cs.createdAt === 'string' &&
-      typeof cs.updatedAt === 'string'
+      this.isString(cs.createdAt) &&
+      this.isString(cs.updatedAt)
     );
   }
 
-  private isValidQuestion(item: unknown): item is Question {
-    if (!item || typeof item !== 'object') {
+  private isValidQuestion(
+    item: unknown,
+    validBlockIds: ReadonlySet<StudyBlockId>,
+  ): item is Question {
+    if (!this.isRecord(item)) {
       return false;
     }
     const q = item as Partial<Question>;
     return (
-      typeof q.id === 'string' &&
-      typeof q.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(q.blockId as TaiBlockId) &&
-      typeof q.prompt === 'string' &&
+      this.isString(q.id) &&
+      this.isValidBlockId(q.blockId, validBlockIds) &&
+      this.isString(q.prompt) &&
       Array.isArray(q.options) &&
       q.options.length === 4 &&
       q.options.every((opt) => typeof opt === 'string') &&
-      typeof q.correctIndex === 'number' &&
-      Number.isInteger(q.correctIndex) &&
-      q.correctIndex >= 0 &&
-      q.correctIndex <= 3 &&
+      this.isIntInRange(q.correctIndex, 0, 3) &&
       typeof q.flagged === 'boolean' &&
       Array.isArray(q.tags) &&
       !!q.stats &&
-      typeof q.stats.attempts === 'number' &&
-      Number.isFinite(q.stats.attempts) &&
-      q.stats.attempts >= 0 &&
-      typeof q.stats.correct === 'number' &&
-      Number.isFinite(q.stats.correct) &&
-      q.stats.correct >= 0 &&
-      typeof q.createdAt === 'string' &&
-      typeof q.updatedAt === 'string'
+      this.isFiniteNumber(q.stats.attempts, 0) &&
+      this.isFiniteNumber(q.stats.correct, 0) &&
+      this.isString(q.createdAt) &&
+      this.isString(q.updatedAt)
     );
   }
 
   private isValidExamAnswer(item: unknown): item is ExamAnswer {
-    if (!item || typeof item !== 'object') {
+    if (!this.isRecord(item)) {
       return false;
     }
     const ans = item as Partial<ExamAnswer>;
     const validSelected =
-      ans.selectedIndex === null ||
-      (typeof ans.selectedIndex === 'number' &&
-        Number.isInteger(ans.selectedIndex) &&
-        ans.selectedIndex >= 0 &&
-        ans.selectedIndex <= 3);
+      ans.selectedIndex === null || this.isIntInRange(ans.selectedIndex, 0, 3);
     return (
-      typeof ans.questionId === 'string' &&
-      typeof ans.blockId === 'string' &&
-      VALID_BLOCK_IDS.has(ans.blockId as TaiBlockId) &&
+      this.isString(ans.questionId) &&
+      this.isNonEmptyString(ans.blockId) &&
       validSelected &&
-      typeof ans.correctIndex === 'number' &&
-      Number.isInteger(ans.correctIndex) &&
-      ans.correctIndex >= 0 &&
-      ans.correctIndex <= 3 &&
+      this.isIntInRange(ans.correctIndex, 0, 3) &&
       typeof ans.isCorrect === 'boolean'
     );
   }
 
   private isValidExamAttempt(item: unknown): item is ExamAttempt {
-    if (!item || typeof item !== 'object') {
+    if (!this.isRecord(item)) {
       return false;
     }
     const a = item as Partial<ExamAttempt>;
     return (
-      typeof a.id === 'string' &&
-      typeof a.title === 'string' &&
-      typeof a.date === 'string' &&
+      this.isString(a.id) &&
+      this.isString(a.title) &&
+      this.isString(a.date) &&
       typeof a.mode === 'string' &&
       VALID_EXAM_MODES.has(a.mode as ExamMode) &&
-      typeof a.penaltyRatio === 'number' &&
-      Number.isFinite(a.penaltyRatio) &&
+      this.isFiniteNumber(a.penaltyRatio) &&
       Array.isArray(a.answers) &&
       a.answers.every((ans) => this.isValidExamAnswer(ans)) &&
-      typeof a.correctCount === 'number' &&
-      Number.isFinite(a.correctCount) &&
-      typeof a.wrongCount === 'number' &&
-      Number.isFinite(a.wrongCount) &&
-      typeof a.blankCount === 'number' &&
-      Number.isFinite(a.blankCount) &&
-      typeof a.netScore === 'number' &&
-      Number.isFinite(a.netScore) &&
-      typeof a.maxScore === 'number' &&
-      Number.isFinite(a.maxScore) &&
-      typeof a.scoreOn10 === 'number' &&
-      Number.isFinite(a.scoreOn10) &&
-      typeof a.durationSec === 'number' &&
-      Number.isFinite(a.durationSec) &&
-      a.durationSec >= 0
+      this.isFiniteNumber(a.correctCount) &&
+      this.isFiniteNumber(a.wrongCount) &&
+      this.isFiniteNumber(a.blankCount) &&
+      this.isFiniteNumber(a.netScore) &&
+      this.isFiniteNumber(a.maxScore) &&
+      this.isFiniteNumber(a.scoreOn10) &&
+      this.isFiniteNumber(a.durationSec, 0)
     );
   }
 
-  private isValidFlashcard(item: unknown): item is Flashcard {
+  private isValidFlashcard(
+    item: unknown,
+    validBlockIds: ReadonlySet<StudyBlockId>,
+  ): item is Flashcard {
     if (!this.isRecord(item)) {
       return false;
     }
     const f = item as Partial<Flashcard>;
     return (
       this.isString(f.id) &&
-      this.isValidBlockId(f.blockId) &&
+      this.isValidBlockId(f.blockId, validBlockIds) &&
       this.isString(f.front) &&
       this.isString(f.back) &&
       this.isStringArray(f.tags) &&
@@ -480,6 +494,10 @@ export class BackupService {
     return typeof value === 'string';
   }
 
+  private isNonEmptyString(value: unknown): value is string {
+    return typeof value === 'string' && value.trim().length > 0;
+  }
+
   private isStringArray(value: unknown): value is string[] {
     return Array.isArray(value) && value.every((item) => typeof item === 'string');
   }
@@ -492,13 +510,19 @@ export class BackupService {
     return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
   }
 
-  private isValidBlockId(value: unknown): value is TaiBlockId {
-    return typeof value === 'string' && VALID_BLOCK_IDS.has(value as TaiBlockId);
+  private isValidBlockId(
+    value: unknown,
+    validBlockIds: ReadonlySet<StudyBlockId>,
+  ): value is StudyBlockId {
+    return typeof value === 'string' && validBlockIds.has(value);
   }
 
   private readLastBackupDate(): string | null {
     try {
-      return localStorage.getItem(LAST_BACKUP_STORAGE_KEY);
+      return (
+        localStorage.getItem(LAST_BACKUP_STORAGE_KEY) ??
+        localStorage.getItem(LEGACY_LAST_BACKUP_STORAGE_KEY)
+      );
     } catch {
       return null;
     }

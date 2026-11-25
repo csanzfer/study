@@ -10,8 +10,8 @@ import {
   STUDY_SESSION_TYPE_LABELS,
   StudySession,
   StudySessionType,
-  TaiBlock,
-  TaiBlockId,
+  StudyBlock,
+  StudyBlockId,
   Topic,
 } from '../../../core/models/study.models';
 import { PomodoroPhase, PomodoroService } from '../../../core/services/pomodoro.service';
@@ -54,7 +54,7 @@ export class PomodoroPanel {
   protected readonly manualType = signal<StudySessionType>('reading');
 
   protected readonly blockMap = computed(() => {
-    const map = new Map<TaiBlockId, TaiBlock>();
+    const map = new Map<StudyBlockId, StudyBlock>();
     for (const block of this.store.blocks()) {
       map.set(block.id, block);
     }
@@ -201,7 +201,7 @@ export class PomodoroPanel {
     return this.topicMap().get(topicId)?.title ?? 'Tema eliminado';
   }
 
-  protected getBlockColor(blockId: TaiBlockId): string {
+  protected getBlockColor(blockId: StudyBlockId): string {
     return this.blockMap().get(blockId)?.color ?? '#64748b';
   }
 }

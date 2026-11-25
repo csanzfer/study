@@ -159,7 +159,7 @@
           class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
           <option value="">Sin tema específico (solo cronómetro)</option>
           @for (topic of store.topics(); track topic.id) {
-          <option [value]="topic.id">[{{ topic.blockId }}] #{{ topic.order }} {{ topic.title }}</option>
+          <option [value]="topic.id">[{{ store.getBlockById(topic.blockId)?.code ?? 'Eliminado' }}] #{{ topic.order }} {{ topic.title }}</option>
           }
         </select>
       </div>
@@ -210,7 +210,7 @@
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 class="text-sm font-bold text-slate-900 dark:text-white">
-            Horas reales por bloque TAI
+            Horas reales por asignatura
           </h3>
           <p class="text-xs text-slate-500 dark:text-slate-400">
             Esta semana: <strong>{{ formatDuration(store.studyMinutesThisWeek()) }}</strong> ·
@@ -235,7 +235,7 @@
           <select name="manualTopicId" [ngModel]="manualTopicId()" (ngModelChange)="manualTopicId.set($event)"
             class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900">
             @for (topic of store.topics(); track topic.id) {
-            <option [value]="topic.id">[{{ topic.blockId }}] {{ topic.title }}</option>
+            <option [value]="topic.id">[{{ store.getBlockById(topic.blockId)?.code ?? 'Eliminado' }}] {{ topic.title }}</option>
             }
           </select>
         </div>

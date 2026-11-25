@@ -91,8 +91,12 @@
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
         Crea o importa un tema en cualquiera de los bloques para generar su mapa mental automáticamente.
       </p>
-      <a routerLink="/blocks/B1" mat-stroked-button class="mt-4 !rounded-xl">
-        Ir al Bloque I
+      <a
+        [routerLink]="store.defaultBlockId() ? ['/blocks', store.defaultBlockId()] : ['/dashboard']"
+        mat-stroked-button
+        class="mt-4 !rounded-xl"
+      >
+        {{ store.defaultBlockId() ? 'Ir a mi primera asignatura' : 'Ir al panel principal' }}
       </a>
     </div>
   } @else {

@@ -41,7 +41,7 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label class="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
-              Bloque TAI
+              Asignatura / Bloque
             </label>
             <select
               [ngModel]="selectedBlock()"
@@ -51,7 +51,7 @@
               <option value="ALL">Todos los bloques ({{ store.totalQuestions() }})</option>
               @for (block of store.blocks(); track block.id) {
                 <option [value]="block.id">
-                  {{ block.code }} ({{ store.questionCountByBlock()[block.id] }})
+                  {{ block.code }} ({{ store.questionCountByBlock()[block.id] ?? 0 }})
                 </option>
               }
             </select>
@@ -69,7 +69,7 @@
               <option value="ALL">Todos los temas</option>
               @for (topic of availableTopics(); track topic.id) {
                 <option [value]="topic.id">
-                  {{ topic.blockId }} · #{{ topic.order }} {{ topic.title }}
+                  {{ store.getBlockById(topic.blockId)?.code ?? topic.blockId }} · #{{ topic.order }} {{ topic.title }}
                   ({{ store.questionCountByTopic()[topic.id] || 0 }})
                 </option>
               }
@@ -117,11 +117,11 @@
       @if (selectedMode() === 'simulation') {
         <div class="flex flex-wrap items-center justify-between gap-2">
           <p class="text-xs text-slate-500 dark:text-slate-400">
-            Configura el reparto de preguntas por bloque, el tiempo límite y la penalización oficial.
+            Configura el reparto de preguntas por asignatura, el tiempo límite y la penalización.
           </p>
           <div class="flex items-center gap-2">
-            <button mat-stroked-button type="button" (click)="applyOfficialInapQuotas()">
-              Preset INAP (80 · 90m)
+            <button mat-stroked-button type="button" (click)="applyBalancedQuotas()">
+              Reparto equitativo
             </button>
             <button mat-stroked-button type="button" (click)="applyAvailableQuotas()">
               Usar todas disponibles
@@ -132,50 +132,19 @@
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           @for (block of store.blocks(); track block.id) {
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-              <div class="flex items-center justify-between text-xs font-semibold">
-                <span class="text-slate-700 dark:text-slate-200">{{ block.code }}</span>
-                <span class="text-[11px] text-slate-400">
-                  Disp: {{ store.questionCountByBlock()[block.id] }}
+              <div class="flex items-center justify-between gap-1 text-xs font-semibold">
+                <span class="truncate text-slate-700 dark:text-slate-200">{{ block.code }}</span>
+                <span class="shrink-0 text-[11px] text-slate-400">
+                  Disp: {{ store.questionCountByBlock()[block.id] ?? 0 }}
                 </span>
               </div>
-              @switch (block.id) {
-                @case ('B1') {
-                  <input
-                    type="number"
-                    min="0"
-                    [ngModel]="quotaB1()"
-                    (ngModelChange)="quotaB1.set(+$event || 0)"
-                    class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                  />
-                }
-                @case ('B2') {
-                  <input
-                    type="number"
-                    min="0"
-                    [ngModel]="quotaB2()"
-                    (ngModelChange)="quotaB2.set(+$event || 0)"
-                    class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                  />
-                }
-                @case ('B3') {
-                  <input
-                    type="number"
-                    min="0"
-                    [ngModel]="quotaB3()"
-                    (ngModelChange)="quotaB3.set(+$event || 0)"
-                    class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                  />
-                }
-                @case ('B4') {
-                  <input
-                    type="number"
-                    min="0"
-                    [ngModel]="quotaB4()"
-                    (ngModelChange)="quotaB4.set(+$event || 0)"
-                    class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                  />
-                }
-              }
+              <input
+                type="number"
+                min="0"
+                [ngModel]="blockQuotas()[block.id] ?? 0"
+                (ngModelChange)="setBlockQuota(block.id, $event)"
+                class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
             </div>
           }
         </div>
@@ -277,7 +246,7 @@
               <option value="">-- Elige un supuesto --</option>
               @for (cs of store.caseStudies(); track cs.id) {
                 <option [value]="cs.id">
-                  {{ cs.blockId }} · {{ cs.title }} ({{ store.getQuestionsForCaseStudy(cs.id).length }} preg.)
+                  {{ store.getBlockById(cs.blockId)?.code ?? 'Eliminado' }} · {{ cs.title }} ({{ store.getQuestionsForCaseStudy(cs.id).length }} preg.)
                 </option>
               }
             </select>

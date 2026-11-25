@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { TOPIC_STATUS_LABELS, TaiBlock, Topic } from '../../../core/models/study.models';
+import { TOPIC_STATUS_LABELS, StudyBlock, Topic } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
   TOPIC_HEALTH_LABELS,
@@ -21,7 +21,7 @@ interface TopicWithHealth {
 }
 
 interface BlockHealthSummary {
-  block: TaiBlock;
+  block: StudyBlock;
   items: TopicWithHealth[];
   counts: Record<TopicHealthLevel, number>;
 }

@@ -12,12 +12,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
+import { CreateBlockInput } from '../../../core/models/study.models';
 import { BackupService } from '../../../core/services/backup.service';
 import { PomodoroService } from '../../../core/services/pomodoro.service';
 import { SearchService } from '../../../core/services/search.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import {
+  BlockEditorDialog,
+  BlockEditorDialogData,
+} from '../block-editor-dialog/block-editor-dialog';
 import { GlobalSearchDialog } from '../global-search-dialog/global-search-dialog';
 
 interface ToolNavItem {
@@ -89,6 +94,27 @@ export class AppShell {
     if (this.isHandset()) {
       void this.drawer()?.close();
     }
+  }
+
+  protected async openCreateBlockDialog(): Promise<void> {
+    const dialogRef = this.dialog.open<
+      BlockEditorDialog,
+      BlockEditorDialogData,
+      CreateBlockInput
+    >(BlockEditorDialog, {
+      width: '560px',
+      maxWidth: '95vw',
+      data: {},
+    });
+
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (!result) {
+      return;
+    }
+
+    const created = await this.store.createBlock(result);
+    this.closeDrawerOnMobile();
+    this.snackBar.open(`Asignatura "${created.title}" creada.`, 'Cerrar', { duration: 3000 });
   }
 
   protected onGlobalKeydown(event: KeyboardEvent): void {

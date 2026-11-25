@@ -19,11 +19,11 @@
 
 ## 📊 Resumen de Progreso
 
-- [ ] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
-- [ ] **Fase 2:** Store reactivo dinámico y BackupService compatible
-- [ ] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
-- [ ] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
-- [ ] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
+- [x] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
+- [x] **Fase 2:** Store reactivo dinámico y BackupService compatible
+- [x] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
+- [x] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
+- [x] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
 
 ---
 
@@ -33,8 +33,8 @@
 
 ### Tareas
 
-- [ ] **Modelos (`src/app/core/models/study.models.ts`):**
-  - Reemplazar `TaiBlockId = 'B1' | 'B2' | 'B3' | 'B4'` por `StudyBlockId = string` (y `TaiBlock` por `StudyBlock`).
+- [x] **Modelos (`src/app/core/models/study.models.ts`):**
+  - Reemplazar `TaiBlockId = 'B1' | 'B2' | 'B3' | 'B4'` por `StudyBlockId = string` (y `TaiBlock` por `StudyBlock`). *(Alias `@deprecated` temporales mantenidos hasta completar Fases 2–5.)*
   - Definir `CreateBlockInput` (`code`, `title`, `shortTitle?`, `description?`, `color`, `icon`) y `UpdateBlockPatch`.
   - Definir paleta de colores e iconos Material recomendados para elegir al crear un bloque (constantes `BLOCK_COLOR_PRESETS` y `BLOCK_ICON_PRESETS`).
   - Generalizar constantes de dominio:
@@ -42,11 +42,11 @@
     - `PENALTY_PRESETS`: `'Penalización -1/3'`, `'-1/4'`, `'-1/2'`, `'Sin penalización (0)'`.
     - Renombrar `TAI_FLASHCARD_SUGGESTED_TAGS` a `FLASHCARD_SUGGESTED_TAGS` con etiquetas genéricas (`definiciones`, `fechas`, `fórmulas`, `siglas`, `conceptos`, `vocabulario`, `ejemplos`, `resumen`).
   - Actualizar `BackupPayload` para soportar `schemaVersion: 1 | 2 | 3 | 4 | 5` y `appName: 'tai-study' | 'crisisstudent'`.
-- **Base de datos (`src/app/core/db/study.db.ts`):**
+- [x] **Base de datos (`src/app/core/db/study.db.ts`):**
   - Cambiar el tipado de `blocks!: Table<StudyBlock, StudyBlockId>`.
   - Eliminar la llamada a `TAI_BLOCKS_SEED` en `ensureSeeded()` (dejar la tabla vacía en instalaciones nuevas; los usuarios existentes mantienen sus bloques actuales intactos).
-  - Eliminar `src/app/core/db/tai-seed.ts` una vez migradas todas sus referencias en código y tests.
-- **Repositorio (`src/app/core/repositories/study.repository.ts`):**
+  - Eliminado `src/app/core/db/tai-seed.ts` tras migrar todas sus referencias en código y tests.
+- [x] **Repositorio (`src/app/core/repositories/study.repository.ts`):**
   - Añadir a `StudyRepository` e implementar en `IndexedDbStudyRepository`:
     - `saveBlock(block: StudyBlock): Promise<void>`
     - `saveBlocks(blocks: StudyBlock[]): Promise<void>`
@@ -65,7 +65,7 @@
 
 ### Tareas
 
-- [ ] **Store (`src/app/core/services/study-store.service.ts`):**
+- [x] **Store (`src/app/core/services/study-store.service.ts`):**
   - Sustituir todos los mapas inicializados con `{ B1: 0, B2: 0, B3: 0, B4: 0 }` por `Record<string, number>` construidos dinámicamente a partir de `this.blocks()`:
     - `topicCountByBlock`
     - `studyMinutesByBlockThisWeek`
@@ -79,13 +79,13 @@
     - `reorderBlocks(orderedBlockIds: StudyBlockId[]): Promise<void>`
     - `deleteBlock(id: StudyBlockId): Promise<void>` (recalculando `order` de los restantes y refrescando el estado).
   - Cambiar texto por defecto de intento de examen `'Test TAI'` → `'Test de práctica'`.
-- [ ] **BackupService (`src/app/core/services/backup.service.ts`):**
+- [x] **BackupService (`src/app/core/services/backup.service.ts`):**
   - Eliminar `VALID_BLOCK_IDS = new Set(['B1', 'B2', 'B3', 'B4'])` y el fallback a `TAI_BLOCKS_SEED`.
   - Validar la estructura de cada bloque en `candidate.blocks` (`isValidBlock`) y construir dinámicamente el `Set<string>` de IDs válidos a partir de los bloques presentes en el propio JSON del backup.
   - Exportar con `schemaVersion: 5`, `appName: 'crisisstudent'` y nombre de archivo `crisisstudent-backup-YYYY-MM-DD.json`.
   - En `parseBackupJson`, aceptar `appName === 'tai-study' || appName === 'crisisstudent'` y `schemaVersion` en `1..5` para mantener retrocompatibilidad total.
   - Leer `last-backup-at` manteniendo compatibilidad con la clave anterior en `localStorage` si existiera.
-- [ ] **Tests de Core:**
+- [x] **Tests de Core:**
   - Actualizar mocks y tests en `study-store.service.spec.ts`, `backup.service.spec.ts`, `search.service.spec.ts`, `pomodoro.service.spec.ts` y `app.spec.ts` para usar bloques genéricos de prueba y añadir tests de `createBlock`, `updateBlock`, `reorderBlocks`, `deleteBlock` y restauración de backups v4 (TAI) y v5 (`crisisstudent`).
 
 ### Criterio de aceptación de Fase 2
@@ -101,7 +101,7 @@
 
 ### Tareas
 
-- [ ] **Nuevo diálogo `BlockEditorDialog` (`src/app/shared/components/block-editor-dialog/`):**
+- [x] **Nuevo diálogo `BlockEditorDialog` (`src/app/shared/components/block-editor-dialog/`):**
   - Componente standalone (Angular Material Dialog + Tailwind + modo oscuro).
   - Campos:
     - Nombre / Título (obligatorio, ej. *"Historia Contemporánea"*, *"AWS Cloud"*, *"Redes"*).
@@ -111,19 +111,19 @@
     - Selector visual de color (`BLOCK_COLOR_PRESETS`).
     - Selector visual de icono Material (`BLOCK_ICON_PRESETS`).
   - Sirve tanto para **Crear** como para **Editar** un bloque existente.
-- [ ] **Menú lateral (`src/app/shared/components/app-shell/app-shell.html` y `.ts`):**
+- [x] **Menú lateral (`src/app/shared/components/app-shell/app-shell.html` y `.ts`):**
   - Cambiar sección *"Temario TAI"* → *"Asignaturas / Bloques"* (con botón `+` directo para abrir `BlockEditorDialog`).
   - Mostrar estado vacío compacto si aún no hay bloques (botón *"Crear primera asignatura"*).
-- [ ] **Dashboard (`src/app/features/dashboard/dashboard.html` y `.ts`):**
+- [x] **Dashboard (`src/app/features/dashboard/dashboard.html` y `.ts`):**
   - En la sección de bloques/asignaturas:
     - Botón **"+ Nueva asignatura"**.
     - Menú contextual o botones en cada tarjeta para **Editar** y **Eliminar** (con `ConfirmDialog` indicando cuántos temas, preguntas y flashcards se borrarán).
     - Opcional: reordenación por drag & drop (`@angular/cdk/drag-drop`) o botones subir/bajar.
   - Estado vacío acogedor cuando `store.blocks().length === 0`: mensaje de bienvenida a **CrisIsStudent** con botón destacado para crear la primera asignatura o importar un backup `.json`.
-- [ ] **Vista de bloque (`src/app/features/block-view/block-view.ts` y `.html`):**
+- [x] **Vista de bloque (`src/app/features/block-view/block-view.ts` y `.html`):**
   - Botón para editar los datos del bloque actual o eliminarlo (redirigiendo a `/dashboard` tras borrar).
   - Si se navega a un `blockId` inexistente, mostrar mensaje claro con enlace a `/dashboard` en lugar de caer en `'B1'`.
-- [ ] **Eliminar enlaces/fallbacks hardcodeados a `'B1'` o `'B3'`:**
+- [x] **Eliminar enlaces/fallbacks hardcodeados a `'B1'` o `'B3'`:**
   - `src/app/features/notes/topic-detail/topic-detail.ts`
   - `src/app/features/planner/kanban-board/kanban-board.html` (enlazar al primer bloque si existe o a `/dashboard`).
   - `src/app/features/schemas/schemas-index/schemas-index.html` (enlazar al primer bloque si existe o a `/dashboard`).
@@ -144,7 +144,7 @@
 
 ### Tareas
 
-- [ ] **Motor de Tests y Simulacros:**
+- [x] **Motor de Tests y Simulacros:**
   - `src/app/features/tests/utils/test-scoring.util.ts`: calcular `byBlock: Record<string, ScoreBreakdown>` dinámicamente según los `blockId` presentes en las preguntas del intento.
   - `src/app/features/tests/utils/test-generator.util.ts`: en modo `simulation`, iterar sobre `Object.entries(quotas)` en lugar de `['B1', 'B2', 'B3', 'B4']`.
   - `src/app/features/tests/test-launcher/test-launcher.ts` y `.html`:
@@ -154,7 +154,7 @@
   - `src/app/features/tests/utils/question-import.util.ts`: recibir la lista de `StudyBlock[]` en `QuestionImportDefaults` y resolver `blockId` buscando coincidencia exacta/normalizada por `id`, `code` o `title` (con fallback a `defaultBlockId`). Actualizar ejemplos de importación a ejemplos genéricos.
   - `src/app/features/tests/utils/inap-pdf-parser.util.ts` y `inap-pdf-import-dialog/`: generalizar textos visibles a *"Importar examen PDF (tipo test)"*, manteniendo los filtros de ruido como limpieza genérica de cabeceras de examen.
   - `src/app/features/tests/utils/topic-question-generator.util.ts` y `topic-question-generator-dialog/`: generalizar el prompt de IA para crear preguntas tipo test de alta calidad de cualquier materia (sin exigir formato oficial INAP/TAI).
-- [ ] **Flashcards y Gamificación:**
+- [x] **Flashcards y Gamificación:**
   - `src/app/features/flashcards/utils/flashcard-import.util.ts`: aceptar cualquier `blockId` válido presente en los bloques del usuario (o fallback a `defaults.blockId`).
   - Eliminar `src/app/features/flashcards/data/tai-acronyms-seed.ts` y los botones/referencias a *"Cargar pack de siglas TAI"* en `flashcard-review-session`, `flashcard-deck-manager` y `flashcard-import-dialog`.
   - `src/app/features/flashcards/utils/daily-missions.util.ts`:
@@ -176,18 +176,18 @@
 
 ### Tareas
 
-- [ ] **Marca y PWA:**
+- [x] **Marca y PWA:**
   - `src/index.html`: `<title>CrisIsStudent — Tu espacio de estudio local-first</title>`, `meta description` y `<noscript>`.
   - `public/manifest.webmanifest`: `name: "CrisIsStudent"`, `short_name: "CrisIsStudent"`, descripción genérica e icono actualizado.
   - `public/icons/`: crear icono SVG nuevo para **CrisIsStudent** (ej. `crisisstudent-icon.svg`) y enlazarlo desde `index.html` y `manifest.webmanifest`.
   - `src/app/shared/components/app-shell/app-shell.html`: logo/monograma y título `CrisIsStudent`, placeholder de búsqueda genérico (*"Buscar temas, etiquetas o apuntes..."*).
-- [ ] **Textos y exportaciones restantes:**
+- [x] **Textos y exportaciones restantes:**
   - `src/app/features/dashboard/dashboard.html`: títulos genéricos (*"Panel de estudio"*, *"Tus asignaturas"*, *"Motor de Tests y Simulacros"*, *"Flashcards SM-2"*).
   - `src/app/features/notes/services/topic-export.service.ts`: encabezados de impresión/PDF con **CrisIsStudent** en lugar de **TAI Study**.
   - `src/app/shared/utils/tiptap-markdown.util.ts` y `src/app/features/schemas/utils/markmap-export.util.ts`: fallbacks de nombre de archivo `'apunte'` y `'esquema'` (en lugar de `'apunte-tai'` / `'esquema-tai'`).
   - `src/app/shared/components/global-search-dialog/global-search-dialog.html`: `aria-label` y estado vacío genéricos.
   - Revisar con `grep -rni "\btai\b\|inap" src/ public/` que no quede ninguna referencia residual no deseada (dejando solo la compatibilidad explícita en `BackupService` y el nombre técnico de IndexedDB `TaiStudyDB`).
-- [ ] **Verificación obligatoria (según `AGENTS.md`):**
+- [x] **Verificación obligatoria (según `AGENTS.md`):**
   - Ejecutar suite completa de tests:
     ```bash
     CI=true NG_CLI_ANALYTICS=false HOME=/tmp npx ng test --watch=false

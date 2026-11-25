@@ -16,16 +16,21 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
 import {
+  CreateBlockInput,
+  StudyBlockId,
   TOPIC_STATUS_LABELS,
   TOPIC_STATUS_LIST,
-  TaiBlockId,
   Topic,
   TopicStatus,
 } from '../../core/models/study.models';
 import { StudyStoreService } from '../../core/services/study-store.service';
+import {
+  BlockEditorDialog,
+  BlockEditorDialogData,
+} from '../../shared/components/block-editor-dialog/block-editor-dialog';
 import {
   ConfirmDialog,
   ConfirmDialogData,
@@ -58,6 +63,7 @@ import { TopicExportService } from '../notes/services/topic-export.service';
 })
 export class BlockView {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly exportService = inject(TopicExportService);
@@ -75,8 +81,8 @@ export class BlockView {
   protected readonly editStatus = signal<TopicStatus>('pending');
 
   protected readonly blockId = toSignal(
-    this.route.paramMap.pipe(map((params) => (params.get('blockId') as TaiBlockId) ?? 'B1')),
-    { initialValue: 'B1' as TaiBlockId },
+    this.route.paramMap.pipe(map((params) => (params.get('blockId') as StudyBlockId) ?? '')),
+    { initialValue: '' as StudyBlockId },
   );
 
   protected readonly block = computed(() => this.store.getBlockById(this.blockId()));
@@ -217,6 +223,64 @@ export class BlockView {
       this.editingTopicId.set(null);
     }
     this.snackBar.open(`Tema "${topic.title}" eliminado.`, 'Cerrar', { duration: 2500 });
+  }
+
+  protected async openEditBlockDialog(): Promise<void> {
+    const currentBlock = this.block();
+    if (!currentBlock) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open<
+      BlockEditorDialog,
+      BlockEditorDialogData,
+      CreateBlockInput
+    >(BlockEditorDialog, {
+      width: '560px',
+      maxWidth: '95vw',
+      data: { block: currentBlock },
+    });
+
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (!result) {
+      return;
+    }
+
+    await this.store.updateBlock(currentBlock.id, result);
+    this.snackBar.open(`Asignatura "${result.title}" actualizada.`, 'Cerrar', { duration: 2500 });
+  }
+
+  protected async removeCurrentBlock(): Promise<void> {
+    const currentBlock = this.block();
+    if (!currentBlock) {
+      return;
+    }
+
+    const topicsCount = this.store.topicCountByBlock()[currentBlock.id] ?? 0;
+    const questionsCount = this.store.questionCountByBlock()[currentBlock.id] ?? 0;
+    const flashcardsCount = this.store.flashcardCountByBlock()[currentBlock.id] ?? 0;
+    const details = `${topicsCount} ${topicsCount === 1 ? 'tema' : 'temas'}, ${questionsCount} ${questionsCount === 1 ? 'pregunta' : 'preguntas'} y ${flashcardsCount} ${flashcardsCount === 1 ? 'flashcard' : 'flashcards'}`;
+
+    const dialogRef = this.dialog.open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, {
+      data: {
+        title: `Eliminar "${currentBlock.title}"`,
+        message: `¿Seguro que quieres eliminar esta asignatura? También se borrarán ${details} asociados a ella. Esta acción no se puede deshacer.`,
+        confirmLabel: 'Eliminar',
+        cancelLabel: 'Cancelar',
+        danger: true,
+      },
+    });
+
+    const confirmed = await firstValueFrom(dialogRef.afterClosed());
+    if (!confirmed) {
+      return;
+    }
+
+    await this.store.deleteBlock(currentBlock.id);
+    this.snackBar.open(`Asignatura "${currentBlock.title}" eliminada.`, 'Cerrar', {
+      duration: 3000,
+    });
+    await this.router.navigate(['/dashboard']);
   }
 
   protected exportBlockMarkdown(): void {

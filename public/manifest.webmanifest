@@ -1,7 +1,7 @@
 {
-  "name": "TAI Study — Oposiciones TAI",
-  "short_name": "TAI Study",
-  "description": "Aplicación local-first de apuntes, esquemas, planificación y tests para oposiciones TAI.",
+  "name": "crisisstudent — Espacio de estudio local-first",
+  "short_name": "crisisstudent",
+  "description": "Aplicación local-first de apuntes, esquemas mentales, planificación, tests y flashcards para organizar cualquier materia.",
   "theme_color": "#2563eb",
   "background_color": "#0f172a",
   "display": "standalone",
@@ -10,7 +10,7 @@
   "lang": "es",
   "icons": [
     {
-      "src": "icons/tai-icon.svg",
+      "src": "icons/crisisstudent-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

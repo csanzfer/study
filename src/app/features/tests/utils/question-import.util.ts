@@ -1,7 +1,8 @@
 import {
   CreateQuestionInput,
   QuestionOptionIndex,
-  TaiBlockId,
+  StudyBlock,
+  StudyBlockId,
   Topic,
 } from '../../../core/models/study.models';
 
@@ -18,28 +19,59 @@ export interface QuestionImportResult {
 }
 
 export interface QuestionImportDefaults {
-  defaultBlockId: TaiBlockId;
+  defaultBlockId: StudyBlockId;
   defaultTopicId?: string;
   defaultCaseStudyId?: string;
   defaultSource?: string;
+  blocks?: StudyBlock[];
   topics?: Topic[];
 }
 
-const VALID_BLOCKS = new Set<TaiBlockId>(['B1', 'B2', 'B3', 'B4']);
+function normalizeLookup(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
 
-function parseBlockId(raw: unknown, fallback: TaiBlockId): TaiBlockId {
+function parseBlockId(
+  raw: unknown,
+  fallback: StudyBlockId,
+  blocks?: StudyBlock[],
+): StudyBlockId {
   if (typeof raw !== 'string') {
     return fallback;
   }
-  const normalized = raw.trim().toUpperCase();
-  if (VALID_BLOCKS.has(normalized as TaiBlockId)) {
-    return normalized as TaiBlockId;
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return fallback;
   }
-  if (/^(BLOQUE\s*)?(1|I)$/.test(normalized)) return 'B1';
-  if (/^(BLOQUE\s*)?(2|II)$/.test(normalized)) return 'B2';
-  if (/^(BLOQUE\s*)?(3|III)$/.test(normalized)) return 'B3';
-  if (/^(BLOQUE\s*)?(4|IV)$/.test(normalized)) return 'B4';
-  return fallback;
+
+  if (blocks && blocks.length > 0) {
+    const exactId = blocks.find((b) => b.id === trimmed);
+    if (exactId) return exactId.id;
+
+    const normalized = normalizeLookup(trimmed);
+    const byField = blocks.find(
+      (b) =>
+        normalizeLookup(b.id) === normalized ||
+        normalizeLookup(b.code) === normalized ||
+        normalizeLookup(b.title) === normalized ||
+        normalizeLookup(b.shortTitle) === normalized,
+    );
+    if (byField) return byField.id;
+
+    return fallback;
+  }
+
+  // Fallback when no blocks list is provided (e.g. standalone calls)
+  const upper = trimmed.toUpperCase();
+  if (/^(BLOQUE\s*)?(1|I)$/.test(upper)) return 'B1';
+  if (/^(BLOQUE\s*)?(2|II)$/.test(upper)) return 'B2';
+  if (/^(BLOQUE\s*)?(3|III)$/.test(upper)) return 'B3';
+  if (/^(BLOQUE\s*)?(4|IV)$/.test(upper)) return 'B4';
+  return trimmed;
 }
 
 function parseCorrectIndex(raw: unknown): QuestionOptionIndex | null {
@@ -61,7 +93,7 @@ function parseCorrectIndex(raw: unknown): QuestionOptionIndex | null {
 
 function resolveTopicId(
   rawTopic: string | undefined,
-  blockId: TaiBlockId,
+  blockId: StudyBlockId,
   defaults: QuestionImportDefaults,
 ): string | undefined {
   const trimmed = rawTopic?.trim();
@@ -192,7 +224,11 @@ export function parseQuestionsFromJson(
       return;
     }
 
-    const blockId = parseBlockId(obj['blockId'] ?? obj['bloque'] ?? obj['block'], defaults.defaultBlockId);
+    const blockId = parseBlockId(
+      obj['blockId'] ?? obj['bloque'] ?? obj['block'],
+      defaults.defaultBlockId,
+      defaults.blocks,
+    );
     const topicId = resolveTopicId(
       typeof obj['topicId'] === 'string'
         ? obj['topicId']
@@ -349,7 +385,7 @@ export function parseQuestionsFromCsv(
       return;
     }
 
-    const blockId = parseBlockId(cell(idxBlock), defaults.defaultBlockId);
+    const blockId = parseBlockId(cell(idxBlock), defaults.defaultBlockId, defaults.blocks);
     const topicId = resolveTopicId(cell(idxTopic), blockId, defaults);
 
     valid.push({
@@ -401,7 +437,7 @@ export function parseQuestionsFromText(
     let correctIndex: QuestionOptionIndex | null = null;
     let explanation: string | undefined;
     let reference: string | undefined;
-    let blockId: TaiBlockId = defaults.defaultBlockId;
+    let blockId: StudyBlockId = defaults.defaultBlockId;
     let tags: string[] = [];
     let currentOptionIdx = -1;
 
@@ -430,7 +466,7 @@ export function parseQuestionsFromText(
 
       const blockMatch = line.match(/^(?:bloque|block)\s*[:=-]\s*(.+)$/i);
       if (blockMatch) {
-        blockId = parseBlockId(blockMatch[1], defaults.defaultBlockId);
+        blockId = parseBlockId(blockMatch[1], defaults.defaultBlockId, defaults.blocks);
         currentOptionIdx = -1;
         continue;
       }
@@ -520,31 +556,28 @@ export function parseQuestions(
 }
 
 export const IMPORT_SAMPLE_TEMPLATES: Record<QuestionImportFormat, string> = {
-  text: `1. Según la Ley 39/2015, ¿cuál es el plazo máximo general para resolver cuando las normas no fijen plazo?
-a) 1 mes
-*b) 3 meses
-c) 6 meses
-d) 15 días hábiles
-Referencia: Art. 21.3 Ley 39/2015
-Explicación: Cuando las normas reguladoras de los procedimientos no fijen el plazo máximo, éste será de tres meses.
-Bloque: B1
-
-2. ¿Qué puerto TCP utiliza por defecto el protocolo HTTPS?
-a) 22
-b) 80
-c) 443
-d) 8080
-Respuesta: C
+  text: `1. ¿Qué protocolo utiliza por defecto el puerto TCP 443?
+a) HTTP
+*b) HTTPS
+c) SSH
+d) FTP
 Referencia: RFC 2818 / IANA
-Bloque: B4`,
+Explicación: HTTPS cifra el tráfico HTTP sobre TLS y usa el puerto 443 por defecto.
+
+2. ¿En qué año comenzó la Revolución Francesa?
+a) 1776
+b) 1789
+c) 1808
+d) 1812
+Respuesta: B
+Referencia: Historia Contemporánea`,
 
   csv: `bloque,enunciado,opcion_a,opcion_b,opcion_c,opcion_d,correcta,explicacion,referencia,tags
-B1,"¿En qué año se aprobó la Constitución Española?",1975,1978,1981,1979,B,"Aprobada en referéndum el 6 de diciembre de 1978","CE 1978","leyes|ce"
-B3,"¿Qué cláusula SQL filtra grupos creados con GROUP BY?",WHERE,HAVING,ORDER BY,DISTINCT,B,"HAVING aplica condiciones sobre grupos agregados","ISO SQL","sql|bbdd"`,
+,"¿Qué cláusula SQL filtra grupos creados con GROUP BY?",WHERE,HAVING,ORDER BY,DISTINCT,B,"HAVING aplica condiciones sobre grupos agregados","ISO SQL","sql|bbdd"
+,"¿Cuál es la unidad de resistencia eléctrica en el SI?",Voltio,Amperio,Ohmio,Vatio,C,"La resistencia eléctrica se mide en ohmios (Ω)","Física básica","fisica|unidades"`,
 
   json: `[
   {
-    "blockId": "B2",
     "prompt": "¿Cuál de las siguientes memorias es volátil?",
     "options": ["ROM", "EEPROM", "SRAM", "Flash NAND"],
     "correctIndex": 2,

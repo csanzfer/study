@@ -1,8 +1,8 @@
 import {
   Flashcard,
   Question,
-  TaiBlock,
-  TaiBlockId,
+  StudyBlock,
+  StudyBlockId,
   Topic,
 } from '../../../core/models/study.models';
 import { isFlashcardMastered } from '../../../shared/utils/srs-sm2.util';
@@ -10,7 +10,7 @@ import { tiptapJsonToOutlineMarkdown } from '../../../shared/utils/tiptap-outlin
 
 export interface TopicCampaignProgress {
   topicId: string;
-  blockId: TaiBlockId;
+  blockId: StudyBlockId;
   title: string;
   score: number; // 0..100
   level: number; // 1..5
@@ -28,7 +28,7 @@ export interface TopicCampaignProgress {
 }
 
 export interface BlockCampaignProgress {
-  block: TaiBlock;
+  block: StudyBlock;
   score: number; // 0..100
   level: number; // 1..5
   rankLabel: string;
@@ -176,7 +176,7 @@ export function computeTopicCampaignProgress(
 }
 
 export function computeCampaignOverview(
-  blocks: TaiBlock[],
+  blocks: StudyBlock[],
   topics: Topic[],
   flashcards: Flashcard[],
   questions: Question[],

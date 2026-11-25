@@ -1,7 +1,7 @@
 import {
   ExamMode,
   Question,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 
 export type MistakesFilter = 'both' | 'failed' | 'flagged';
@@ -9,11 +9,11 @@ export type MistakesFilter = 'both' | 'failed' | 'flagged';
 export interface TestGenerationConfig {
   mode: ExamMode;
   title?: string;
-  blockIds?: TaiBlockId[];
+  blockIds?: StudyBlockId[];
   topicId?: string;
   caseStudyId?: string;
   questionCount?: number;
-  blockQuotas?: Partial<Record<TaiBlockId, number>>;
+  blockQuotas?: Record<StudyBlockId, number>;
   mistakesFilter?: MistakesFilter;
   onlyUnanswered?: boolean;
   shuffle?: boolean;
@@ -105,8 +105,8 @@ export function generateTestQuestions(
     const quotas = config.blockQuotas;
     if (quotas) {
       const selected: Question[] = [];
-      for (const blockId of ['B1', 'B2', 'B3', 'B4'] as TaiBlockId[]) {
-        const quota = Math.max(0, Math.floor(quotas[blockId] ?? 0));
+      for (const [blockId, rawQuota] of Object.entries(quotas)) {
+        const quota = Math.max(0, Math.floor(rawQuota ?? 0));
         if (quota === 0) continue;
 
         const blockPool = allQuestions.filter((q) => q.blockId === blockId);

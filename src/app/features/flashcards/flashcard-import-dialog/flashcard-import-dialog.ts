@@ -3,24 +3,19 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { CreateFlashcardInput, TaiBlockId } from '../../../core/models/study.models';
+import { CreateFlashcardInput, StudyBlockId } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
-import {
-  TAI_ACRONYMS_SEED,
-  TaiAcronymSeedItem,
-  toAcronymFlashcardInput,
-} from '../data/tai-acronyms-seed';
 import {
   extractFlashcardsFromTopic,
   normalizeFlashcardKey,
   parseFlashcardsBatch,
 } from '../utils/flashcard-import.util';
 
-export type FlashcardImportTab = 'batch' | 'extract' | 'acronyms';
+export type FlashcardImportTab = 'extract' | 'batch';
 
 export interface FlashcardImportDialogData {
   initialTab?: FlashcardImportTab;
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
   topicId?: string;
 }
 
@@ -39,11 +34,13 @@ export class FlashcardImportDialog {
   protected readonly store = inject(StudyStoreService);
 
   protected readonly activeTab = signal<FlashcardImportTab>(
-    this.data?.initialTab ?? 'acronyms',
+    this.data?.initialTab ?? 'extract',
   );
 
   // Batch tab
-  protected readonly batchBlockId = signal<TaiBlockId>(this.data?.blockId ?? 'B4');
+  protected readonly batchBlockId = signal<StudyBlockId>(
+    this.data?.blockId ?? this.store.defaultBlockId(),
+  );
   protected readonly batchTopicId = signal<string>(this.data?.topicId ?? '');
   protected readonly batchDefaultTags = signal<string>('');
   protected readonly batchRawText = signal<string>('');
@@ -63,6 +60,7 @@ export class FlashcardImportDialog {
         blockId: this.batchBlockId(),
         topicId: this.batchTopicId() || undefined,
         tags,
+        validBlockIds: this.store.blocks().map((b) => b.id),
       },
       this.store.flashcards(),
     );
@@ -82,48 +80,18 @@ export class FlashcardImportDialog {
     return extractFlashcardsFromTopic(topic, this.store.flashcards());
   });
 
-  // TAI Acronyms Pack tab
-  protected readonly acronymBlockFilter = signal<'ALL' | TaiBlockId>('ALL');
-  protected readonly deselectedAcronyms = signal<Set<string>>(new Set());
-
-  private readonly existingFrontKeys = computed(
-    () => new Set(this.store.flashcards().map((c) => normalizeFlashcardKey(c.front))),
-  );
-
-  protected readonly filteredAcronymSeed = computed(() => {
-    const filter = this.acronymBlockFilter();
-    const existing = this.existingFrontKeys();
-    return TAI_ACRONYMS_SEED.filter((item) => filter === 'ALL' || item.blockId === filter).map(
-      (item) => ({
-        ...item,
-        alreadyExists: existing.has(normalizeFlashcardKey(item.front)),
-      }),
-    );
-  });
-
-  protected readonly selectedAcronymInputs = computed(() => {
-    const deselected = this.deselectedAcronyms();
-    return this.filteredAcronymSeed()
-      .filter((item) => !item.alreadyExists && !deselected.has(item.front))
-      .map((item) => toAcronymFlashcardInput(item));
-  });
-
   protected readonly canImport = computed(() => {
     const tab = this.activeTab();
     if (tab === 'batch') {
-      return this.batchParsed().items.length > 0;
+      return this.batchBlockId().length > 0 && this.batchParsed().items.length > 0;
     }
-    if (tab === 'extract') {
-      return this.getSelectedExtractedItems().length > 0;
-    }
-    return this.selectedAcronymInputs().length > 0;
+    return this.getSelectedExtractedItems().length > 0;
   });
 
   protected readonly importCount = computed(() => {
     const tab = this.activeTab();
     if (tab === 'batch') return this.batchParsed().items.length;
-    if (tab === 'extract') return this.getSelectedExtractedItems().length;
-    return this.selectedAcronymInputs().length;
+    return this.getSelectedExtractedItems().length;
   });
 
   constructor() {
@@ -156,30 +124,13 @@ export class FlashcardImportDialog {
     return this.selectedExtractedKeys().has(normalizeFlashcardKey(front));
   }
 
-  protected toggleAcronymItem(item: TaiAcronymSeedItem): void {
-    this.deselectedAcronyms.update((set) => {
-      const next = new Set(set);
-      if (next.has(item.front)) next.delete(item.front);
-      else next.add(item.front);
-      return next;
-    });
-  }
-
-  protected isAcronymSelected(item: TaiAcronymSeedItem & { alreadyExists: boolean }): boolean {
-    return !item.alreadyExists && !this.deselectedAcronyms().has(item.front);
-  }
-
   protected confirmImport(): void {
     const tab = this.activeTab();
     if (tab === 'batch') {
       this.dialogRef.close(this.batchParsed().items);
       return;
     }
-    if (tab === 'extract') {
-      this.dialogRef.close(this.getSelectedExtractedItems());
-      return;
-    }
-    this.dialogRef.close(this.selectedAcronymInputs());
+    this.dialogRef.close(this.getSelectedExtractedItems());
   }
 
   private getSelectedExtractedItems(): CreateFlashcardInput[] {

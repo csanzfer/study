@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { TaiBlock, Topic } from '../../../core/models/study.models';
+import { StudyBlock, Topic } from '../../../core/models/study.models';
 import { TopicExportService } from './topic-export.service';
 
-const sampleBlock: TaiBlock = {
+const sampleBlock: StudyBlock = {
   id: 'B2',
   code: 'Bloque II',
   title: 'Tecnología Básica',
@@ -54,7 +54,8 @@ describe('TopicExportService', () => {
     );
 
     expect(html).toContain('@page');
-    expect(html).toContain('TAI STUDY');
+    expect(html).toContain('— crisisstudent');
+    expect(html).toContain('>cris</span><span');
     expect(html).toContain('class="exam-callout"');
     expect(html).toContain('SRAM no necesita refresco.');
     expect(html).not.toContain('<script>');

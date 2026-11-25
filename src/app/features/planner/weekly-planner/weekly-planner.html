@@ -144,7 +144,7 @@
                 class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               >
                 @for (topic of pickerTopics(); track topic.id) {
-                  <option [value]="topic.id">[{{ topic.blockId }}] {{ topic.title }}</option>
+                  <option [value]="topic.id">[{{ store.getBlockById(topic.blockId)?.code ?? 'Eliminado' }}] {{ topic.title }}</option>
                 }
               </select>
 
@@ -226,7 +226,7 @@
                       [style.background-color]="getBlockColor(item.blockId)"
                     ></span>
                     <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      {{ item.blockId }}
+                      {{ store.getBlockById(item.blockId)?.code ?? 'Eliminado' }}
                     </span>
                     @if (item.targetPomodoros) {
                       <span class="text-[10px] text-slate-400">

@@ -4,7 +4,7 @@
       Generar preguntas desde tus apuntes
     </h2>
     <p class="text-xs text-slate-500 dark:text-slate-400">
-      Extrae borradores automáticamente en local (offline) o genera un prompt calibrado estilo INAP para cualquier IA.
+      Extrae borradores automáticamente en local (offline) o genera un prompt calibrado para cualquier IA.
     </p>
   </div>
   <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
@@ -30,7 +30,7 @@
           } @else {
             @for (topic of store.topics(); track topic.id) {
               <option [value]="topic.id">
-                {{ topic.blockId }} · #{{ topic.order }} {{ topic.title }}
+                {{ store.getBlockById(topic.blockId)?.code ?? topic.blockId }} · #{{ topic.order }} {{ topic.title }}
               </option>
             }
           }
@@ -66,7 +66,7 @@
           [class.dark:text-slate-400]="activeTab() !== 'ai_prompt'"
         >
           <mat-icon class="!h-4 !w-4 !text-[16px]">auto_awesome</mat-icon>
-          Prompt IA (INAP)
+          Prompt IA
         </button>
       </div>
     </div>
@@ -115,7 +115,7 @@
             <div class="mt-4">
               <button mat-flat-button type="button" (click)="activeTab.set('ai_prompt')">
                 <mat-icon>auto_awesome</mat-icon>
-                Generar con Prompt IA (estilo INAP)
+                Generar con Prompt IA
               </button>
             </div>
           </div>
@@ -213,7 +213,7 @@
               (ngModelChange)="aiDifficulty.set($event)"
               class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
-              <option value="standard">Estándar oficial INAP</option>
+              <option value="standard">Estándar de examen</option>
               <option value="hard">Difícil (preguntas trampa)</option>
             </select>
           </div>

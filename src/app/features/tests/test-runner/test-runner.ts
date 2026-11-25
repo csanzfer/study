@@ -9,7 +9,7 @@ import {
   EXAM_MODE_LABELS,
   Question,
   QuestionOptionIndex,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
@@ -86,13 +86,14 @@ export class TestRunner {
   protected readonly blockBreakdownList = computed(() => {
     const score = this.runner.lastScore();
     if (!score) return [];
-    return (['B1', 'B2', 'B3', 'B4'] as TaiBlockId[])
-      .map((blockId) => ({
+    return Object.entries(score.byBlock)
+      .map(([blockId, stats]) => ({
         blockId,
         block: this.store.getBlockById(blockId),
-        stats: score.byBlock[blockId],
+        stats,
       }))
-      .filter((item) => item.stats.total > 0);
+      .filter((item) => item.stats.total > 0)
+      .sort((a, b) => (a.block?.order ?? 999) - (b.block?.order ?? 999));
   });
 
   protected onKeydown(event: KeyboardEvent): void {

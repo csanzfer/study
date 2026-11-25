@@ -7,7 +7,7 @@ import {
   CreateCaseStudyInput,
   CreateQuestionInput,
   QuestionOptionIndex,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { PdfTextExtractorService } from '../services/pdf-text-extractor.service';
@@ -23,7 +23,7 @@ import {
 import { OPTION_LETTERS } from '../utils/test-scoring.util';
 
 export interface InapPdfImportDialogData {
-  defaultBlockId?: TaiBlockId;
+  defaultBlockId?: StudyBlockId;
 }
 
 export interface InapPdfImportDialogResult {
@@ -53,9 +53,11 @@ export class InapPdfImportDialog {
   protected readonly letters = OPTION_LETTERS;
   protected readonly step = signal<1 | 2>(1);
   protected readonly mode = signal<InapImportMode>('questionnaire');
-  protected readonly defaultBlockId = signal<TaiBlockId>(this.data.defaultBlockId ?? 'B1');
+  protected readonly defaultBlockId = signal<StudyBlockId>(
+    this.data.defaultBlockId ?? this.store.defaultBlockId(),
+  );
   protected readonly source = signal('');
-  protected readonly tagsText = signal('inap');
+  protected readonly tagsText = signal('examen-pdf');
   protected readonly caseStudyTitle = signal('');
   protected readonly caseStudyStatement = signal('');
   protected readonly skipDuplicates = signal(true);
@@ -109,6 +111,7 @@ export class InapPdfImportDialog {
     const dups = this.duplicateIds();
     return this.parsedQuestions().filter((q) => {
       if (!q.selected || q.correctIndex === null) return false;
+      if (!q.blockId.trim()) return false;
       if (!q.prompt.trim() || q.options.some((opt) => !opt.trim())) return false;
       if (skipDups && dups.has(q.id)) return false;
       return true;
@@ -223,7 +226,7 @@ export class InapPdfImportDialog {
     if (this.mode() === 'case_study') {
       this.caseStudyStatement.set(parsed.caseStudyStatement ?? '');
       if (!this.caseStudyTitle().trim()) {
-        this.caseStudyTitle.set(this.source().trim() || 'Supuesto práctico INAP');
+        this.caseStudyTitle.set(this.source().trim() || 'Supuesto práctico');
       }
     }
     this.step.set(2);
@@ -320,7 +323,7 @@ export class InapPdfImportDialog {
     if (this.mode() === 'case_study' && this.caseStudyStatement().trim()) {
       caseStudy = {
         blockId: this.defaultBlockId(),
-        title: this.caseStudyTitle().trim() || cleanSource || 'Supuesto práctico INAP',
+        title: this.caseStudyTitle().trim() || cleanSource || 'Supuesto práctico',
         statement: this.caseStudyStatement().trim(),
         source: cleanSource,
         tags: baseTags,

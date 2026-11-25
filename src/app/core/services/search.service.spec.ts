@@ -1,15 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
@@ -17,8 +16,31 @@ import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.reposit
 import { SearchService, buildHighlightedSnippet } from './search.service';
 import { StudyStoreService } from './study-store.service';
 
+const SEARCH_TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'B1',
+    code: 'DER',
+    title: 'Derecho',
+    shortTitle: 'Derecho',
+    description: '',
+    color: '#2563eb',
+    icon: 'gavel',
+    order: 1,
+  },
+  {
+    id: 'B4',
+    code: 'RED',
+    title: 'Redes',
+    shortTitle: 'Redes',
+    description: '',
+    color: '#059669',
+    icon: 'lan',
+    order: 2,
+  },
+];
+
 class InMemoryRepository implements StudyRepository {
-  private blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
+  private blocks: StudyBlock[] = SEARCH_TEST_BLOCKS.map((b) => ({ ...b }));
   private topics: Topic[] = [];
   private sessions: StudySession[] = [];
   private weeklyPlan: WeeklyPlanItem[] = [];
@@ -29,10 +51,32 @@ class InMemoryRepository implements StudyRepository {
   private profile?: GamificationProfile;
 
   async initialize(): Promise<void> {}
-  async getBlocks(): Promise<TaiBlock[]> {
+  async getBlocks(): Promise<StudyBlock[]> {
     return [...this.blocks];
   }
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async saveBlock(block: StudyBlock): Promise<void> {
+    const idx = this.blocks.findIndex((b) => b.id === block.id);
+    if (idx >= 0) {
+      this.blocks[idx] = block;
+    } else {
+      this.blocks.push(block);
+    }
+  }
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
+    for (const block of blocks) {
+      await this.saveBlock(block);
+    }
+  }
+  async deleteBlock(id: StudyBlockId): Promise<void> {
+    this.blocks = this.blocks.filter((b) => b.id !== id);
+    this.topics = this.topics.filter((t) => t.blockId !== id);
+    this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
+    this.sessions = this.sessions.filter((s) => s.blockId !== id);
+    this.caseStudies = this.caseStudies.filter((c) => c.blockId !== id);
+    this.questions = this.questions.filter((q) => q.blockId !== id);
+    this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
+  }
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     return blockId ? this.topics.filter((t) => t.blockId === blockId) : [...this.topics];
   }
   async getTopicById(id: string): Promise<Topic | undefined> {
@@ -123,7 +167,7 @@ class InMemoryRepository implements StudyRepository {
   async getGamificationProfile(): Promise<GamificationProfile | undefined> { return this.profile; }
   async saveGamificationProfile(profile: GamificationProfile): Promise<void> { this.profile = profile; }
   async replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],

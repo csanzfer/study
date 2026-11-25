@@ -6,17 +6,20 @@ import {
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
 
 export interface StudyRepository {
   initialize(): Promise<void>;
-  getBlocks(): Promise<TaiBlock[]>;
-  getTopics(blockId?: TaiBlockId): Promise<Topic[]>;
+  getBlocks(): Promise<StudyBlock[]>;
+  saveBlock(block: StudyBlock): Promise<void>;
+  saveBlocks(blocks: StudyBlock[]): Promise<void>;
+  deleteBlock(id: StudyBlockId): Promise<void>;
+  getTopics(blockId?: StudyBlockId): Promise<Topic[]>;
   getTopicById(id: string): Promise<Topic | undefined>;
   saveTopic(topic: Topic): Promise<void>;
   saveTopics(topics: Topic[]): Promise<void>;
@@ -45,7 +48,7 @@ export interface StudyRepository {
   getGamificationProfile(): Promise<GamificationProfile | undefined>;
   saveGamificationProfile(profile: GamificationProfile): Promise<void>;
   replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions?: StudySession[],
     weeklyPlanItems?: WeeklyPlanItem[],
@@ -68,11 +71,48 @@ export class IndexedDbStudyRepository implements StudyRepository {
     void this.db.requestPersistentStorage();
   }
 
-  async getBlocks(): Promise<TaiBlock[]> {
+  async getBlocks(): Promise<StudyBlock[]> {
     return this.db.blocks.orderBy('order').toArray();
   }
 
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async saveBlock(block: StudyBlock): Promise<void> {
+    await this.db.blocks.put(block);
+  }
+
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
+    if (blocks.length === 0) {
+      return;
+    }
+    await this.db.transaction('rw', this.db.blocks, async () => {
+      await this.db.blocks.bulkPut(blocks);
+    });
+  }
+
+  async deleteBlock(id: StudyBlockId): Promise<void> {
+    await this.db.transaction(
+      'rw',
+      [
+        this.db.blocks,
+        this.db.topics,
+        this.db.weeklyPlanItems,
+        this.db.studySessions,
+        this.db.caseStudies,
+        this.db.questions,
+        this.db.flashcards,
+      ],
+      async () => {
+        await this.db.blocks.delete(id);
+        await this.db.topics.where('blockId').equals(id).delete();
+        await this.db.weeklyPlanItems.where('blockId').equals(id).delete();
+        await this.db.studySessions.where('blockId').equals(id).delete();
+        await this.db.caseStudies.where('blockId').equals(id).delete();
+        await this.db.questions.where('blockId').equals(id).delete();
+        await this.db.flashcards.where('blockId').equals(id).delete();
+      },
+    );
+  }
+
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     if (blockId) {
       const topics = await this.db.topics.where('blockId').equals(blockId).toArray();
       return topics.sort((a, b) => a.order - b.order);
@@ -255,7 +295,7 @@ export class IndexedDbStudyRepository implements StudyRepository {
   }
 
   async replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],

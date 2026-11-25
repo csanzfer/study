@@ -6,7 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import {
   TOPIC_STATUS_LABELS,
-  TaiBlockId,
+  StudyBlockId,
   Topic,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
@@ -43,13 +43,13 @@ export class SchemasIndex {
   protected readonly store = inject(StudyStoreService);
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
-  protected readonly selectedBlockId = signal<TaiBlockId | 'ALL'>('ALL');
+  protected readonly selectedBlockId = signal<StudyBlockId | 'ALL'>('ALL');
   protected readonly filterText = signal('');
   protected readonly selectedTopicId = signal<string | null>(null);
   protected readonly outlineDepth = signal<OutlineDepth>('full');
 
   protected readonly blockLookup = computed(() => {
-    const map = new Map<TaiBlockId, { code: string; color: string }>();
+    const map = new Map<StudyBlockId, { code: string; color: string }>();
     for (const block of this.store.blocks()) {
       map.set(block.id, { code: block.code, color: block.color });
     }
@@ -133,7 +133,7 @@ export class SchemasIndex {
     });
   }
 
-  protected selectBlock(blockId: TaiBlockId | 'ALL'): void {
+  protected selectBlock(blockId: StudyBlockId | 'ALL'): void {
     this.selectedBlockId.set(blockId);
   }
 

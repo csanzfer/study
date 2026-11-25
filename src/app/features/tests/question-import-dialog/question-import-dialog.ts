@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { CreateQuestionInput, TaiBlockId } from '../../../core/models/study.models';
+import { CreateQuestionInput, StudyBlockId } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
   IMPORT_SAMPLE_TEMPLATES,
@@ -13,7 +13,7 @@ import {
 import { OPTION_LETTERS } from '../utils/test-scoring.util';
 
 export interface QuestionImportDialogData {
-  defaultBlockId?: TaiBlockId;
+  defaultBlockId?: StudyBlockId;
   defaultTopicId?: string;
   defaultCaseStudyId?: string;
 }
@@ -35,7 +35,9 @@ export class QuestionImportDialog {
   protected readonly letters = OPTION_LETTERS;
 
   protected readonly format = signal<QuestionImportFormat>('text');
-  protected readonly defaultBlockId = signal<TaiBlockId>(this.data.defaultBlockId ?? 'B1');
+  protected readonly defaultBlockId = signal<StudyBlockId>(
+    this.data.defaultBlockId ?? this.store.defaultBlockId(),
+  );
   protected readonly defaultTopicId = signal<string>(this.data.defaultTopicId ?? '');
   protected readonly defaultCaseStudyId = signal<string>(this.data.defaultCaseStudyId ?? '');
   protected readonly defaultSource = signal('');
@@ -55,6 +57,7 @@ export class QuestionImportDialog {
       defaultTopicId: this.defaultTopicId() || undefined,
       defaultCaseStudyId: this.defaultCaseStudyId() || undefined,
       defaultSource: this.defaultSource().trim() || undefined,
+      blocks: this.store.blocks(),
       topics: this.store.topics(),
     });
   });
@@ -63,7 +66,7 @@ export class QuestionImportDialog {
     this.format.set(next);
   }
 
-  protected onBlockChange(next: TaiBlockId): void {
+  protected onBlockChange(next: StudyBlockId): void {
     this.defaultBlockId.set(next);
     const current = this.store.getTopicById(this.defaultTopicId());
     if (current && current.blockId !== next) {
@@ -98,9 +101,15 @@ export class QuestionImportDialog {
     this.rawText.set(text);
   }
 
+  protected readonly canImport = computed(
+    () =>
+      this.defaultBlockId().trim().length > 0 &&
+      this.parseResult().valid.length > 0 &&
+      this.parseResult().valid.every((q) => q.blockId.trim().length > 0),
+  );
+
   protected confirmImport(): void {
-    const valid = this.parseResult().valid;
-    if (valid.length === 0) return;
-    this.dialogRef.close(valid);
+    if (!this.canImport()) return;
+    this.dialogRef.close(this.parseResult().valid);
   }
 }

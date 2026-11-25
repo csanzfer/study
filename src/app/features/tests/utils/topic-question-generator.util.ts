@@ -551,14 +551,14 @@ export function buildAiPromptForTopic(
 
   const difficultyInstruction =
     options.difficulty === 'hard'
-      ? 'Nivel DIFÍCIL (estilo pregunta trampa del INAP: usa distractores muy parecidos en plazos, excepciones, artículos o matices técnicos).'
-      : 'Nivel ESTÁNDAR oficial INAP (preguntas claras y representativas con distractores creíbles).';
+      ? 'Nivel DIFÍCIL (preguntas exigentes: usa distractores muy parecidos en plazos, excepciones, detalles o matices clave).'
+      : 'Nivel ESTÁNDAR de examen (preguntas claras y representativas con distractores creíbles).';
 
   const calloutInstruction = options.focusCallouts
     ? '- Prioriza especialmente los bloques marcados como "⚠️ OJO EXAMEN", plazos, excepciones y cifras clave.\n'
     : '';
 
-  const prompt = `Actúa como preparador experto de las oposiciones a Técnicos Auxiliares de Informática (TAI — Subgrupo C1, INAP, España).
+  const prompt = `Actúa como profesor y evaluador experto en la creación de preguntas tipo test de alta calidad.
 
 Genera exactamente ${options.questionCount} preguntas tipo test basadas EXCLUSIVAMENTE en los siguientes apuntes del tema "${topic.title}" (${options.blockCode ?? topic.blockId}).
 
@@ -566,7 +566,7 @@ Reglas obligatorias:
 - ${difficultyInstruction}
 ${calloutInstruction}- Cada pregunta debe tener exactamente 4 opciones (A, B, C, D) con una única respuesta correcta.
 - Distribuye de forma equilibrada la posición de la respuesta correcta ("correctIndex") entre 0, 1, 2 y 3 (evita concentrar las respuestas en las mismas letras).
-- Incluye una explicación breve y clara y la referencia normativa/técnica cuando aparezca en el texto.
+- Incluye una explicación breve y clara y la referencia al apartado o fuente cuando aparezca en el texto.
 - Responde ÚNICAMENTE con un array JSON válido (sin texto adicional antes ni después) con exactamente esta estructura:
 
 [
@@ -576,13 +576,13 @@ ${calloutInstruction}- Cada pregunta debe tener exactamente 4 opciones (A, B, C,
     "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
     "correctIndex": 0,
     "explanation": "Explicación concisa de por qué es correcta",
-    "reference": "Art. / norma / apartado del tema",
-    "tags": ["${topic.tags[0] ?? 'inap'}"]
+    "reference": "Apartado / fuente del tema",
+    "tags": ["${topic.tags[0] ?? 'repaso'}"]
   }
 ]
 
 --- APUNTES DEL TEMA: ${topic.title} ---
-${content || '(El tema aún no tiene apuntes escritos; genera preguntas representativas sobre el título del tema para la oposición TAI).'}
+${content || '(El tema aún no tiene apuntes escritos; genera preguntas representativas sobre el título del tema).'}
 --- FIN DE APUNTES ---`;
 
   return {

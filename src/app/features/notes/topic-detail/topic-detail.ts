@@ -15,7 +15,7 @@ import {
   CreateQuestionInput,
   TOPIC_STATUS_LABELS,
   TOPIC_STATUS_LIST,
-  TaiBlockId,
+  StudyBlockId,
   TopicStatus,
   UpdateTopicPatch,
 } from '../../../core/models/study.models';
@@ -100,11 +100,11 @@ export class TopicDetail {
   private readonly params = toSignal(
     this.route.paramMap.pipe(
       map((paramMap) => ({
-        blockId: (paramMap.get('blockId') as TaiBlockId) ?? 'B1',
+        blockId: paramMap.get('blockId') ?? '',
         topicId: paramMap.get('topicId') ?? '',
       })),
     ),
-    { initialValue: { blockId: 'B1' as TaiBlockId, topicId: '' } },
+    { initialValue: { blockId: '', topicId: '' } },
   );
 
   protected readonly blockId = computed(() => this.params().blockId);

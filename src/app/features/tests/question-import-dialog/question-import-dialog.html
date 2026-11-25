@@ -4,7 +4,7 @@
       Importador rápido de preguntas
     </h2>
     <p class="text-xs text-slate-500 dark:text-slate-400">
-      Pega tandas de exámenes INAP / libros o sube un archivo CSV o JSON con vista previa instantánea.
+      Pega tandas de preguntas en texto o sube un archivo CSV o JSON con vista previa instantánea.
     </p>
   </div>
   <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
@@ -29,7 +29,7 @@
           [class.text-slate-600]="format() !== 'text'"
           [class.dark:text-slate-400]="format() !== 'text'"
         >
-          Texto rápido (INAP)
+          Texto rápido
         </button>
         <button
           type="button"
@@ -124,7 +124,7 @@
         >
           <option value="">Ninguno</option>
           @for (cs of store.caseStudies(); track cs.id) {
-            <option [value]="cs.id">{{ cs.blockId }} · {{ cs.title }}</option>
+            <option [value]="cs.id">{{ store.getBlockById(cs.blockId)?.code ?? 'Eliminado' }} · {{ cs.title }}</option>
           }
         </select>
       </div>
@@ -137,7 +137,7 @@
           type="text"
           [ngModel]="defaultSource()"
           (ngModelChange)="defaultSource.set($event)"
-          placeholder="Ej.: INAP 2023"
+          placeholder="Ej.: Parcial 2025"
           class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>
@@ -187,7 +187,7 @@
                     {{ $index + 1 }}. {{ item.prompt }}
                   </p>
                   <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {{ item.blockId }} · {{ letters[item.correctIndex] }}
+                    {{ store.getBlockById(item.blockId)?.code ?? 'Eliminado' }} · {{ letters[item.correctIndex] }}
                   </span>
                 </div>
                 <p class="mt-0.5 truncate text-[11px] text-emerald-700 dark:text-emerald-400">
@@ -212,7 +212,7 @@
   <button
     mat-flat-button
     type="button"
-    [disabled]="parseResult().valid.length === 0"
+    [disabled]="!canImport()"
     (click)="confirmImport()"
   >
     <mat-icon>download_done</mat-icon>

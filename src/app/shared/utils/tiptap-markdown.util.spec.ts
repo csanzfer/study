@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TaiBlock, Topic } from '../../core/models/study.models';
+import { StudyBlock, Topic } from '../../core/models/study.models';
 import {
   buildBlockMarkdownDocument,
   buildTopicMarkdownDocument,
@@ -7,7 +7,7 @@ import {
   tiptapJsonToMarkdown,
 } from './tiptap-markdown.util';
 
-const sampleBlock: TaiBlock = {
+const sampleBlock: StudyBlock = {
   id: 'B1',
   code: 'Bloque I',
   title: 'Organización del Estado y Administración Electrónica',
@@ -215,6 +215,6 @@ describe('tiptap-markdown.util', () => {
     expect(sanitizeExportFilename('Tema 1: Constitución Española (1978)')).toBe(
       'tema-1-constitucion-espanola-1978',
     );
-    expect(sanitizeExportFilename('   ')).toBe('apunte-tai');
+    expect(sanitizeExportFilename('   ')).toBe('apunte');
   });
 });

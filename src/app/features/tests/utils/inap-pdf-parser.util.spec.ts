@@ -124,9 +124,9 @@ describe('inap-pdf-parser.util', () => {
   });
 
   it('infers source and tags from PDF filename and normalizes duplicate prompts', () => {
-    const meta = inferInapMetadataFromFilename('TAI_2024_Libre_Cuestionario.pdf');
+    const meta = inferInapMetadataFromFilename('Examen_2024_Libre_Cuestionario.pdf');
     expect(meta.source).toContain('2024');
-    expect(meta.tags).toEqual(expect.arrayContaining(['inap', '2024', 'libre']));
+    expect(meta.tags).toEqual(expect.arrayContaining(['examen-pdf', '2024', 'libre']));
 
     expect(normalizePromptForDuplicateCheck('¿Qué es la Constitución Española?')).toBe(
       normalizePromptForDuplicateCheck('Que es la Constitucion Espanola'),
