@@ -95,7 +95,7 @@ export class FlashcardsPage {
     });
   }
 
-  protected async openImportDialog(initialTab: FlashcardImportTab = 'acronyms'): Promise<void> {
+  protected async openImportDialog(initialTab: FlashcardImportTab = 'extract'): Promise<void> {
     const ref = this.dialog.open<
       FlashcardImportDialog,
       FlashcardImportDialogData,

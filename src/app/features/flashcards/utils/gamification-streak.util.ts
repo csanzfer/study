@@ -40,12 +40,12 @@ export function getLevelFromXp(xp: number): {
   const progressPercent = Math.round((currentLevelXp / xpPerLevel) * 100);
 
   const titles = [
-    'Aspirante TAI',
-    'Técnico en Formación',
-    'Analista Constante',
-    'Especialista AGE',
+    'Aprendiz',
+    'Estudiante Activo',
+    'Constante',
+    'Especialista',
     'Maestro del Temario',
-    'Leyenda INAP',
+    'Leyenda del Estudio',
   ];
   const title = titles[Math.min(titles.length - 1, Math.floor((level - 1) / 2))];
 

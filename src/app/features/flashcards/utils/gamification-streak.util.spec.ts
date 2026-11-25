@@ -100,6 +100,8 @@ describe('gamification-streak.util', () => {
 
     const lvl = getLevelFromXp(profile.xp);
     expect(lvl.level).toBe(2);
+    expect(lvl.title).toBe('Aprendiz');
     expect(lvl.currentLevelXp).toBe(50);
+    expect(getLevelFromXp(3000).title).toBe('Leyenda del Estudio');
   });
 });

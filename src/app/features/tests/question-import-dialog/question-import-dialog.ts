@@ -57,6 +57,7 @@ export class QuestionImportDialog {
       defaultTopicId: this.defaultTopicId() || undefined,
       defaultCaseStudyId: this.defaultCaseStudyId() || undefined,
       defaultSource: this.defaultSource().trim() || undefined,
+      blocks: this.store.blocks(),
       topics: this.store.topics(),
     });
   });

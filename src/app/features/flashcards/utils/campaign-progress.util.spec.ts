@@ -1,15 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { TAI_BLOCKS_SEED } from '../../../core/db/tai-seed';
-import { Flashcard, Question, Topic } from '../../../core/models/study.models';
+import { Flashcard, Question, StudyBlock, Topic } from '../../../core/models/study.models';
 import {
   computeCampaignOverview,
   computeTopicCampaignProgress,
 } from './campaign-progress.util';
 
+const TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'block-1',
+    code: 'M1',
+    title: 'Asignatura 1',
+    shortTitle: 'Asig 1',
+    description: '',
+    color: '#2563eb',
+    icon: 'menu_book',
+    order: 1,
+  },
+  {
+    id: 'block-2',
+    code: 'M2',
+    title: 'Asignatura 2',
+    shortTitle: 'Asig 2',
+    description: '',
+    color: '#059669',
+    icon: 'science',
+    order: 2,
+  },
+];
+
 describe('campaign-progress.util', () => {
   const baseTopic: Topic = {
     id: 't-1',
-    blockId: 'B1',
+    blockId: 'block-1',
     order: 1,
     title: 'Constitución Española',
     status: 'pending',
@@ -80,8 +102,8 @@ describe('campaign-progress.util', () => {
   });
 
   it('aggregates block scores into CampaignOverview', () => {
-    const overview = computeCampaignOverview(TAI_BLOCKS_SEED, [baseTopic], [], []);
-    expect(overview.blocks.length).toBe(4);
+    const overview = computeCampaignOverview(TEST_BLOCKS, [baseTopic], [], []);
+    expect(overview.blocks.length).toBe(2);
     expect(overview.blocks[0].topicCount).toBe(1);
     expect(overview.blocks[1].topicCount).toBe(0);
     expect(overview.overallScore).toBe(0);

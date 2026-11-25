@@ -42,7 +42,7 @@ export class FlashcardReviewSession {
   readonly initialBlockId = input<'ALL' | TaiBlockId>('ALL');
   readonly initialTopicId = input<string>('');
   readonly initialTag = input<string>('');
-  readonly openImportRequest = output<'acronyms' | 'extract' | 'batch'>();
+  readonly openImportRequest = output<'extract' | 'batch'>();
 
   protected readonly ratingLabels = FLASHCARD_RATING_LABELS;
 

@@ -1,11 +1,43 @@
-import { TAI_BLOCKS_SEED } from '../../../core/db/tai-seed';
-import { ExamAttempt, Question, Topic } from '../../../core/models/study.models';
+import { ExamAttempt, Question, StudyBlock, Topic } from '../../../core/models/study.models';
 import {
   computeAttemptTrend,
   computeAverageScoreOn10,
   computeBlockPerformance,
   computeWeakestTopics,
 } from './test-analytics.util';
+
+const ANALYTICS_TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'B1',
+    code: 'DER',
+    title: 'Derecho',
+    shortTitle: 'Derecho',
+    description: '',
+    color: '#2563eb',
+    icon: 'gavel',
+    order: 1,
+  },
+  {
+    id: 'B2',
+    code: 'HW',
+    title: 'Hardware',
+    shortTitle: 'Hardware',
+    description: '',
+    color: '#0891b2',
+    icon: 'memory',
+    order: 2,
+  },
+  {
+    id: 'B3',
+    code: 'DEV',
+    title: 'Desarrollo',
+    shortTitle: 'Desarrollo',
+    description: '',
+    color: '#7c3aed',
+    icon: 'code',
+    order: 3,
+  },
+];
 
 describe('test-analytics.util', () => {
   const topics: Topic[] = [
@@ -67,7 +99,7 @@ describe('test-analytics.util', () => {
   ];
 
   it('should compute block performance and weakest topics sorted by lowest accuracy', () => {
-    const blocks = computeBlockPerformance(TAI_BLOCKS_SEED, questions);
+    const blocks = computeBlockPerformance(ANALYTICS_TEST_BLOCKS, questions);
     expect(blocks.find((b) => b.blockId === 'B1')?.accuracyPercent).toBe(75);
     expect(blocks.find((b) => b.blockId === 'B3')?.accuracyPercent).toBe(25);
     expect(blocks.find((b) => b.blockId === 'B2')?.accuracyPercent).toBeNull();

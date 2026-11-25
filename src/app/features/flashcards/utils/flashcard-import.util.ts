@@ -1,4 +1,9 @@
-import { CreateFlashcardInput, Flashcard, TaiBlockId, Topic } from '../../../core/models/study.models';
+import {
+  CreateFlashcardInput,
+  Flashcard,
+  StudyBlockId,
+  Topic,
+} from '../../../core/models/study.models';
 
 export interface FlashcardImportResult {
   items: CreateFlashcardInput[];
@@ -22,7 +27,12 @@ export function normalizeFlashcardKey(front: string): string {
  */
 export function parseFlashcardsBatch(
   raw: string,
-  defaults: { blockId: TaiBlockId; topicId?: string; tags?: string[] },
+  defaults: {
+    blockId: StudyBlockId;
+    topicId?: string;
+    tags?: string[];
+    validBlockIds?: Iterable<StudyBlockId>;
+  },
   existing: Flashcard[] = [],
 ): FlashcardImportResult {
   const trimmed = raw.trim();
@@ -74,12 +84,11 @@ export function parseFlashcardsBatch(
           warnings.push('Se omitió un objeto JSON sin anverso/reverso.');
           continue;
         }
-        const blockCandidate = obj['blockId'];
-        const blockId: TaiBlockId =
-          blockCandidate === 'B1' ||
-          blockCandidate === 'B2' ||
-          blockCandidate === 'B3' ||
-          blockCandidate === 'B4'
+        const validSet = defaults.validBlockIds ? new Set(defaults.validBlockIds) : null;
+        const blockCandidate =
+          typeof obj['blockId'] === 'string' ? obj['blockId'].trim() : '';
+        const blockId: StudyBlockId =
+          blockCandidate && (!validSet || validSet.has(blockCandidate))
             ? blockCandidate
             : defaults.blockId;
         const tags = Array.isArray(obj['tags'])

@@ -5,7 +5,7 @@
     </div>
     <div>
       <h2 class="text-base font-bold text-slate-900 dark:text-white">
-        Asistente PDF de Convocatorias INAP
+        Importar examen PDF (tipo test)
       </h2>
       <p class="text-xs text-slate-500 dark:text-slate-400">
         Paso {{ step() }} de 2 · Procesamiento 100% local en tu navegador
@@ -30,7 +30,7 @@
       <!-- Mode selector -->
       <div>
         <label class="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
-          Tipo de ejercicio del INAP
+          Tipo de ejercicio
         </label>
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
@@ -92,7 +92,7 @@
             }
           </div>
           <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Cuadernillo oficial publicado por el INAP (con texto seleccionable).
+            Documento PDF del examen tipo test (con texto seleccionable).
           </p>
           <input
             #questionnaireInput
@@ -187,7 +187,7 @@
             type="text"
             [ngModel]="source()"
             (ngModelChange)="source.set($event)"
-            placeholder="Ej. INAP TAI 2024 Libre"
+            placeholder="Ej. Examen Parcial 2025"
             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
@@ -200,7 +200,7 @@
             type="text"
             [ngModel]="tagsText()"
             (ngModelChange)="tagsText.set($event)"
-            placeholder="inap, 2024, libre"
+            placeholder="examen, 2025, parcial"
             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
@@ -378,7 +378,7 @@
                   class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
                   @for (block of store.blocks(); track block.id) {
-                    <option [value]="block.id">{{ block.id }}</option>
+                    <option [value]="block.id">{{ block.code }}</option>
                   }
                 </select>
 

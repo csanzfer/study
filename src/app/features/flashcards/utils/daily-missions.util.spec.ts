@@ -1,18 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { TAI_BLOCKS_SEED } from '../../../core/db/tai-seed';
 import {
   Flashcard,
+  StudyBlock,
   createDefaultGamificationProfile,
 } from '../../../core/models/study.models';
 import { createInitialSrsState } from '../../../shared/utils/srs-sm2.util';
 import { generateDailyMissions } from './daily-missions.util';
+
+const MISSION_TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'block-1',
+    code: 'M1',
+    title: 'Asignatura 1',
+    shortTitle: 'Asig 1',
+    description: '',
+    color: '#2563eb',
+    icon: 'menu_book',
+    order: 1,
+  },
+  {
+    id: 'block-2',
+    code: 'M2',
+    title: 'Asignatura 2',
+    shortTitle: 'Asig 2',
+    description: '',
+    color: '#059669',
+    icon: 'lan',
+    order: 2,
+  },
+];
 
 describe('daily-missions.util', () => {
   const today = new Date(2026, 10, 23, 12, 0, 0);
 
   it('generates starter missions when the user has no flashcards or questions yet', () => {
     const missions = generateDailyMissions({
-      blocks: TAI_BLOCKS_SEED,
+      blocks: MISSION_TEST_BLOCKS,
       topics: [],
       flashcards: [],
       questions: [],
@@ -44,7 +67,7 @@ describe('daily-missions.util', () => {
     }));
 
     const missions = generateDailyMissions({
-      blocks: TAI_BLOCKS_SEED,
+      blocks: MISSION_TEST_BLOCKS,
       topics: [],
       flashcards: cards,
       questions: [],
@@ -76,7 +99,7 @@ describe('daily-missions.util', () => {
 
   it('keeps weekly-plan mission visible and claimable once all today plan items are completed', () => {
     const missions = generateDailyMissions({
-      blocks: TAI_BLOCKS_SEED,
+      blocks: MISSION_TEST_BLOCKS,
       topics: [],
       flashcards: [],
       questions: [],
@@ -125,7 +148,7 @@ describe('daily-missions.util', () => {
     };
 
     const missions = generateDailyMissions({
-      blocks: TAI_BLOCKS_SEED,
+      blocks: MISSION_TEST_BLOCKS,
       topics: [],
       flashcards: cards,
       questions: [],

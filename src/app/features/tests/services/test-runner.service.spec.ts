@@ -1,14 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { TAI_BLOCKS_SEED } from '../../../core/db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../../../core/models/study.models';
@@ -16,8 +15,31 @@ import { STUDY_REPOSITORY, StudyRepository } from '../../../core/repositories/st
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { TestRunnerService } from './test-runner.service';
 
+const RUNNER_TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'B1',
+    code: 'M1',
+    title: 'Asignatura 1',
+    shortTitle: 'Asig 1',
+    description: '',
+    color: '#2563eb',
+    icon: 'menu_book',
+    order: 1,
+  },
+  {
+    id: 'B2',
+    code: 'M2',
+    title: 'Asignatura 2',
+    shortTitle: 'Asig 2',
+    description: '',
+    color: '#0891b2',
+    icon: 'science',
+    order: 2,
+  },
+];
+
 class InMemoryTestRepo implements StudyRepository {
-  blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
+  blocks: StudyBlock[] = RUNNER_TEST_BLOCKS.map((b) => ({ ...b }));
   topics: Topic[] = [];
   sessions: StudySession[] = [];
   weeklyPlan: WeeklyPlanItem[] = [];
@@ -28,14 +50,14 @@ class InMemoryTestRepo implements StudyRepository {
   profile?: GamificationProfile;
 
   async initialize(): Promise<void> {}
-  async getBlocks(): Promise<TaiBlock[]> { return this.blocks; }
-  async saveBlock(block: TaiBlock): Promise<void> {
+  async getBlocks(): Promise<StudyBlock[]> { return this.blocks; }
+  async saveBlock(block: StudyBlock): Promise<void> {
     this.blocks = [block, ...this.blocks.filter((b) => b.id !== block.id)];
   }
-  async saveBlocks(blocks: TaiBlock[]): Promise<void> {
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
     for (const b of blocks) await this.saveBlock(b);
   }
-  async deleteBlock(id: TaiBlockId): Promise<void> {
+  async deleteBlock(id: StudyBlockId): Promise<void> {
     this.blocks = this.blocks.filter((b) => b.id !== id);
     this.topics = this.topics.filter((t) => t.blockId !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
@@ -44,7 +66,7 @@ class InMemoryTestRepo implements StudyRepository {
     this.questions = this.questions.filter((q) => q.blockId !== id);
     this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
   }
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     return blockId ? this.topics.filter((t) => t.blockId === blockId) : this.topics;
   }
   async getTopicById(id: string): Promise<Topic | undefined> {

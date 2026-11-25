@@ -326,7 +326,7 @@ export function applyInapAnswerKey(
         correctIndex: null,
         isAnnulled: true,
         selected: false,
-        warnings: [...cleanWarnings, 'Pregunta anulada en plantilla oficial del INAP.'],
+        warnings: [...cleanWarnings, 'Pregunta anulada en la plantilla de respuestas.'],
       };
     }
 
@@ -353,7 +353,7 @@ export function inferInapMetadataFromFilename(filename: string): {
 } {
   const base = filename.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
   const yearMatch = base.match(/\b(20\d{2})\b/);
-  const tags = ['inap'];
+  const tags = ['examen-pdf'];
   if (yearMatch) {
     tags.push(yearMatch[1]);
   }
@@ -363,7 +363,7 @@ export function inferInapMetadataFromFilename(filename: string): {
     tags.push('promocion-interna');
   }
 
-  const source = base ? `INAP · ${base}` : 'Convocatoria oficial INAP';
+  const source = base || 'Examen PDF';
   return {
     source: source.slice(0, 80),
     tags: Array.from(new Set(tags)),

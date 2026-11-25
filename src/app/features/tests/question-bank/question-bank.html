@@ -6,7 +6,7 @@
         Banco de preguntas ({{ filteredQuestions().length }} / {{ store.totalQuestions() }})
       </h2>
       <p class="text-xs text-slate-500 dark:text-slate-400">
-        Crea preguntas manualmente o importa tandas desde exámenes oficiales INAP en texto, CSV o JSON.
+        Crea preguntas manualmente o importa tandas desde exámenes en PDF, texto, CSV o JSON.
       </p>
     </div>
 
@@ -17,7 +17,7 @@
       </button>
       <button mat-stroked-button type="button" (click)="openInapPdfImportDialog()">
         <mat-icon>picture_as_pdf</mat-icon>
-        Importar PDF INAP
+        Importar examen PDF
       </button>
       <button mat-stroked-button type="button" (click)="openImportDialog()">
         <mat-icon>upload_file</mat-icon>
@@ -111,7 +111,7 @@
       <p class="mx-auto mt-1 max-w-md text-xs text-slate-500 dark:text-slate-400">
         {{
           store.totalQuestions() === 0
-            ? 'Añade preguntas manualmente o pega una tanda de un examen INAP con el importador rápido.'
+            ? 'Añade preguntas manualmente o importa una tanda desde PDF, texto, CSV o JSON.'
             : 'Prueba a cambiar los filtros de bloque, tema o estado.'
         }}
       </p>

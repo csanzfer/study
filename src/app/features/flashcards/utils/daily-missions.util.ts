@@ -3,8 +3,8 @@ import {
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
   StudySession,
-  TaiBlock,
   Topic,
   WeeklyPlanItem,
 } from '../../../core/models/study.models';
@@ -36,7 +36,7 @@ export interface DailyMission {
 }
 
 export interface DailyMissionsContext {
-  blocks: TaiBlock[];
+  blocks: StudyBlock[];
   topics: Topic[];
   flashcards: Flashcard[];
   questions: Question[];
@@ -80,8 +80,8 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
     missions.push({
       id: startMissionId,
       kind: 'flashcards',
-      title: 'Crea tus primeras 5 flashcards o siglas',
-      description: 'Empieza tu mazo de repetición espaciada desde un apunte o con el pack TAI.',
+      title: 'Crea tus primeras 5 flashcards',
+      description: 'Empieza tu mazo de repetición espaciada extrayendo conceptos de un apunte o importando en lote.',
       icon: 'style',
       xpReward: 40,
       current: Math.min(5, ctx.flashcards.length),
@@ -125,8 +125,8 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
     missions.push({
       id: acronymMissionId,
       kind: 'acronyms',
-      title: `Domina ${targetAcronyms} siglas TAI`,
-      description: 'Refuerza acrónimos clave de los bloques de informática y administración.',
+      title: `Domina ${targetAcronyms} siglas`,
+      description: 'Refuerza los acrónimos y siglas clave de tu mazo.',
       icon: 'spellcheck',
       xpReward: 35,
       current: Math.min(targetAcronyms, reviewedAcronymsToday),
@@ -227,7 +227,7 @@ export function generateDailyMissions(ctx: DailyMissionsContext): DailyMission[]
       description:
         failedCount > 0
           ? 'Atacar tus preguntas falladas sube rápidamente tu nota neta.'
-          : 'Mantén el ritmo tipo examen oficial INAP.',
+          : 'Mantén el ritmo con una tanda rápida de preguntas tipo test.',
       icon: 'quiz',
       xpReward: 45,
       current: Math.min(1, attemptsToday),

@@ -4,7 +4,7 @@
       Importador rápido de preguntas
     </h2>
     <p class="text-xs text-slate-500 dark:text-slate-400">
-      Pega tandas de exámenes INAP / libros o sube un archivo CSV o JSON con vista previa instantánea.
+      Pega tandas de preguntas en texto o sube un archivo CSV o JSON con vista previa instantánea.
     </p>
   </div>
   <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar">
@@ -29,7 +29,7 @@
           [class.text-slate-600]="format() !== 'text'"
           [class.dark:text-slate-400]="format() !== 'text'"
         >
-          Texto rápido (INAP)
+          Texto rápido
         </button>
         <button
           type="button"
@@ -137,7 +137,7 @@
           type="text"
           [ngModel]="defaultSource()"
           (ngModelChange)="defaultSource.set($event)"
-          placeholder="Ej.: INAP 2023"
+          placeholder="Ej.: Parcial 2025"
           class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>

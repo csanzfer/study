@@ -205,8 +205,8 @@ export class QuestionBank {
     await this.store.bulkCreateQuestions(questionsToSave);
     this.snackBar.open(
       caseStudyId
-        ? `Supuesto práctico y ${questionsToSave.length} preguntas importadas desde PDF INAP.`
-        : `${questionsToSave.length} preguntas importadas desde PDF oficial del INAP.`,
+        ? `Supuesto práctico y ${questionsToSave.length} preguntas importadas desde PDF.`
+        : `${questionsToSave.length} preguntas importadas desde examen PDF.`,
       'Cerrar',
       { duration: 4000 },
     );

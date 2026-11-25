@@ -22,7 +22,7 @@
 - [x] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
 - [x] **Fase 2:** Store reactivo dinámico y BackupService compatible
 - [x] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
-- [ ] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
+- [x] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
 - [ ] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
 
 ---
@@ -45,7 +45,7 @@
 - [x] **Base de datos (`src/app/core/db/study.db.ts`):**
   - Cambiar el tipado de `blocks!: Table<StudyBlock, StudyBlockId>`.
   - Eliminar la llamada a `TAI_BLOCKS_SEED` en `ensureSeeded()` (dejar la tabla vacía en instalaciones nuevas; los usuarios existentes mantienen sus bloques actuales intactos).
-  - *Pendiente de Fases 2 y 4:* eliminar físicamente `src/app/core/db/tai-seed.ts` una vez migradas todas sus referencias en `BackupService` y tests.
+  - Eliminado `src/app/core/db/tai-seed.ts` tras migrar todas sus referencias en código y tests.
 - [x] **Repositorio (`src/app/core/repositories/study.repository.ts`):**
   - Añadir a `StudyRepository` e implementar en `IndexedDbStudyRepository`:
     - `saveBlock(block: StudyBlock): Promise<void>`
@@ -144,7 +144,7 @@
 
 ### Tareas
 
-- [ ] **Motor de Tests y Simulacros:**
+- [x] **Motor de Tests y Simulacros:**
   - `src/app/features/tests/utils/test-scoring.util.ts`: calcular `byBlock: Record<string, ScoreBreakdown>` dinámicamente según los `blockId` presentes en las preguntas del intento.
   - `src/app/features/tests/utils/test-generator.util.ts`: en modo `simulation`, iterar sobre `Object.entries(quotas)` en lugar de `['B1', 'B2', 'B3', 'B4']`.
   - `src/app/features/tests/test-launcher/test-launcher.ts` y `.html`:
@@ -154,7 +154,7 @@
   - `src/app/features/tests/utils/question-import.util.ts`: recibir la lista de `StudyBlock[]` en `QuestionImportDefaults` y resolver `blockId` buscando coincidencia exacta/normalizada por `id`, `code` o `title` (con fallback a `defaultBlockId`). Actualizar ejemplos de importación a ejemplos genéricos.
   - `src/app/features/tests/utils/inap-pdf-parser.util.ts` y `inap-pdf-import-dialog/`: generalizar textos visibles a *"Importar examen PDF (tipo test)"*, manteniendo los filtros de ruido como limpieza genérica de cabeceras de examen.
   - `src/app/features/tests/utils/topic-question-generator.util.ts` y `topic-question-generator-dialog/`: generalizar el prompt de IA para crear preguntas tipo test de alta calidad de cualquier materia (sin exigir formato oficial INAP/TAI).
-- [ ] **Flashcards y Gamificación:**
+- [x] **Flashcards y Gamificación:**
   - `src/app/features/flashcards/utils/flashcard-import.util.ts`: aceptar cualquier `blockId` válido presente en los bloques del usuario (o fallback a `defaults.blockId`).
   - Eliminar `src/app/features/flashcards/data/tai-acronyms-seed.ts` y los botones/referencias a *"Cargar pack de siglas TAI"* en `flashcard-review-session`, `flashcard-deck-manager` y `flashcard-import-dialog`.
   - `src/app/features/flashcards/utils/daily-missions.util.ts`:

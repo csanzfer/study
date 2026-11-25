@@ -8,7 +8,7 @@ import {
   EXAM_MODE_LABELS,
   ExamMode,
   PENALTY_PRESETS,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { TestRunnerService } from '../services/test-runner.service';
@@ -34,7 +34,7 @@ export class TestLauncher {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly initialMode = input<ExamMode | null>(null);
-  readonly initialBlockId = input<TaiBlockId | null>(null);
+  readonly initialBlockId = input<StudyBlockId | null>(null);
   readonly initialTopicId = input<string | null>(null);
 
   protected readonly penaltyPresets = PENALTY_PRESETS;
@@ -44,14 +44,14 @@ export class TestLauncher {
     {
       id: 'practice',
       title: 'Práctica por tema o bloque',
-      subtitle: 'Corrección inmediata con explicación y referencia normativa.',
+      subtitle: 'Corrección inmediata con explicación y referencia.',
       icon: 'school',
       accentClass: 'text-blue-600 dark:text-blue-400',
     },
     {
       id: 'simulation',
-      title: 'Simulacro oficial TAI',
-      subtitle: 'Cronómetro, reparto por bloques, opción en blanco y penalización -1/3.',
+      title: 'Simulacro de examen',
+      subtitle: 'Cronómetro, reparto por bloques, opción en blanco y penalización configurable.',
       icon: 'assignment',
       accentClass: 'text-indigo-600 dark:text-indigo-400',
     },
@@ -72,7 +72,7 @@ export class TestLauncher {
   ];
 
   protected readonly selectedMode = signal<ExamMode>('practice');
-  protected readonly selectedBlock = signal<TaiBlockId | 'ALL'>('ALL');
+  protected readonly selectedBlock = signal<StudyBlockId | 'ALL'>('ALL');
   protected readonly selectedTopicId = signal<string>('ALL');
   protected readonly questionCount = signal(20);
   protected readonly onlyUnanswered = signal(false);
@@ -81,10 +81,7 @@ export class TestLauncher {
 
   // Simulation settings
   protected readonly timeLimitMinutes = signal<number>(90);
-  protected readonly quotaB1 = signal(20);
-  protected readonly quotaB2 = signal(20);
-  protected readonly quotaB3 = signal(20);
-  protected readonly quotaB4 = signal(20);
+  protected readonly blockQuotas = signal<Record<StudyBlockId, number>>({});
 
   // Mistakes settings
   protected readonly mistakesFilter = signal<MistakesFilter>('both');
@@ -112,6 +109,24 @@ export class TestLauncher {
         }
       }
     });
+    effect(() => {
+      const blocks = this.store.blocks();
+      const counts = this.store.questionCountByBlock();
+      this.blockQuotas.update((current) => {
+        const next: Record<StudyBlockId, number> = {};
+        let changed = Object.keys(current).length !== blocks.length;
+        for (const block of blocks) {
+          if (block.id in current) {
+            next[block.id] = current[block.id];
+          } else {
+            const available = counts[block.id] ?? 0;
+            next[block.id] = available > 0 ? Math.min(20, available) : 0;
+            changed = true;
+          }
+        }
+        return changed ? next : current;
+      });
+    });
   }
 
   protected readonly availableTopics = computed(() => {
@@ -125,52 +140,63 @@ export class TestLauncher {
     const blockIds = block === 'ALL' ? undefined : [block];
     const topicId = this.selectedTopicId() === 'ALL' ? undefined : this.selectedTopicId();
 
-    return generateTestQuestions(
-      this.store.questions(),
-      {
-        mode,
-        blockIds,
-        topicId,
-        caseStudyId: this.selectedCaseStudyId() || undefined,
-        questionCount: this.questionCount(),
-        blockQuotas:
-          mode === 'simulation'
-            ? {
-                B1: this.quotaB1(),
-                B2: this.quotaB2(),
-                B3: this.quotaB3(),
-                B4: this.quotaB4(),
-              }
-            : undefined,
-        mistakesFilter: this.mistakesFilter(),
-        onlyUnanswered: this.onlyUnanswered(),
-        shuffle: false,
-      },
-    );
+    return generateTestQuestions(this.store.questions(), {
+      mode,
+      blockIds,
+      topicId,
+      caseStudyId: this.selectedCaseStudyId() || undefined,
+      questionCount: this.questionCount(),
+      blockQuotas: mode === 'simulation' ? this.blockQuotas() : undefined,
+      mistakesFilter: this.mistakesFilter(),
+      onlyUnanswered: this.onlyUnanswered(),
+      shuffle: false,
+    });
   });
 
   protected readonly canLaunch = computed(() => this.previewResult().questions.length > 0);
 
-  protected onBlockChange(next: TaiBlockId | 'ALL'): void {
+  protected onBlockChange(next: StudyBlockId | 'ALL'): void {
     this.selectedBlock.set(next);
     this.selectedTopicId.set('ALL');
   }
 
-  protected applyAvailableQuotas(): void {
-    const counts = this.store.questionCountByBlock();
-    this.quotaB1.set(counts['B1'] ?? 0);
-    this.quotaB2.set(counts['B2'] ?? 0);
-    this.quotaB3.set(counts['B3'] ?? 0);
-    this.quotaB4.set(counts['B4'] ?? 0);
+  protected setBlockQuota(blockId: StudyBlockId, value: number): void {
+    const safe = Math.max(0, Math.floor(Number(value) || 0));
+    this.blockQuotas.update((current) => ({ ...current, [blockId]: safe }));
   }
 
-  protected applyOfficialInapQuotas(): void {
-    this.quotaB1.set(20);
-    this.quotaB2.set(20);
-    this.quotaB3.set(20);
-    this.quotaB4.set(20);
-    this.timeLimitMinutes.set(90);
-    this.penaltyRatio.set(1 / 3);
+  protected applyAvailableQuotas(): void {
+    const counts = this.store.questionCountByBlock();
+    const next: Record<StudyBlockId, number> = {};
+    for (const block of this.store.blocks()) {
+      next[block.id] = counts[block.id] ?? 0;
+    }
+    this.blockQuotas.set(next);
+  }
+
+  protected applyBalancedQuotas(): void {
+    const blocks = this.store.blocks();
+    const counts = this.store.questionCountByBlock();
+    const populated = blocks.filter((b) => (counts[b.id] ?? 0) > 0);
+    const next: Record<StudyBlockId, number> = {};
+
+    if (populated.length === 0) {
+      for (const block of blocks) {
+        next[block.id] = 0;
+      }
+      this.blockQuotas.set(next);
+      return;
+    }
+
+    const totalAvailable = populated.reduce((sum, b) => sum + (counts[b.id] ?? 0), 0);
+    const targetTotal = Math.min(totalAvailable, Math.max(20, populated.length * 10));
+    const perBlock = Math.max(1, Math.floor(targetTotal / populated.length));
+
+    for (const block of blocks) {
+      const avail = counts[block.id] ?? 0;
+      next[block.id] = avail > 0 ? Math.min(avail, perBlock) : 0;
+    }
+    this.blockQuotas.set(next);
   }
 
   protected startTest(): void {
@@ -185,15 +211,7 @@ export class TestLauncher {
       topicId,
       caseStudyId: this.selectedCaseStudyId() || undefined,
       questionCount: this.questionCount(),
-      blockQuotas:
-        mode === 'simulation'
-          ? {
-              B1: this.quotaB1(),
-              B2: this.quotaB2(),
-              B3: this.quotaB3(),
-              B4: this.quotaB4(),
-            }
-          : undefined,
+      blockQuotas: mode === 'simulation' ? this.blockQuotas() : undefined,
       mistakesFilter: this.mistakesFilter(),
       onlyUnanswered: this.onlyUnanswered(),
       shuffle: this.shuffle(),
@@ -243,7 +261,7 @@ export class TestLauncher {
       return `Supuesto: ${caseStudyTitle}`;
     }
     if (mode === 'simulation') {
-      return `Simulacro TAI (${count} preg.)`;
+      return `Simulacro (${count} preg.)`;
     }
     if (mode === 'mistakes') {
       return `Repaso de fallos y marcadas (${count} preg.)`;
