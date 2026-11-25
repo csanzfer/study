@@ -100,7 +100,7 @@
                 Pregunta {{ runner.currentIndex() + 1 }} de {{ runner.questions().length }}
               </span>
               <span class="rounded-lg bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                {{ question.blockId }}
+                {{ store.getBlockById(question.blockId)?.code ?? 'Eliminado' }}
               </span>
               @if (question.source) {
                 <span class="text-slate-400">{{ question.source }}</span>
@@ -410,7 +410,7 @@
           <div class="flex items-start justify-between gap-2">
             <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
               <span class="rounded bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                #{{ entry.index }} · {{ entry.question.blockId }}
+                #{{ entry.index }} · {{ store.getBlockById(entry.question.blockId)?.code ?? 'Eliminado' }}
               </span>
               @if (entry.answer.selectedIndex === null) {
                 <span class="rounded bg-slate-100 px-2 py-0.5 text-slate-500 dark:bg-slate-800">

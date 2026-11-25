@@ -58,7 +58,7 @@
         >
           <option value="">Pregunta independiente</option>
           @for (cs of store.caseStudies(); track cs.id) {
-            <option [value]="cs.id">{{ cs.blockId }} · {{ cs.title }}</option>
+            <option [value]="cs.id">{{ store.getBlockById(cs.blockId)?.code ?? 'Eliminado' }} · {{ cs.title }}</option>
           }
         </select>
       </div>

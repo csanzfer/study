@@ -2,15 +2,30 @@
   <!-- Action bar -->
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="flex flex-wrap items-center gap-2">
-      <button mat-flat-button type="button" (click)="openCreateDialog('standard')">
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openCreateDialog('standard')"
+      >
         <mat-icon>add</mat-icon>
         Nueva flashcard
       </button>
-      <button mat-stroked-button type="button" (click)="openCreateDialog('acronym')">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openCreateDialog('acronym')"
+      >
         <mat-icon>spellcheck</mat-icon>
         Nueva sigla
       </button>
-      <button mat-stroked-button type="button" (click)="openImportRequest.emit('extract')">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openImportRequest.emit('extract')"
+      >
         <mat-icon>library_add</mat-icon>
         Importar / Extraer
       </button>
@@ -67,7 +82,7 @@
           <option value="ALL">Todos los temas</option>
           @for (topic of availableTopics(); track topic.id) {
             <option [value]="topic.id">
-              {{ topic.blockId }} · #{{ topic.order }} {{ topic.title }}
+              {{ store.getBlockById(topic.blockId)?.code ?? 'Eliminado' }} · #{{ topic.order }} {{ topic.title }}
               ({{ store.flashcardCountByTopic()[topic.id] || 0 }})
             </option>
           }

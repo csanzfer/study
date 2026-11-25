@@ -11,19 +11,39 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <button mat-stroked-button type="button" (click)="openGeneratorDialog()">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openGeneratorDialog()"
+      >
         <mat-icon>auto_awesome</mat-icon>
         Generar desde tema
       </button>
-      <button mat-stroked-button type="button" (click)="openInapPdfImportDialog()">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openInapPdfImportDialog()"
+      >
         <mat-icon>picture_as_pdf</mat-icon>
         Importar examen PDF
       </button>
-      <button mat-stroked-button type="button" (click)="openImportDialog()">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openImportDialog()"
+      >
         <mat-icon>upload_file</mat-icon>
         Importar tandas
       </button>
-      <button mat-flat-button type="button" (click)="openCreateDialog()">
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="store.blocks().length === 0"
+        (click)="openCreateDialog()"
+      >
         <mat-icon>add</mat-icon>
         Nueva pregunta
       </button>
@@ -61,7 +81,7 @@
       >
         <option value="ALL">Todos los temas</option>
         @for (topic of availableTopics(); track topic.id) {
-          <option [value]="topic.id">{{ topic.blockId }} · #{{ topic.order }} {{ topic.title }}</option>
+          <option [value]="topic.id">{{ store.getBlockById(topic.blockId)?.code ?? 'Eliminado' }} · #{{ topic.order }} {{ topic.title }}</option>
         }
       </select>
     </div>
@@ -143,7 +163,7 @@
                   class="rounded-md px-2 py-0.5 text-white"
                   [style.background-color]="getBlockColor(question.blockId)"
                 >
-                  {{ question.blockId }}
+                  {{ store.getBlockById(question.blockId)?.code ?? 'Eliminado' }}
                 </span>
 
                 @if (getTopicTitle(question.topicId); as topicTitle) {

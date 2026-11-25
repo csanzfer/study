@@ -246,7 +246,7 @@
               <option value="">-- Elige un supuesto --</option>
               @for (cs of store.caseStudies(); track cs.id) {
                 <option [value]="cs.id">
-                  {{ cs.blockId }} · {{ cs.title }} ({{ store.getQuestionsForCaseStudy(cs.id).length }} preg.)
+                  {{ store.getBlockById(cs.blockId)?.code ?? 'Eliminado' }} · {{ cs.title }} ({{ store.getQuestionsForCaseStudy(cs.id).length }} preg.)
                 </option>
               }
             </select>

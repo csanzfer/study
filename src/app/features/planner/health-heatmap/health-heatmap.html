@@ -142,7 +142,7 @@
                   class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold text-white"
                   [style.background-color]="entry.block?.color ?? '#64748b'"
                 >
-                  {{ entry.topic.blockId }} · #{{ entry.topic.order }}
+                  {{ store.getBlockById(entry.topic.blockId)?.code ?? 'Eliminado' }} · #{{ entry.topic.order }}
                 </span>
                 <a
                   [routerLink]="['/blocks', entry.topic.blockId, 'topics', entry.topic.id]"

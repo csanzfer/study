@@ -5,11 +5,16 @@
         Supuestos prácticos ({{ store.caseStudies().length }})
       </h2>
       <p class="text-xs text-slate-500 dark:text-slate-400">
-        Crea supuestos de Bloque III (Desarrollo) o Bloque IV (Sistemas) y resuélvelos en vista dividida con el enunciado fijo.
+        Crea supuestos prácticos para cualquier asignatura y resuélvelos en vista dividida con el enunciado fijo.
       </p>
     </div>
 
-    <button mat-flat-button type="button" (click)="createCaseStudy()">
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="store.blocks().length === 0"
+      (click)="createCaseStudy()"
+    >
       <mat-icon>add</mat-icon>
       Nuevo supuesto
     </button>
@@ -25,7 +30,12 @@
         Los supuestos prácticos agrupan un enunciado común junto a su batería de preguntas asociadas.
       </p>
       <div class="mt-4">
-        <button mat-flat-button type="button" (click)="createCaseStudy()">
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="store.blocks().length === 0"
+          (click)="createCaseStudy()"
+        >
           <mat-icon>add</mat-icon>
           Crear primer supuesto
         </button>
@@ -42,7 +52,7 @@
                   class="rounded-md px-2 py-0.5 text-white"
                   [style.background-color]="getBlockColor(cs.blockId)"
                 >
-                  {{ cs.blockId }}
+                  {{ store.getBlockById(cs.blockId)?.code ?? 'Eliminado' }}
                 </span>
                 @if (cs.source) {
                   <span class="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
