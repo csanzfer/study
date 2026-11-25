@@ -2,24 +2,36 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { routes } from './app.routes';
-import { TAI_BLOCKS_SEED } from './core/db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from './core/models/study.models';
 import { STUDY_REPOSITORY, StudyRepository } from './core/repositories/study.repository';
 import { StudyStoreService } from './core/services/study-store.service';
 
+const APP_TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'block-1',
+    code: 'M1',
+    title: 'Asignatura 1',
+    shortTitle: 'Asignatura 1',
+    description: '',
+    color: '#2563eb',
+    icon: 'menu_book',
+    order: 1,
+  },
+];
+
 class InMemoryStudyRepository implements StudyRepository {
-  private blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
+  private blocks: StudyBlock[] = APP_TEST_BLOCKS.map((b) => ({ ...b }));
   private topics: Topic[] = [];
   private sessions: StudySession[] = [];
   private weeklyPlan: WeeklyPlanItem[] = [];
@@ -31,11 +43,11 @@ class InMemoryStudyRepository implements StudyRepository {
 
   async initialize(): Promise<void> {}
 
-  async getBlocks(): Promise<TaiBlock[]> {
+  async getBlocks(): Promise<StudyBlock[]> {
     return [...this.blocks];
   }
 
-  async saveBlock(block: TaiBlock): Promise<void> {
+  async saveBlock(block: StudyBlock): Promise<void> {
     const idx = this.blocks.findIndex((b) => b.id === block.id);
     if (idx >= 0) {
       this.blocks[idx] = block;
@@ -44,13 +56,13 @@ class InMemoryStudyRepository implements StudyRepository {
     }
   }
 
-  async saveBlocks(blocks: TaiBlock[]): Promise<void> {
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
     for (const block of blocks) {
       await this.saveBlock(block);
     }
   }
 
-  async deleteBlock(id: TaiBlockId): Promise<void> {
+  async deleteBlock(id: StudyBlockId): Promise<void> {
     this.blocks = this.blocks.filter((b) => b.id !== id);
     this.topics = this.topics.filter((t) => t.blockId !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
@@ -60,7 +72,7 @@ class InMemoryStudyRepository implements StudyRepository {
     this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
   }
 
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     return blockId ? this.topics.filter((t) => t.blockId === blockId) : [...this.topics];
   }
 
@@ -180,7 +192,7 @@ class InMemoryStudyRepository implements StudyRepository {
   }
 
   async replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
@@ -216,7 +228,7 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('should create the app and initialize the 4 TAI blocks', async () => {
+  it('should create the app and initialize blocks from the repository', async () => {
     const store = TestBed.inject(StudyStoreService);
     await store.initialize();
 
@@ -224,7 +236,7 @@ describe('App', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance).toBeTruthy();
-    expect(store.blocks().length).toBe(4);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('TAI Study');
+    expect(store.blocks().length).toBe(APP_TEST_BLOCKS.length);
+    expect(store.defaultBlockId()).toBe('block-1');
   });
 });

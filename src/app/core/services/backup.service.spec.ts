@@ -1,14 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
   createDefaultGamificationProfile,
@@ -16,12 +15,45 @@ import {
 import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.repository';
 import { BackupService } from './backup.service';
 
+const GENERIC_BLOCKS: StudyBlock[] = [
+  {
+    id: 'block-hist',
+    code: 'HIST',
+    title: 'Historia Contemporánea',
+    shortTitle: 'Historia',
+    description: 'Siglos XIX y XX',
+    color: '#2563eb',
+    icon: 'history_edu',
+    order: 1,
+  },
+  {
+    id: 'block-code',
+    code: 'DEV',
+    title: 'Programación y APIs',
+    shortTitle: 'Programación',
+    description: 'REST, TypeScript y bases de datos',
+    color: '#7c3aed',
+    icon: 'code',
+    order: 2,
+  },
+  {
+    id: 'block-net',
+    code: 'RED',
+    title: 'Redes',
+    shortTitle: 'Redes',
+    description: 'TCP/IP y DNS',
+    color: '#059669',
+    icon: 'lan',
+    order: 3,
+  },
+];
+
 class MockStudyRepository implements StudyRepository {
-  blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
+  blocks: StudyBlock[] = GENERIC_BLOCKS.map((b) => ({ ...b }));
   topics: Topic[] = [
     {
       id: 't-1',
-      blockId: 'B1',
+      blockId: 'block-hist',
       order: 1,
       title: 'Constitución Española',
       status: 'first_round',
@@ -38,7 +70,7 @@ class MockStudyRepository implements StudyRepository {
     {
       id: 's-1',
       topicId: 't-1',
-      blockId: 'B1',
+      blockId: 'block-hist',
       startedAt: '2026-11-23T09:00:00.000Z',
       endedAt: '2026-11-23T09:25:00.000Z',
       durationMinutes: 25,
@@ -51,7 +83,7 @@ class MockStudyRepository implements StudyRepository {
       weekStartDate: '2026-11-23',
       dayOfWeek: 1,
       topicId: 't-1',
-      blockId: 'B1',
+      blockId: 'block-hist',
       order: 1,
       completed: false,
       targetPomodoros: 2,
@@ -60,9 +92,9 @@ class MockStudyRepository implements StudyRepository {
   caseStudies: CaseStudy[] = [
     {
       id: 'cs-1',
-      blockId: 'B3',
+      blockId: 'block-code',
       title: 'Supuesto REST API',
-      statement: 'Una entidad pública expone un API REST...',
+      statement: 'Una entidad expone un API REST...',
       tags: ['rest'],
       createdAt: '2026-11-23T10:00:00.000Z',
       updatedAt: '2026-11-23T10:00:00.000Z',
@@ -71,7 +103,7 @@ class MockStudyRepository implements StudyRepository {
   questions: Question[] = [
     {
       id: 'q-1',
-      blockId: 'B1',
+      blockId: 'block-hist',
       topicId: 't-1',
       prompt: '¿En qué año se aprobó la Constitución Española?',
       options: ['1975', '1978', '1981', '1979'],
@@ -88,14 +120,14 @@ class MockStudyRepository implements StudyRepository {
   examAttempts: ExamAttempt[] = [
     {
       id: 'a-1',
-      title: 'Práctica Bloque I',
+      title: 'Práctica Historia',
       date: '2026-11-23T11:00:00.000Z',
       mode: 'practice',
       penaltyRatio: 1 / 3,
       answers: [
         {
           questionId: 'q-1',
-          blockId: 'B1',
+          blockId: 'block-hist',
           topicId: 't-1',
           selectedIndex: 1,
           correctIndex: 1,
@@ -114,7 +146,7 @@ class MockStudyRepository implements StudyRepository {
   flashcards: Flashcard[] = [
     {
       id: 'fc-1',
-      blockId: 'B4',
+      blockId: 'block-net',
       topicId: 't-1',
       front: 'DNS',
       back: 'Domain Name System',
@@ -141,10 +173,10 @@ class MockStudyRepository implements StudyRepository {
   };
 
   async initialize(): Promise<void> {}
-  async getBlocks(): Promise<TaiBlock[]> {
+  async getBlocks(): Promise<StudyBlock[]> {
     return this.blocks;
   }
-  async saveBlock(block: TaiBlock): Promise<void> {
+  async saveBlock(block: StudyBlock): Promise<void> {
     const idx = this.blocks.findIndex((b) => b.id === block.id);
     if (idx >= 0) {
       this.blocks[idx] = block;
@@ -152,12 +184,12 @@ class MockStudyRepository implements StudyRepository {
       this.blocks.push(block);
     }
   }
-  async saveBlocks(blocks: TaiBlock[]): Promise<void> {
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
     for (const block of blocks) {
       await this.saveBlock(block);
     }
   }
-  async deleteBlock(id: TaiBlockId): Promise<void> {
+  async deleteBlock(id: StudyBlockId): Promise<void> {
     this.blocks = this.blocks.filter((b) => b.id !== id);
     this.topics = this.topics.filter((t) => t.blockId !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
@@ -166,7 +198,7 @@ class MockStudyRepository implements StudyRepository {
     this.questions = this.questions.filter((q) => q.blockId !== id);
     this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
   }
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     return blockId ? this.topics.filter((t) => t.blockId === blockId) : this.topics;
   }
   async getTopicById(id: string): Promise<Topic | undefined> {
@@ -262,7 +294,7 @@ class MockStudyRepository implements StudyRepository {
     this.profile = profile;
   }
   async replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
@@ -289,6 +321,7 @@ describe('BackupService', () => {
   let repo: MockStudyRepository;
 
   beforeEach(() => {
+    localStorage.clear();
     repo = new MockStudyRepository();
     TestBed.configureTestingModule({
       providers: [
@@ -299,11 +332,11 @@ describe('BackupService', () => {
     service = TestBed.inject(BackupService);
   });
 
-  it('should create a valid v4 backup payload including flashcards and gamification profile', async () => {
+  it('should create a valid v5 crisisstudent backup payload including flashcards and gamification profile', async () => {
     const payload = await service.createBackupPayload();
-    expect(payload.appName).toBe('tai-study');
-    expect(payload.schemaVersion).toBe(4);
-    expect(payload.blocks.length).toBe(4);
+    expect(payload.appName).toBe('crisisstudent');
+    expect(payload.schemaVersion).toBe(5);
+    expect(payload.blocks.length).toBe(3);
     expect(payload.topics.length).toBe(1);
     expect(payload.studySessions?.length).toBe(1);
     expect(payload.weeklyPlanItems?.length).toBe(1);
@@ -314,16 +347,34 @@ describe('BackupService', () => {
     expect(payload.gamificationProfile?.xp).toBe(120);
   });
 
-  it('should accept legacy v1 and v2 backup files for backward compatibility', async () => {
+  it('should accept legacy tai-study v1, v2, and v4 backup files for backward compatibility', async () => {
+    const legacyBlocks: StudyBlock[] = [
+      {
+        id: 'B1',
+        code: 'Bloque I',
+        title: 'Organización',
+        shortTitle: 'Organización',
+        description: '',
+        color: '#2563eb',
+        icon: 'account_balance',
+        order: 1,
+      },
+    ];
+    const legacyTopic: Topic = {
+      ...repo.topics[0],
+      blockId: 'B1',
+    };
+
     const legacyV1 = {
       schemaVersion: 1,
       appName: 'tai-study',
       exportedAt: '2026-11-20T12:00:00.000Z',
-      blocks: repo.blocks,
-      topics: repo.topics,
+      blocks: legacyBlocks,
+      topics: [legacyTopic],
     };
 
     const parsedV1 = service.parseBackupJson(JSON.stringify(legacyV1));
+    expect(parsedV1.appName).toBe('tai-study');
     expect(parsedV1.schemaVersion).toBe(1);
     expect(parsedV1.topics.length).toBe(1);
     expect(parsedV1.studySessions).toEqual([]);
@@ -336,16 +387,35 @@ describe('BackupService', () => {
       schemaVersion: 2,
       appName: 'tai-study',
       exportedAt: '2026-11-21T12:00:00.000Z',
-      blocks: repo.blocks,
-      topics: repo.topics,
-      studySessions: repo.sessions,
-      weeklyPlanItems: repo.weeklyPlan,
+      blocks: legacyBlocks,
+      topics: [legacyTopic],
+      studySessions: [{ ...repo.sessions[0], blockId: 'B1' }],
+      weeklyPlanItems: [{ ...repo.weeklyPlan[0], blockId: 'B1' }],
     };
 
     const parsedV2 = service.parseBackupJson(JSON.stringify(legacyV2));
     expect(parsedV2.schemaVersion).toBe(2);
     expect(parsedV2.studySessions?.length).toBe(1);
     expect(parsedV2.questions).toEqual([]);
+
+    const legacyV4 = {
+      schemaVersion: 4,
+      appName: 'tai-study',
+      exportedAt: '2026-11-24T12:00:00.000Z',
+      blocks: legacyBlocks,
+      topics: [legacyTopic],
+      flashcards: [{ ...repo.flashcards[0], blockId: 'B1' }],
+      gamificationProfile: repo.profile,
+    };
+
+    const fileV4 = new File([JSON.stringify(legacyV4)], 'tai-study-backup.json', {
+      type: 'application/json',
+    });
+    const importResult = await service.importBackupFile(fileV4);
+    expect(importResult.blocksCount).toBe(1);
+    expect(importResult.topicsCount).toBe(1);
+    expect(importResult.flashcardsCount).toBe(1);
+    expect((await repo.getBlocks())[0].id).toBe('B1');
   });
 
   it('should reject an invalid backup JSON', () => {
@@ -386,10 +456,10 @@ describe('BackupService', () => {
     expect((await repo.getWeeklyPlanItems()).length).toBe(0);
     expect((await repo.getQuestions()).length).toBe(0);
 
-    const file = new File([jsonString], 'tai-study-backup.json', { type: 'application/json' });
+    const file = new File([jsonString], 'crisisstudent-backup.json', { type: 'application/json' });
     const result = await service.importBackupFile(file);
 
-    expect(result.blocksCount).toBe(4);
+    expect(result.blocksCount).toBe(3);
     expect(result.topicsCount).toBe(1);
     expect(result.sessionsCount).toBe(1);
     expect(result.weeklyPlanItemsCount).toBe(1);
@@ -499,5 +569,42 @@ describe('BackupService', () => {
       gamificationProfile: { ...base.gamificationProfile!, weeklyRestDays: [9] },
     };
     expect(() => service.parseBackupJson(JSON.stringify(invalidRestDaysPayload))).toThrow();
+
+    const invalidBlockPayload = {
+      ...base,
+      blocks: [{ id: '', title: 'Sin código' }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(invalidBlockPayload))).toThrow();
+
+    const orphanTopicPayload = {
+      ...base,
+      topics: [{ ...base.topics[0], blockId: 'block-does-not-exist' }],
+    };
+    expect(() => service.parseBackupJson(JSON.stringify(orphanTopicPayload))).toThrow();
+  });
+
+  it('should allow empty blocks backup and examAttempts referencing deleted blocks, and read legacy last-backup-at', async () => {
+    const emptyPayload = {
+      schemaVersion: 5,
+      appName: 'crisisstudent',
+      exportedAt: '2026-11-25T10:00:00.000Z',
+      blocks: [],
+      topics: [],
+      examAttempts: repo.examAttempts,
+    };
+    const parsed = service.parseBackupJson(JSON.stringify(emptyPayload));
+    expect(parsed.blocks).toEqual([]);
+    expect(parsed.examAttempts?.length).toBe(1);
+
+    localStorage.setItem('tai-study:last-backup-at', '2026-11-20T08:00:00.000Z');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        BackupService,
+        { provide: STUDY_REPOSITORY, useValue: repo },
+      ],
+    });
+    const freshService = TestBed.inject(BackupService);
+    expect(freshService.lastBackupAt()).toBe('2026-11-20T08:00:00.000Z');
   });
 });

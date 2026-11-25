@@ -1,22 +1,64 @@
 import { TestBed } from '@angular/core/testing';
-import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
 import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.repository';
 import { StudyStoreService } from './study-store.service';
 
+const TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'block-law',
+    code: 'DER',
+    title: 'Derecho Administrativo',
+    shortTitle: 'Derecho',
+    description: 'Normativa general',
+    color: '#2563eb',
+    icon: 'gavel',
+    order: 1,
+  },
+  {
+    id: 'block-os',
+    code: 'SO',
+    title: 'Sistemas Operativos',
+    shortTitle: 'Sistemas',
+    description: 'Procesos y memoria',
+    color: '#0891b2',
+    icon: 'memory',
+    order: 2,
+  },
+  {
+    id: 'block-dev',
+    code: 'DEV',
+    title: 'Desarrollo de Software',
+    shortTitle: 'Desarrollo',
+    description: 'Programación y SQL',
+    color: '#7c3aed',
+    icon: 'code',
+    order: 3,
+  },
+  {
+    id: 'block-net',
+    code: 'RED',
+    title: 'Redes y Comunicaciones',
+    shortTitle: 'Redes',
+    description: 'TCP/IP y seguridad',
+    color: '#059669',
+    icon: 'lan',
+    order: 4,
+  },
+];
+
 class InMemoryStudyRepository implements StudyRepository {
-  blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
+  blocks: StudyBlock[] = TEST_BLOCKS.map((b) => ({ ...b }));
   topics: Topic[] = [];
   sessions: StudySession[] = [];
   weeklyPlan: WeeklyPlanItem[] = [];
@@ -28,11 +70,11 @@ class InMemoryStudyRepository implements StudyRepository {
 
   async initialize(): Promise<void> {}
 
-  async getBlocks(): Promise<TaiBlock[]> {
+  async getBlocks(): Promise<StudyBlock[]> {
     return [...this.blocks].sort((a, b) => a.order - b.order);
   }
 
-  async saveBlock(block: TaiBlock): Promise<void> {
+  async saveBlock(block: StudyBlock): Promise<void> {
     const idx = this.blocks.findIndex((b) => b.id === block.id);
     if (idx >= 0) {
       this.blocks[idx] = block;
@@ -41,13 +83,13 @@ class InMemoryStudyRepository implements StudyRepository {
     }
   }
 
-  async saveBlocks(blocks: TaiBlock[]): Promise<void> {
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
     for (const block of blocks) {
       await this.saveBlock(block);
     }
   }
 
-  async deleteBlock(id: TaiBlockId): Promise<void> {
+  async deleteBlock(id: StudyBlockId): Promise<void> {
     this.blocks = this.blocks.filter((b) => b.id !== id);
     this.topics = this.topics.filter((t) => t.blockId !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
@@ -57,7 +99,7 @@ class InMemoryStudyRepository implements StudyRepository {
     this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
   }
 
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     const list = blockId ? this.topics.filter((t) => t.blockId === blockId) : [...this.topics];
     return list.sort((a, b) => a.blockId.localeCompare(b.blockId) || a.order - b.order);
   }
@@ -197,7 +239,7 @@ class InMemoryStudyRepository implements StudyRepository {
   }
 
   async replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],
@@ -491,5 +533,100 @@ describe('StudyStoreService', () => {
     await store.deleteTopic(topic.id);
     expect(store.getFlashcardById(card.id)?.topicId).toBeUndefined();
     expect(store.totalFlashcards()).toBe(1);
+  });
+
+  it('should create, update, reorder, and cascade-delete dynamic blocks with reindexed orders', async () => {
+    expect(store.defaultBlockId()).toBe('block-law');
+
+    const created = await store.createBlock({
+      code: '  HIST  ',
+      title: '  Historia Contemporánea  ',
+      description: '  Siglos XIX y XX  ',
+      color: '#db2777',
+      icon: 'history_edu',
+    });
+
+    expect(created.id.startsWith('block-')).toBe(true);
+    expect(created.code).toBe('HIST');
+    expect(created.title).toBe('Historia Contemporánea');
+    expect(created.shortTitle).toBe('Historia Contemporánea');
+    expect(created.order).toBe(5);
+    expect(store.topicCountByBlock()[created.id]).toBe(0);
+    expect(store.questionCountByBlock()[created.id]).toBe(0);
+    expect(store.flashcardCountByBlock()[created.id]).toBe(0);
+
+    const updated = await store.updateBlock(created.id, {
+      shortTitle: 'Historia',
+      color: '#4f46e5',
+    });
+    expect(updated?.shortTitle).toBe('Historia');
+    expect(updated?.color).toBe('#4f46e5');
+    expect(store.getBlockById(created.id)?.shortTitle).toBe('Historia');
+
+    await store.reorderBlocks([created.id, 'block-net', 'block-law']);
+    expect(store.blocks().map((b) => b.id)).toEqual([
+      created.id,
+      'block-net',
+      'block-law',
+      'block-os',
+      'block-dev',
+    ]);
+    expect(store.blocks().map((b) => b.order)).toEqual([1, 2, 3, 4, 5]);
+    expect(store.defaultBlockId()).toBe(created.id);
+
+    const topic = await store.createTopic({ blockId: created.id, title: 'Revolución Industrial' });
+    await store.addStudySession({
+      topicId: topic.id,
+      blockId: created.id,
+      durationMinutes: 30,
+      type: 'reading',
+    });
+    await store.createQuestion({
+      blockId: created.id,
+      topicId: topic.id,
+      prompt: '¿Dónde comenzó la Revolución Industrial?',
+      options: ['Francia', 'Gran Bretaña', 'España', 'Alemania'],
+      correctIndex: 1,
+    });
+    await store.createFlashcard({
+      blockId: created.id,
+      topicId: topic.id,
+      front: '1789',
+      back: 'Revolución Francesa',
+    });
+
+    expect(store.topicCountByBlock()[created.id]).toBe(1);
+    expect(store.studyMinutesByBlockThisWeek()[created.id]).toBe(30);
+    expect(store.questionCountByBlock()[created.id]).toBe(1);
+    expect(store.flashcardCountByBlock()[created.id]).toBe(1);
+
+    await store.deleteBlock(created.id);
+
+    expect(store.getBlockById(created.id)).toBeUndefined();
+    expect(store.blocks().map((b) => b.order)).toEqual([1, 2, 3, 4]);
+    expect(store.defaultBlockId()).toBe('block-net');
+    expect(store.topics().some((t) => t.blockId === created.id)).toBe(false);
+    expect(store.studySessions().some((s) => s.blockId === created.id)).toBe(false);
+    expect(store.questions().some((q) => q.blockId === created.id)).toBe(false);
+    expect(store.flashcards().some((f) => f.blockId === created.id)).toBe(false);
+  });
+
+  it('should use generic default title when recording an exam attempt with empty title', async () => {
+    const attempt = await store.recordExamAttempt({
+      title: '   ',
+      mode: 'practice',
+      penaltyRatio: 0,
+      answers: [],
+      correctCount: 0,
+      wrongCount: 0,
+      blankCount: 0,
+      netScore: 0,
+      maxScore: 0,
+      scoreOn10: 0,
+      durationSec: 10,
+      logStudySession: false,
+    });
+
+    expect(attempt.title).toBe('Test de práctica');
   });
 });

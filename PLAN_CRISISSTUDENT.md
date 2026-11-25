@@ -20,7 +20,7 @@
 ## 📊 Resumen de Progreso
 
 - [x] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
-- [ ] **Fase 2:** Store reactivo dinámico y BackupService compatible
+- [x] **Fase 2:** Store reactivo dinámico y BackupService compatible
 - [ ] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
 - [ ] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
 - [ ] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
@@ -65,7 +65,7 @@
 
 ### Tareas
 
-- [ ] **Store (`src/app/core/services/study-store.service.ts`):**
+- [x] **Store (`src/app/core/services/study-store.service.ts`):**
   - Sustituir todos los mapas inicializados con `{ B1: 0, B2: 0, B3: 0, B4: 0 }` por `Record<string, number>` construidos dinámicamente a partir de `this.blocks()`:
     - `topicCountByBlock`
     - `studyMinutesByBlockThisWeek`
@@ -79,13 +79,13 @@
     - `reorderBlocks(orderedBlockIds: StudyBlockId[]): Promise<void>`
     - `deleteBlock(id: StudyBlockId): Promise<void>` (recalculando `order` de los restantes y refrescando el estado).
   - Cambiar texto por defecto de intento de examen `'Test TAI'` → `'Test de práctica'`.
-- [ ] **BackupService (`src/app/core/services/backup.service.ts`):**
+- [x] **BackupService (`src/app/core/services/backup.service.ts`):**
   - Eliminar `VALID_BLOCK_IDS = new Set(['B1', 'B2', 'B3', 'B4'])` y el fallback a `TAI_BLOCKS_SEED`.
   - Validar la estructura de cada bloque en `candidate.blocks` (`isValidBlock`) y construir dinámicamente el `Set<string>` de IDs válidos a partir de los bloques presentes en el propio JSON del backup.
   - Exportar con `schemaVersion: 5`, `appName: 'crisisstudent'` y nombre de archivo `crisisstudent-backup-YYYY-MM-DD.json`.
   - En `parseBackupJson`, aceptar `appName === 'tai-study' || appName === 'crisisstudent'` y `schemaVersion` en `1..5` para mantener retrocompatibilidad total.
   - Leer `last-backup-at` manteniendo compatibilidad con la clave anterior en `localStorage` si existiera.
-- [ ] **Tests de Core:**
+- [x] **Tests de Core:**
   - Actualizar mocks y tests en `study-store.service.spec.ts`, `backup.service.spec.ts`, `search.service.spec.ts`, `pomodoro.service.spec.ts` y `app.spec.ts` para usar bloques genéricos de prueba y añadir tests de `createBlock`, `updateBlock`, `reorderBlocks`, `deleteBlock` y restauración de backups v4 (TAI) y v5 (`crisisstudent`).
 
 ### Criterio de aceptación de Fase 2

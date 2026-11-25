@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { vi } from 'vitest';
-import { TAI_BLOCKS_SEED } from '../db/tai-seed';
 import {
   CaseStudy,
   ExamAttempt,
   Flashcard,
   GamificationProfile,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
@@ -18,8 +17,21 @@ import { STUDY_REPOSITORY, StudyRepository } from '../repositories/study.reposit
 import { PomodoroService } from './pomodoro.service';
 import { StudyStoreService } from './study-store.service';
 
+const POMODORO_TEST_BLOCKS: StudyBlock[] = [
+  {
+    id: 'B3',
+    code: 'DEV',
+    title: 'Desarrollo',
+    shortTitle: 'Desarrollo',
+    description: '',
+    color: '#7c3aed',
+    icon: 'code',
+    order: 1,
+  },
+];
+
 class InMemoryRepo implements StudyRepository {
-  blocks: TaiBlock[] = [...TAI_BLOCKS_SEED];
+  blocks: StudyBlock[] = POMODORO_TEST_BLOCKS.map((b) => ({ ...b }));
   topics: Topic[] = [];
   sessions: StudySession[] = [];
   weeklyPlan: WeeklyPlanItem[] = [];
@@ -30,18 +42,18 @@ class InMemoryRepo implements StudyRepository {
   profile?: GamificationProfile;
 
   async initialize(): Promise<void> {}
-  async getBlocks(): Promise<TaiBlock[]> {
+  async getBlocks(): Promise<StudyBlock[]> {
     return this.blocks;
   }
-  async saveBlock(block: TaiBlock): Promise<void> {
+  async saveBlock(block: StudyBlock): Promise<void> {
     const idx = this.blocks.findIndex((b) => b.id === block.id);
     if (idx >= 0) this.blocks[idx] = block;
     else this.blocks.push(block);
   }
-  async saveBlocks(blocks: TaiBlock[]): Promise<void> {
+  async saveBlocks(blocks: StudyBlock[]): Promise<void> {
     for (const b of blocks) await this.saveBlock(b);
   }
-  async deleteBlock(id: TaiBlockId): Promise<void> {
+  async deleteBlock(id: StudyBlockId): Promise<void> {
     this.blocks = this.blocks.filter((b) => b.id !== id);
     this.topics = this.topics.filter((t) => t.blockId !== id);
     this.weeklyPlan = this.weeklyPlan.filter((w) => w.blockId !== id);
@@ -50,7 +62,7 @@ class InMemoryRepo implements StudyRepository {
     this.questions = this.questions.filter((q) => q.blockId !== id);
     this.flashcards = this.flashcards.filter((f) => f.blockId !== id);
   }
-  async getTopics(blockId?: TaiBlockId): Promise<Topic[]> {
+  async getTopics(blockId?: StudyBlockId): Promise<Topic[]> {
     return blockId ? this.topics.filter((t) => t.blockId === blockId) : this.topics;
   }
   async getTopicById(id: string): Promise<Topic | undefined> {
@@ -131,7 +143,7 @@ class InMemoryRepo implements StudyRepository {
   async getGamificationProfile(): Promise<GamificationProfile | undefined> { return this.profile; }
   async saveGamificationProfile(profile: GamificationProfile): Promise<void> { this.profile = profile; }
   async replaceAllData(
-    blocks: TaiBlock[],
+    blocks: StudyBlock[],
     topics: Topic[],
     studySessions: StudySession[] = [],
     weeklyPlanItems: WeeklyPlanItem[] = [],

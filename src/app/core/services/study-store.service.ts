@@ -22,6 +22,7 @@ import {
 } from '../../shared/utils/week-date.util';
 import {
   CaseStudy,
+  CreateBlockInput,
   CreateCaseStudyInput,
   CreateExamAttemptInput,
   CreateFlashcardInput,
@@ -35,11 +36,12 @@ import {
   GamificationProfile,
   IsoDayOfWeek,
   Question,
+  StudyBlock,
+  StudyBlockId,
   StudySession,
-  TaiBlock,
-  TaiBlockId,
   Topic,
   TopicStatus,
+  UpdateBlockPatch,
   UpdateCaseStudyPatch,
   UpdateFlashcardPatch,
   UpdateQuestionPatch,
@@ -58,7 +60,8 @@ export interface MoveTopicStatusResult {
 export class StudyStoreService {
   private readonly repository = inject(STUDY_REPOSITORY);
 
-  readonly blocks = signal<TaiBlock[]>([]);
+  readonly blocks = signal<StudyBlock[]>([]);
+  readonly defaultBlockId = computed<StudyBlockId>(() => this.blocks()[0]?.id ?? '');
   readonly topics = signal<Topic[]>([]);
   readonly studySessions = signal<StudySession[]>([]);
   readonly weeklyPlanItems = signal<WeeklyPlanItem[]>([]);
@@ -83,7 +86,7 @@ export class StudyStoreService {
   );
 
   readonly topicCountByBlock = computed(() => {
-    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    const counts = this.createBlockCountMap();
     for (const topic of this.topics()) {
       counts[topic.blockId] = (counts[topic.blockId] ?? 0) + 1;
     }
@@ -120,7 +123,7 @@ export class StudyStoreService {
 
   readonly studyMinutesByBlockThisWeek = computed(() => {
     const currentWeekStart = getWeekStartDate();
-    const totals: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    const totals = this.createBlockCountMap();
     for (const session of this.studySessions()) {
       if (isIsoTimestampInWeek(session.startedAt, currentWeekStart)) {
         totals[session.blockId] = (totals[session.blockId] ?? 0) + session.durationMinutes;
@@ -130,7 +133,7 @@ export class StudyStoreService {
   });
 
   readonly studyMinutesByBlockTotal = computed(() => {
-    const totals: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    const totals = this.createBlockCountMap();
     for (const session of this.studySessions()) {
       totals[session.blockId] = (totals[session.blockId] ?? 0) + session.durationMinutes;
     }
@@ -155,7 +158,7 @@ export class StudyStoreService {
   );
 
   readonly questionCountByBlock = computed(() => {
-    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    const counts = this.createBlockCountMap();
     for (const question of this.questions()) {
       counts[question.blockId] = (counts[question.blockId] ?? 0) + 1;
     }
@@ -214,7 +217,7 @@ export class StudyStoreService {
   });
 
   readonly flashcardCountByBlock = computed(() => {
-    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+    const counts = this.createBlockCountMap();
     for (const card of this.flashcards()) {
       counts[card.blockId] = (counts[card.blockId] ?? 0) + 1;
     }
@@ -325,15 +328,140 @@ export class StudyStoreService {
     this.gamificationProfile.set(profile ?? createDefaultGamificationProfile());
   }
 
-  getBlockById(blockId: TaiBlockId): TaiBlock | undefined {
+  getBlockById(blockId: StudyBlockId): StudyBlock | undefined {
     return this.blocks().find((block) => block.id === blockId);
+  }
+
+  async createBlock(input: CreateBlockInput): Promise<StudyBlock> {
+    const current = this.blocks();
+    const nextOrder =
+      current.length > 0 ? Math.max(...current.map((block) => block.order)) + 1 : 1;
+
+    const title = input.title.trim();
+    const code = input.code.trim();
+    const shortTitle = input.shortTitle?.trim() || title;
+    const description = input.description?.trim() ?? '';
+
+    const block: StudyBlock = {
+      id: `block-${this.generateId('block')}`,
+      code,
+      title,
+      shortTitle,
+      description,
+      color: input.color.trim(),
+      icon: input.icon.trim(),
+      order: nextOrder,
+    };
+
+    await this.repository.saveBlock(block);
+    this.blocks.update((items) => [...items, block].sort((a, b) => a.order - b.order));
+    return block;
+  }
+
+  async updateBlock(id: StudyBlockId, patch: UpdateBlockPatch): Promise<StudyBlock | undefined> {
+    const existing = this.getBlockById(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const nextTitle =
+      patch.title !== undefined ? patch.title.trim() || existing.title : existing.title;
+    const nextCode =
+      patch.code !== undefined ? patch.code.trim() || existing.code : existing.code;
+    const nextShortTitle =
+      patch.shortTitle !== undefined
+        ? patch.shortTitle.trim() || nextTitle
+        : existing.shortTitle;
+    const nextDescription =
+      patch.description !== undefined ? patch.description.trim() : existing.description;
+    const nextColor =
+      patch.color !== undefined ? patch.color.trim() || existing.color : existing.color;
+    const nextIcon =
+      patch.icon !== undefined ? patch.icon.trim() || existing.icon : existing.icon;
+    const nextOrder =
+      patch.order !== undefined && Number.isFinite(patch.order) ? patch.order : existing.order;
+
+    const updated: StudyBlock = {
+      ...existing,
+      code: nextCode,
+      title: nextTitle,
+      shortTitle: nextShortTitle,
+      description: nextDescription,
+      color: nextColor,
+      icon: nextIcon,
+      order: nextOrder,
+    };
+
+    await this.repository.saveBlock(updated);
+    this.blocks.update((items) =>
+      items
+        .map((item) => (item.id === id ? updated : item))
+        .sort((a, b) => a.order - b.order),
+    );
+    return updated;
+  }
+
+  async reorderBlocks(orderedBlockIds: StudyBlockId[]): Promise<void> {
+    const current = [...this.blocks()].sort((a, b) => a.order - b.order);
+    const blockMap = new Map(current.map((block) => [block.id, block]));
+    const updatedBlocks: StudyBlock[] = [];
+
+    let nextOrder = 1;
+    for (const id of orderedBlockIds) {
+      const block = blockMap.get(id);
+      if (block) {
+        if (block.order !== nextOrder) {
+          updatedBlocks.push({ ...block, order: nextOrder });
+        }
+        blockMap.delete(id);
+        nextOrder++;
+      }
+    }
+
+    for (const remaining of blockMap.values()) {
+      if (remaining.order !== nextOrder) {
+        updatedBlocks.push({ ...remaining, order: nextOrder });
+      }
+      nextOrder++;
+    }
+
+    if (updatedBlocks.length === 0) {
+      return;
+    }
+
+    await this.repository.saveBlocks(updatedBlocks);
+    const updatedMap = new Map(updatedBlocks.map((block) => [block.id, block]));
+    this.blocks.update((items) =>
+      items
+        .map((item) => updatedMap.get(item.id) ?? item)
+        .sort((a, b) => a.order - b.order),
+    );
+  }
+
+  async deleteBlock(id: StudyBlockId): Promise<void> {
+    const existing = this.getBlockById(id);
+    await this.repository.deleteBlock(id);
+
+    if (existing) {
+      const remaining = [...this.blocks()]
+        .filter((block) => block.id !== id)
+        .sort((a, b) => a.order - b.order);
+      const reindexed = remaining
+        .map((block, index) => (block.order !== index + 1 ? { ...block, order: index + 1 } : null))
+        .filter((block): block is StudyBlock => block !== null);
+      if (reindexed.length > 0) {
+        await this.repository.saveBlocks(reindexed);
+      }
+    }
+
+    await this.refresh();
   }
 
   getTopicById(id: string): Topic | undefined {
     return this.topics().find((topic) => topic.id === id);
   }
 
-  getTopicsForBlock(blockId: TaiBlockId): Topic[] {
+  getTopicsForBlock(blockId: StudyBlockId): Topic[] {
     return this.topics()
       .filter((topic) => topic.blockId === blockId)
       .sort((a, b) => a.order - b.order);
@@ -446,7 +574,7 @@ export class StudyStoreService {
     });
   }
 
-  async reorderTopics(blockId: TaiBlockId, orderedTopicIds: string[]): Promise<void> {
+  async reorderTopics(blockId: StudyBlockId, orderedTopicIds: string[]): Promise<void> {
     const blockTopics = this.getTopicsForBlock(blockId);
     const topicMap = new Map(blockTopics.map((topic) => [topic.id, topic]));
     const updatedTopics: Topic[] = [];
@@ -816,7 +944,7 @@ export class StudyStoreService {
     const now = input.date ?? new Date().toISOString();
     const attempt: ExamAttempt = {
       id: this.generateId('attempt'),
-      title: input.title.trim() || 'Test TAI',
+      title: input.title.trim() || 'Test de práctica',
       date: now,
       mode: input.mode,
       penaltyRatio: input.penaltyRatio,
@@ -1097,15 +1225,25 @@ export class StudyStoreService {
     };
   }
 
-  private getDominantBlock(answers: ExamAttempt['answers']): TaiBlockId {
-    const counts: Record<TaiBlockId, number> = { B1: 0, B2: 0, B3: 0, B4: 0 };
+  private createBlockCountMap(): Record<StudyBlockId, number> {
+    const counts: Record<StudyBlockId, number> = {};
+    for (const block of this.blocks()) {
+      counts[block.id] = 0;
+    }
+    return counts;
+  }
+
+  private getDominantBlock(answers: ExamAttempt['answers']): StudyBlockId {
+    const counts: Record<StudyBlockId, number> = {};
     for (const answer of answers) {
       counts[answer.blockId] = (counts[answer.blockId] ?? 0) + 1;
     }
-    let best: TaiBlockId = 'B1';
-    for (const id of ['B1', 'B2', 'B3', 'B4'] as TaiBlockId[]) {
-      if (counts[id] > counts[best]) {
+    let best: StudyBlockId = this.defaultBlockId();
+    let bestCount = -1;
+    for (const [id, count] of Object.entries(counts)) {
+      if (count > bestCount) {
         best = id;
+        bestCount = count;
       }
     }
     return best;
