@@ -2,6 +2,7 @@
 
 > Aplicación web **local-first** y **PWA** de estudio activo: organiza cualquier materia o temario con apuntes enriquecidos, mapas mentales automáticos, planificación por vueltas, temporizador Pomodoro, simulacros de examen y tarjetas de repaso espaciado (SM-2), **100% en tu navegador y sin servidor**.
 
+[![Demo en Vivo](https://img.shields.io/badge/Demo%20en%20Vivo-GitHub%20Pages-0891b2?style=flat-square&logo=githubpages&logoColor=white)](https://csanzfer.github.io/study/)
 [![CI](https://github.com/csanzfer/study/actions/workflows/pr-review.yml/badge.svg?branch=main)](https://github.com/csanzfer/study/actions/workflows/pr-review.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0891b2?style=flat-square)](./LICENSE)
 ![Angular](https://img.shields.io/badge/Angular-22-dd0031?style=flat-square&logo=angular&logoColor=white)
@@ -10,6 +11,9 @@
 ![Dexie.js](https://img.shields.io/badge/Dexie.js-IndexedDB-f97316?style=flat-square)
 ![Vitest](https://img.shields.io/badge/Vitest-5.0-6e9f18?style=flat-square&logo=vitest&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-10b981?style=flat-square)
+
+> [!TIP]
+> **🚀 Pruébala ahora mismo sin instalar nada:** [Abrir Demo en Vivo (CrisIsStudent)](https://csanzfer.github.io/study/) — todos los datos se guardan en el IndexedDB de tu navegador.
 
 ---
 

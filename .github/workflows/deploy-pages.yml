@@ -1,12 +1,9 @@
 name: Deploy to GitHub Pages
 
-# Listo para activar en cuanto el repositorio sea público y GitHub Pages esté habilitado
-# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions).
-# Cuando quieras que se despliegue automáticamente en cada push a main, descomenta el bloque `push`.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-  # push:
-  #   branches: [main]
 
 permissions:
   contents: read
