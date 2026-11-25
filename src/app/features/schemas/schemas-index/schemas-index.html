@@ -76,7 +76,7 @@
           [ngModel]="filterText()"
           (ngModelChange)="filterText.set($event)"
           placeholder="Filtrar tema o etiqueta..."
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-3 pl-8 text-xs text-slate-700 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-900"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-3 pl-8 text-xs text-slate-700 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-900"
         />
       </div>
     </div>
@@ -109,10 +109,10 @@
               type="button"
               (click)="selectTopic(item.topic.id)"
               class="w-full rounded-2xl border p-3.5 text-left transition"
-              [class.border-blue-500]="activeItem()?.topic?.id === item.topic.id"
-              [class.bg-blue-50/60]="activeItem()?.topic?.id === item.topic.id"
-              [class.dark:border-blue-400]="activeItem()?.topic?.id === item.topic.id"
-              [class.dark:bg-blue-950/30]="activeItem()?.topic?.id === item.topic.id"
+              [class.border-cyan-500]="activeItem()?.topic?.id === item.topic.id"
+              [class.bg-cyan-50/60]="activeItem()?.topic?.id === item.topic.id"
+              [class.dark:border-cyan-400]="activeItem()?.topic?.id === item.topic.id"
+              [class.dark:bg-cyan-950/30]="activeItem()?.topic?.id === item.topic.id"
               [class.border-slate-200]="activeItem()?.topic?.id !== item.topic.id"
               [class.bg-white]="activeItem()?.topic?.id !== item.topic.id"
               [class.hover:border-slate-300]="activeItem()?.topic?.id !== item.topic.id"
@@ -152,7 +152,7 @@
                   {{ statusLabels[item.topic.status] }}
                 </span>
                 @for (tag of item.topic.tags.slice(0, 2); track tag) {
-                  <span class="rounded-md bg-blue-50 px-2 py-0.5 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                  <span class="rounded-md bg-cyan-50 px-2 py-0.5 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
                     #{{ tag }}
                   </span>
                 }

@@ -114,14 +114,14 @@ export class TopicExportService {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      border-bottom: 2px solid #2563eb;
+      border-bottom: 2px solid #0891b2;
       padding-bottom: 6px;
       margin-bottom: 18px;
       font-size: 9pt;
       color: #475569;
     }
     .print-banner strong {
-      color: #1e40af;
+      color: #0891b2;
       letter-spacing: 0.03em;
     }
     article h1 {
@@ -245,7 +245,7 @@ export class TopicExportService {
 </head>
 <body>
   <div class="print-banner">
-    <span><strong><span style="color:#2563eb">cris</span><span style="color:#60a5fa">is</span><span style="color:#0f172a">student</span></strong> · ${this.escapeHtml(subtitle)}</span>
+    <span><strong><span style="color:#0891b2">cris</span><span style="color:#22d3ee">is</span><span style="color:#0f172a">student</span></strong> · ${this.escapeHtml(subtitle)}</span>
     <span>Exportado el ${exportedDate}</span>
   </div>
   <article>

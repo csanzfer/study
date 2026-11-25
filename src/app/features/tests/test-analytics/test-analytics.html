@@ -13,7 +13,7 @@
 
     <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
       <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Nota media / 10</p>
-      <p class="mt-2 text-2xl font-extrabold text-blue-600 dark:text-blue-400">
+      <p class="mt-2 text-2xl font-extrabold text-cyan-600 dark:text-cyan-400">
         {{ averageScore() !== null ? averageScore() : '—' }}
       </p>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -78,7 +78,7 @@
               <polyline
                 fill="none"
                 [attr.points]="chartPolyline()"
-                class="stroke-blue-600 dark:stroke-blue-400"
+                class="stroke-cyan-600 dark:stroke-cyan-400"
                 stroke-width="2.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -91,7 +91,7 @@
                   [attr.cx]="pt.x"
                   [attr.cy]="pt.y"
                   r="4.5"
-                  class="fill-blue-600 stroke-white dark:fill-blue-400 dark:stroke-slate-900"
+                  class="fill-cyan-600 stroke-white dark:fill-cyan-400 dark:stroke-slate-900"
                   stroke-width="2"
                 >
                   <title>{{ pt.title }} — Nota: {{ pt.score }}/10</title>

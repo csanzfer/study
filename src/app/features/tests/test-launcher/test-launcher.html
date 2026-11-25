@@ -6,12 +6,12 @@
         type="button"
         (click)="selectedMode.set(mode.id)"
         class="flex flex-col items-start rounded-2xl border p-4 text-left transition"
-        [class.border-blue-500]="selectedMode() === mode.id"
-        [class.bg-blue-50/50]="selectedMode() === mode.id"
+        [class.border-cyan-500]="selectedMode() === mode.id"
+        [class.bg-cyan-50/50]="selectedMode() === mode.id"
         [class.ring-2]="selectedMode() === mode.id"
-        [class.ring-blue-500/20]="selectedMode() === mode.id"
-        [class.dark:border-blue-500]="selectedMode() === mode.id"
-        [class.dark:bg-blue-950/30]="selectedMode() === mode.id"
+        [class.ring-cyan-500/20]="selectedMode() === mode.id"
+        [class.dark:border-cyan-500]="selectedMode() === mode.id"
+        [class.dark:bg-cyan-950/30]="selectedMode() === mode.id"
         [class.border-slate-200]="selectedMode() !== mode.id"
         [class.bg-white]="selectedMode() !== mode.id"
         [class.hover:border-slate-300]="selectedMode() !== mode.id"
@@ -46,7 +46,7 @@
             <select
               [ngModel]="selectedBlock()"
               (ngModelChange)="onBlockChange($event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="ALL">Todos los bloques ({{ store.totalQuestions() }})</option>
               @for (block of store.blocks(); track block.id) {
@@ -64,7 +64,7 @@
             <select
               [ngModel]="selectedTopicId()"
               (ngModelChange)="selectedTopicId.set($event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="ALL">Todos los temas</option>
               @for (topic of availableTopics(); track topic.id) {
@@ -86,7 +86,7 @@
               max="200"
               [ngModel]="questionCount()"
               (ngModelChange)="questionCount.set(+$event || 10)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
         </div>
@@ -97,7 +97,7 @@
               type="checkbox"
               [ngModel]="onlyUnanswered()"
               (ngModelChange)="onlyUnanswered.set($event)"
-              class="h-4 w-4 rounded border-slate-300 text-blue-600"
+              class="h-4 w-4 rounded border-slate-300 text-cyan-600"
             />
             <span>Solo preguntas sin contestar</span>
           </label>
@@ -106,7 +106,7 @@
               type="checkbox"
               [ngModel]="shuffle()"
               (ngModelChange)="shuffle.set($event)"
-              class="h-4 w-4 rounded border-slate-300 text-blue-600"
+              class="h-4 w-4 rounded border-slate-300 text-cyan-600"
             />
             <span>Orden aleatorio</span>
           </label>
@@ -160,7 +160,7 @@
               max="300"
               [ngModel]="timeLimitMinutes()"
               (ngModelChange)="timeLimitMinutes.set(+$event || 0)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
 
@@ -171,7 +171,7 @@
             <select
               [ngModel]="penaltyRatio()"
               (ngModelChange)="penaltyRatio.set(+$event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               @for (preset of penaltyPresets; track preset.label) {
                 <option [ngValue]="preset.ratio">{{ preset.label }}</option>
@@ -191,7 +191,7 @@
             <select
               [ngModel]="mistakesFilter()"
               (ngModelChange)="mistakesFilter.set($event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="both">Falladas y marcadas con bandera</option>
               <option value="failed">Solo falladas ({{ store.failedQuestions().length }})</option>
@@ -206,7 +206,7 @@
             <select
               [ngModel]="selectedBlock()"
               (ngModelChange)="onBlockChange($event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="ALL">Todos los bloques</option>
               @for (block of store.blocks(); track block.id) {
@@ -225,7 +225,7 @@
               max="100"
               [ngModel]="questionCount()"
               (ngModelChange)="questionCount.set(+$event || 20)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
         </div>
@@ -241,7 +241,7 @@
             <select
               [ngModel]="selectedCaseStudyId()"
               (ngModelChange)="selectedCaseStudyId.set($event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="">-- Elige un supuesto --</option>
               @for (cs of store.caseStudies(); track cs.id) {
@@ -259,7 +259,7 @@
             <select
               [ngModel]="penaltyRatio()"
               (ngModelChange)="penaltyRatio.set(+$event)"
-              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               @for (preset of penaltyPresets; track preset.label) {
                 <option [ngValue]="preset.ratio">{{ preset.label }}</option>
@@ -273,7 +273,7 @@
             type="checkbox"
             [ngModel]="caseStudyImmediateFeedback()"
             (ngModelChange)="caseStudyImmediateFeedback.set($event)"
-            class="h-4 w-4 rounded border-slate-300 text-blue-600"
+            class="h-4 w-4 rounded border-slate-300 text-cyan-600"
           />
           <span>Corrección inmediata tras cada pregunta (si se desmarca, corrige al entregar)</span>
         </label>

@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import {
+  DEFAULT_BLOCK_COLOR,
   TOPIC_STATUS_LABELS,
   StudyBlockId,
   Topic,
@@ -94,7 +95,7 @@ export class SchemasIndex {
         return {
           topic,
           blockCode: block?.code ?? topic.blockId,
-          blockColor: block?.color ?? '#3b82f6',
+          blockColor: block?.color ?? DEFAULT_BLOCK_COLOR,
           outline,
           markdown,
           hasSchema: markdown.trim().length > 0,

@@ -29,7 +29,7 @@
 
     <div class="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
       <div
-        class="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-500"
+        class="h-full rounded-full bg-gradient-to-r from-cyan-600 to-indigo-500 transition-all duration-500"
         [style.width.%]="store.campaignOverview().overallScore"
       ></div>
     </div>
@@ -110,7 +110,7 @@
                       <div class="flex items-start justify-between gap-2">
                         <a
                           [routerLink]="['/blocks', topic.blockId, 'topics', topic.topicId]"
-                          class="text-sm font-bold text-slate-900 hover:text-blue-600 hover:underline dark:text-white dark:hover:text-blue-400"
+                          class="text-sm font-bold text-slate-900 hover:text-cyan-600 hover:underline dark:text-white dark:hover:text-cyan-400"
                         >
                           {{ topic.title }}
                         </a>
@@ -167,7 +167,7 @@
                       <a
                         [routerLink]="topic.nextAction.route"
                         [queryParams]="topic.nextAction.queryParams"
-                        class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                        class="inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:underline dark:text-cyan-400"
                       >
                         <span>{{ topic.nextAction.label }}</span>
                         <mat-icon class="!h-3.5 !w-3.5 !text-[14px]">arrow_forward</mat-icon>

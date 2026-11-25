@@ -58,9 +58,12 @@ export interface BlockColorPreset {
   hex: string;
 }
 
+export const DEFAULT_BLOCK_COLOR = '#0891b2';
+
 export const BLOCK_COLOR_PRESETS: BlockColorPreset[] = [
+  { name: 'Aguamarina', hex: DEFAULT_BLOCK_COLOR },
   { name: 'Azul', hex: '#2563eb' },
-  { name: 'Cian', hex: '#0891b2' },
+  { name: 'Turquesa', hex: '#0d9488' },
   { name: 'Violeta', hex: '#7c3aed' },
   { name: 'Esmeralda', hex: '#059669' },
   { name: 'Índigo', hex: '#4f46e5' },
@@ -69,7 +72,6 @@ export const BLOCK_COLOR_PRESETS: BlockColorPreset[] = [
   { name: 'Naranja', hex: '#ea580c' },
   { name: 'Ámbar', hex: '#d97706' },
   { name: 'Verde', hex: '#16a34a' },
-  { name: 'Turquesa', hex: '#0d9488' },
   { name: 'Pizarra', hex: '#475569' },
 ];
 

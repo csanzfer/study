@@ -37,13 +37,13 @@
             type="button"
             (click)="mode.set('questionnaire')"
             class="flex items-start gap-2.5 rounded-xl border p-3 text-left transition"
-            [class.border-blue-500]="mode() === 'questionnaire'"
-            [class.bg-blue-50/70]="mode() === 'questionnaire'"
-            [class.dark:bg-blue-950/40]="mode() === 'questionnaire'"
+            [class.border-cyan-500]="mode() === 'questionnaire'"
+            [class.bg-cyan-50/70]="mode() === 'questionnaire'"
+            [class.dark:bg-cyan-950/40]="mode() === 'questionnaire'"
             [class.border-slate-200]="mode() !== 'questionnaire'"
             [class.dark:border-slate-800]="mode() !== 'questionnaire'"
           >
-            <mat-icon class="mt-0.5 text-blue-600 dark:text-blue-400">quiz</mat-icon>
+            <mat-icon class="mt-0.5 text-cyan-600 dark:text-cyan-400">quiz</mat-icon>
             <div>
               <div class="text-xs font-bold text-slate-900 dark:text-white">
                 Primera parte · Cuestionario tipo test
@@ -120,7 +120,7 @@
               2. Plantilla de Respuestas (opcional)
             </span>
             @if (answerKeyFileName()) {
-              <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+              <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
                 Cargada
               </span>
             }
@@ -158,7 +158,7 @@
           [ngModel]="answerKeyRawText()"
           (ngModelChange)="answerKeyRawText.set($event)"
           placeholder="1 A   2 C   3 D   4 ANULADA   R1 B..."
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-xs text-slate-800 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         ></textarea>
       </div>
 
@@ -171,7 +171,7 @@
           <select
             [ngModel]="defaultBlockId()"
             (ngModelChange)="defaultBlockId.set($event)"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           >
             @for (block of store.blocks(); track block.id) {
               <option [value]="block.id">{{ block.code }} · {{ block.shortTitle }}</option>
@@ -188,7 +188,7 @@
             [ngModel]="source()"
             (ngModelChange)="source.set($event)"
             placeholder="Ej. Examen Parcial 2025"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
 
@@ -201,13 +201,13 @@
             [ngModel]="tagsText()"
             (ngModelChange)="tagsText.set($event)"
             placeholder="examen, 2025, parcial"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
       </div>
 
       @if (extractingPdf()) {
-        <div class="flex items-center gap-2 rounded-xl bg-blue-50 px-3.5 py-2.5 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+        <div class="flex items-center gap-2 rounded-xl bg-cyan-50 px-3.5 py-2.5 text-xs font-medium text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300">
           <mat-icon class="!h-4 !w-4 animate-spin !text-[16px]">sync</mat-icon>
           Extrayendo texto del PDF en local...
         </div>
@@ -315,7 +315,7 @@
           <button
             type="button"
             (click)="selectAllValid()"
-            class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+            class="font-semibold text-cyan-600 hover:underline dark:text-cyan-400"
           >
             Seleccionar válidas
           </button>
@@ -407,7 +407,7 @@
               rows="2"
               [ngModel]="q.prompt"
               (ngModelChange)="updateQuestion(q.id, { prompt: $event })"
-              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-xs font-medium text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-xs font-medium text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
             ></textarea>
 
             <div class="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -424,7 +424,7 @@
                     type="text"
                     [ngModel]="opt"
                     (ngModelChange)="updateOption(q.id, $any($index), $event)"
-                    class="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                    class="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
                   />
                 </div>
               }

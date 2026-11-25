@@ -29,10 +29,10 @@
         (click)="setCardMode('acronym')"
         class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
         [class.bg-white]="cardMode() === 'acronym'"
-        [class.text-blue-700]="cardMode() === 'acronym'"
+        [class.text-cyan-700]="cardMode() === 'acronym'"
         [class.shadow-xs]="cardMode() === 'acronym'"
         [class.dark:bg-slate-700]="cardMode() === 'acronym'"
-        [class.dark:text-blue-300]="cardMode() === 'acronym'"
+        [class.dark:text-cyan-300]="cardMode() === 'acronym'"
         [class.text-slate-600]="cardMode() !== 'acronym'"
         [class.dark:text-slate-400]="cardMode() !== 'acronym'"
       >
@@ -49,7 +49,7 @@
         <select
           [ngModel]="blockId()"
           (ngModelChange)="onBlockChange($event)"
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         >
           @for (block of store.blocks(); track block.id) {
             <option [value]="block.id">{{ block.code }} · {{ block.shortTitle }}</option>
@@ -62,7 +62,7 @@
         <select
           [ngModel]="topicId()"
           (ngModelChange)="topicId.set($event)"
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         >
           <option value="">Sin tema específico</option>
           @for (topic of availableTopics(); track topic.id) {
@@ -81,7 +81,7 @@
         <button
           type="button"
           (click)="swapSides()"
-          class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+          class="inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-400"
         >
           <mat-icon class="!h-4 !w-4 !text-[15px]">swap_vert</mat-icon>
           Intercambiar
@@ -93,7 +93,7 @@
           [ngModel]="front()"
           (ngModelChange)="front.set($event)"
           placeholder="Ej.: DNS, ENS, ACID, BGP, OWASP..."
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-mono text-sm font-bold text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         />
       } @else {
         <textarea
@@ -101,7 +101,7 @@
           [ngModel]="front()"
           (ngModelChange)="front.set($event)"
           placeholder="Ej.: ¿Cuál es el plazo general para resolver un procedimiento administrativo según la Ley 39/2015?"
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         ></textarea>
       }
     </div>
@@ -120,7 +120,7 @@
             ? 'Ej.: Domain Name System (Sistema de Nombres de Dominio)'
             : 'Ej.: 3 meses si la norma reguladora no fija otro plazo (Art. 21.3 LPAC).'
         "
-        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
       ></textarea>
     </label>
 
@@ -138,7 +138,7 @@
             ? 'Ej.: Puerto 53 UDP/TCP · Capa de Aplicación'
             : 'Ej.: Art. 21 Ley 39/2015'
         "
-        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
       />
     </label>
 
@@ -151,11 +151,11 @@
             type="button"
             (click)="toggleSuggestedTag(tag)"
             class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
-            [class.border-blue-500]="tags().includes(tag)"
-            [class.bg-blue-50]="tags().includes(tag)"
-            [class.text-blue-700]="tags().includes(tag)"
-            [class.dark:bg-blue-950/60]="tags().includes(tag)"
-            [class.dark:text-blue-300]="tags().includes(tag)"
+            [class.border-cyan-500]="tags().includes(tag)"
+            [class.bg-cyan-50]="tags().includes(tag)"
+            [class.text-cyan-700]="tags().includes(tag)"
+            [class.dark:bg-cyan-950/60]="tags().includes(tag)"
+            [class.dark:text-cyan-300]="tags().includes(tag)"
             [class.border-slate-200]="!tags().includes(tag)"
             [class.text-slate-600]="!tags().includes(tag)"
             [class.dark:border-slate-700]="!tags().includes(tag)"
@@ -173,7 +173,7 @@
           (ngModelChange)="tagInput.set($event)"
           (keydown.enter)="$event.preventDefault(); addCustomTag()"
           placeholder="Añadir etiqueta personalizada..."
-          class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         />
         <button mat-stroked-button type="button" (click)="addCustomTag()">Añadir</button>
       </div>

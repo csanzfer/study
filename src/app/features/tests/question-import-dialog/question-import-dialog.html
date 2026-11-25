@@ -22,10 +22,10 @@
           (click)="setFormat('text')"
           class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
           [class.bg-white]="format() === 'text'"
-          [class.text-blue-600]="format() === 'text'"
+          [class.text-cyan-600]="format() === 'text'"
           [class.shadow-xs]="format() === 'text'"
           [class.dark:bg-slate-900]="format() === 'text'"
-          [class.dark:text-blue-400]="format() === 'text'"
+          [class.dark:text-cyan-400]="format() === 'text'"
           [class.text-slate-600]="format() !== 'text'"
           [class.dark:text-slate-400]="format() !== 'text'"
         >
@@ -36,10 +36,10 @@
           (click)="setFormat('csv')"
           class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
           [class.bg-white]="format() === 'csv'"
-          [class.text-blue-600]="format() === 'csv'"
+          [class.text-cyan-600]="format() === 'csv'"
           [class.shadow-xs]="format() === 'csv'"
           [class.dark:bg-slate-900]="format() === 'csv'"
-          [class.dark:text-blue-400]="format() === 'csv'"
+          [class.dark:text-cyan-400]="format() === 'csv'"
           [class.text-slate-600]="format() !== 'csv'"
           [class.dark:text-slate-400]="format() !== 'csv'"
         >
@@ -50,10 +50,10 @@
           (click)="setFormat('json')"
           class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
           [class.bg-white]="format() === 'json'"
-          [class.text-blue-600]="format() === 'json'"
+          [class.text-cyan-600]="format() === 'json'"
           [class.shadow-xs]="format() === 'json'"
           [class.dark:bg-slate-900]="format() === 'json'"
-          [class.dark:text-blue-400]="format() === 'json'"
+          [class.dark:text-cyan-400]="format() === 'json'"
           [class.text-slate-600]="format() !== 'json'"
           [class.dark:text-slate-400]="format() !== 'json'"
         >
@@ -150,7 +150,7 @@
         [ngModel]="rawText()"
         (ngModelChange)="rawText.set($event)"
         placeholder="Pega aquí tus preguntas o pulsa 'Ver ejemplo' para comprobar el formato admitido..."
-        class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       ></textarea>
     </div>
 

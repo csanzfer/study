@@ -23,7 +23,7 @@
         <select
           [ngModel]="selectedTopicId()"
           (ngModelChange)="selectedTopicId.set($event)"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         >
           @if (store.topics().length === 0) {
             <option value="">No tienes temas creados todavía</option>
@@ -43,10 +43,10 @@
           (click)="activeTab.set('local')"
           class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
           [class.bg-white]="activeTab() === 'local'"
-          [class.text-blue-600]="activeTab() === 'local'"
+          [class.text-cyan-600]="activeTab() === 'local'"
           [class.shadow-xs]="activeTab() === 'local'"
           [class.dark:bg-slate-900]="activeTab() === 'local'"
-          [class.dark:text-blue-400]="activeTab() === 'local'"
+          [class.dark:text-cyan-400]="activeTab() === 'local'"
           [class.text-slate-600]="activeTab() !== 'local'"
           [class.dark:text-slate-400]="activeTab() !== 'local'"
         >
@@ -58,10 +58,10 @@
           (click)="activeTab.set('ai_prompt')"
           class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
           [class.bg-white]="activeTab() === 'ai_prompt'"
-          [class.text-blue-600]="activeTab() === 'ai_prompt'"
+          [class.text-cyan-600]="activeTab() === 'ai_prompt'"
           [class.shadow-xs]="activeTab() === 'ai_prompt'"
           [class.dark:bg-slate-900]="activeTab() === 'ai_prompt'"
-          [class.dark:text-blue-400]="activeTab() === 'ai_prompt'"
+          [class.dark:text-cyan-400]="activeTab() === 'ai_prompt'"
           [class.text-slate-600]="activeTab() !== 'ai_prompt'"
           [class.dark:text-slate-400]="activeTab() !== 'ai_prompt'"
         >
@@ -91,7 +91,7 @@
               <button
                 type="button"
                 (click)="toggleSelectAllLocal(selectedLocalCount() < localDrafts().length)"
-                class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                class="font-semibold text-cyan-600 hover:underline dark:text-cyan-400"
               >
                 {{ selectedLocalCount() < localDrafts().length ? 'Marcar todas' : 'Desmarcar todas' }}
               </button>
@@ -124,9 +124,9 @@
             @for (item of localDrafts(); track item.id) {
               <div
                 class="rounded-xl border p-3.5 transition"
-                [class.border-blue-300]="item.selected"
+                [class.border-cyan-300]="item.selected"
                 [class.bg-white]="item.selected"
-                [class.dark:border-blue-800]="item.selected"
+                [class.dark:border-cyan-800]="item.selected"
                 [class.dark:bg-slate-900]="item.selected"
                 [class.border-slate-200]="!item.selected"
                 [class.bg-slate-50/70]="!item.selected"
@@ -139,7 +139,7 @@
                     type="checkbox"
                     [checked]="item.selected"
                     (change)="toggleDraftSelection(item.id)"
-                    class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600"
+                    class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-cyan-600"
                   />
                   <div class="min-w-0 flex-1 space-y-2">
                     <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
@@ -155,7 +155,7 @@
                       type="text"
                       [ngModel]="item.draft.prompt"
                       (ngModelChange)="updateDraftPrompt(item.id, $event)"
-                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
 
                     <div class="grid grid-cols-1 gap-1 sm:grid-cols-2">
@@ -224,7 +224,7 @@
                 type="checkbox"
                 [ngModel]="aiFocusCallouts()"
                 (ngModelChange)="aiFocusCallouts.set($event)"
-                class="h-4 w-4 rounded border-slate-300 text-blue-600"
+                class="h-4 w-4 rounded border-slate-300 text-cyan-600"
               />
               <span>Priorizar "Ojo examen"</span>
             </label>
@@ -266,7 +266,7 @@
             [ngModel]="aiResponseText()"
             (ngModelChange)="aiResponseText.set($event)"
             placeholder="Pega aquí el JSON devuelto por la IA..."
-            class="w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            class="w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs text-slate-900 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           ></textarea>
 
           @if (aiResponseText().trim()) {

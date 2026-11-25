@@ -74,9 +74,9 @@
             [class.dark:bg-slate-700]="day.status === 'rest'"
             [class.dark:text-slate-300]="day.status === 'rest'"
             [class.border-2]="day.status === 'today_pending'"
-            [class.border-blue-500]="day.status === 'today_pending'"
-            [class.text-blue-600]="day.status === 'today_pending'"
-            [class.dark:text-blue-400]="day.status === 'today_pending'"
+            [class.border-cyan-500]="day.status === 'today_pending'"
+            [class.text-cyan-600]="day.status === 'today_pending'"
+            [class.dark:text-cyan-400]="day.status === 'today_pending'"
             [class.bg-slate-100]="day.status === 'missed'"
             [class.dark:bg-slate-800/70]="day.status === 'missed'"
           >
@@ -102,7 +102,7 @@
             type="button"
             (click)="toggleRestDay(choice.day)"
             class="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition"
-            [class.bg-blue-600]="isRestDay(choice.day)"
+            [class.bg-cyan-600]="isRestDay(choice.day)"
             [class.text-white]="isRestDay(choice.day)"
             [class.bg-slate-100]="!isRestDay(choice.day)"
             [class.text-slate-600]="!isRestDay(choice.day)"
@@ -151,10 +151,10 @@
                 [class.text-emerald-700]="mission.completed"
                 [class.dark:bg-emerald-950/60]="mission.completed"
                 [class.dark:text-emerald-300]="mission.completed"
-                [class.bg-blue-50]="!mission.completed"
-                [class.text-blue-600]="!mission.completed"
-                [class.dark:bg-blue-950/50]="!mission.completed"
-                [class.dark:text-blue-400]="!mission.completed"
+                [class.bg-cyan-50]="!mission.completed"
+                [class.text-cyan-600]="!mission.completed"
+                [class.dark:bg-cyan-950/50]="!mission.completed"
+                [class.dark:text-cyan-400]="!mission.completed"
               >
                 <mat-icon>{{ mission.completed ? 'check_circle' : mission.icon }}</mat-icon>
               </div>
@@ -202,7 +202,7 @@
               <div
                 class="h-full rounded-full transition-all duration-300"
                 [class.bg-emerald-500]="mission.completed"
-                [class.bg-blue-600]="!mission.completed"
+                [class.bg-cyan-600]="!mission.completed"
                 [style.width.%]="getMissionPercent(mission)"
               ></div>
             </div>
