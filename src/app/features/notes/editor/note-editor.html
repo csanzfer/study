@@ -6,184 +6,184 @@
       role="toolbar"
       aria-label="Herramientas de formato de apuntes"
     >
-    <!-- Headings -->
-    <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 pr-1.5 dark:border-slate-700">
-      @for (level of [1, 2, 3, 4]; track level) {
+      <!-- Headings -->
+      <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 pr-1.5 dark:border-slate-700">
+        @for (level of [1, 2, 3, 4]; track level) {
+          <button
+            type="button"
+            (click)="toggleHeading($any(level))"
+            [matTooltip]="'Encabezado H' + level"
+            class="toolbar-btn px-2 text-xs font-bold"
+            [class.is-active]="isActive('heading', { level })"
+          >
+            H{{ level }}
+          </button>
+        }
+      </div>
+
+      <!-- Inline Formatting -->
+      <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 px-1.5 dark:border-slate-700">
         <button
           type="button"
-          (click)="toggleHeading($any(level))"
-          [matTooltip]="'Encabezado H' + level"
-          class="toolbar-btn px-2 text-xs font-bold"
-          [class.is-active]="isActive('heading', { level })"
+          (click)="toggleBold()"
+          matTooltip="Negrita (Ctrl+B)"
+          aria-label="Negrita"
+          class="toolbar-btn"
+          [class.is-active]="isActive('bold')"
         >
-          H{{ level }}
+          <mat-icon>format_bold</mat-icon>
         </button>
-      }
-    </div>
+        <button
+          type="button"
+          (click)="toggleItalic()"
+          matTooltip="Cursiva (Ctrl+I)"
+          aria-label="Cursiva"
+          class="toolbar-btn"
+          [class.is-active]="isActive('italic')"
+        >
+          <mat-icon>format_italic</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="toggleUnderline()"
+          matTooltip="Subrayado (Ctrl+U)"
+          aria-label="Subrayado"
+          class="toolbar-btn"
+          [class.is-active]="isActive('underline')"
+        >
+          <mat-icon>format_underlined</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="toggleCode()"
+          matTooltip="Código en línea"
+          aria-label="Código en línea"
+          class="toolbar-btn"
+          [class.is-active]="isActive('code')"
+        >
+          <mat-icon>code</mat-icon>
+        </button>
+      </div>
 
-    <!-- Inline Formatting -->
-    <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 px-1.5 dark:border-slate-700">
-      <button
-        type="button"
-        (click)="toggleBold()"
-        matTooltip="Negrita (Ctrl+B)"
-        aria-label="Negrita"
-        class="toolbar-btn"
-        [class.is-active]="isActive('bold')"
-      >
-        <mat-icon>format_bold</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleItalic()"
-        matTooltip="Cursiva (Ctrl+I)"
-        aria-label="Cursiva"
-        class="toolbar-btn"
-        [class.is-active]="isActive('italic')"
-      >
-        <mat-icon>format_italic</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleUnderline()"
-        matTooltip="Subrayado (Ctrl+U)"
-        aria-label="Subrayado"
-        class="toolbar-btn"
-        [class.is-active]="isActive('underline')"
-      >
-        <mat-icon>format_underlined</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleCode()"
-        matTooltip="Código en línea"
-        aria-label="Código en línea"
-        class="toolbar-btn"
-        [class.is-active]="isActive('code')"
-      >
-        <mat-icon>code</mat-icon>
-      </button>
-    </div>
+      <!-- Lists -->
+      <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 px-1.5 dark:border-slate-700">
+        <button
+          type="button"
+          (click)="toggleBulletList()"
+          matTooltip="Lista con viñetas"
+          aria-label="Lista con viñetas"
+          class="toolbar-btn"
+          [class.is-active]="isActive('bulletList')"
+        >
+          <mat-icon>format_list_bulleted</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="toggleOrderedList()"
+          matTooltip="Lista numerada"
+          aria-label="Lista numerada"
+          class="toolbar-btn"
+          [class.is-active]="isActive('orderedList')"
+        >
+          <mat-icon>format_list_numbered</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="toggleTaskList()"
+          matTooltip="Checklist"
+          aria-label="Checklist"
+          class="toolbar-btn"
+          [class.is-active]="isActive('taskList')"
+        >
+          <mat-icon>checklist</mat-icon>
+        </button>
+      </div>
 
-    <!-- Lists -->
-    <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 px-1.5 dark:border-slate-700">
-      <button
-        type="button"
-        (click)="toggleBulletList()"
-        matTooltip="Lista con viñetas"
-        aria-label="Lista con viñetas"
-        class="toolbar-btn"
-        [class.is-active]="isActive('bulletList')"
-      >
-        <mat-icon>format_list_bulleted</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleOrderedList()"
-        matTooltip="Lista numerada"
-        aria-label="Lista numerada"
-        class="toolbar-btn"
-        [class.is-active]="isActive('orderedList')"
-      >
-        <mat-icon>format_list_numbered</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleTaskList()"
-        matTooltip="Checklist"
-        aria-label="Checklist"
-        class="toolbar-btn"
-        [class.is-active]="isActive('taskList')"
-      >
-        <mat-icon>checklist</mat-icon>
-      </button>
-    </div>
+      <!-- Blocks & Exam Callout -->
+      <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 px-1.5 dark:border-slate-700">
+        <button
+          type="button"
+          (click)="toggleCodeBlock()"
+          matTooltip="Bloque de código"
+          aria-label="Bloque de código"
+          class="toolbar-btn"
+          [class.is-active]="isActive('codeBlock')"
+        >
+          <mat-icon>terminal</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="toggleBlockquote()"
+          matTooltip="Cita"
+          aria-label="Cita"
+          class="toolbar-btn"
+          [class.is-active]="isActive('blockquote')"
+        >
+          <mat-icon>format_quote</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="insertTable()"
+          matTooltip="Insertar tabla 3×3"
+          aria-label="Insertar tabla"
+          class="toolbar-btn"
+          [class.is-active]="isInTable()"
+        >
+          <mat-icon>table_chart</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="toggleExamCallout()"
+          matTooltip="Bloque «Ojo examen» (Ctrl+Shift+E)"
+          class="toolbar-btn toolbar-btn-callout gap-1 px-2 text-xs font-semibold"
+          [class.is-active]="isActive('examCallout')"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[16px]">warning_amber</mat-icon>
+          <span class="hidden sm:inline">Ojo examen</span>
+        </button>
+        <button
+          type="button"
+          (click)="requestCreateFlashcard()"
+          [matTooltip]="
+            hasSelection()
+              ? 'Crear flashcard desde el texto seleccionado (Ctrl+Shift+F)'
+              : 'Crear flashcard vinculada a este tema (Ctrl+Shift+F)'
+          "
+          class="toolbar-btn gap-1 px-2 text-xs font-semibold"
+          [class.!bg-violet-100]="hasSelection()"
+          [class.!text-violet-700]="hasSelection()"
+          [class.dark:!bg-violet-950/70]="hasSelection()"
+          [class.dark:!text-violet-300]="hasSelection()"
+        >
+          <mat-icon class="!h-4 !w-4 !text-[16px]">style</mat-icon>
+          <span class="hidden sm:inline">Crear flashcard</span>
+        </button>
+      </div>
 
-    <!-- Blocks & Exam Callout -->
-    <div class="flex shrink-0 items-center gap-0.5 border-r border-slate-200 px-1.5 dark:border-slate-700">
-      <button
-        type="button"
-        (click)="toggleCodeBlock()"
-        matTooltip="Bloque de código"
-        aria-label="Bloque de código"
-        class="toolbar-btn"
-        [class.is-active]="isActive('codeBlock')"
-      >
-        <mat-icon>terminal</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleBlockquote()"
-        matTooltip="Cita"
-        aria-label="Cita"
-        class="toolbar-btn"
-        [class.is-active]="isActive('blockquote')"
-      >
-        <mat-icon>format_quote</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="insertTable()"
-        matTooltip="Insertar tabla 3×3"
-        aria-label="Insertar tabla"
-        class="toolbar-btn"
-        [class.is-active]="isInTable()"
-      >
-        <mat-icon>table_chart</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="toggleExamCallout()"
-        matTooltip="Bloque «Ojo examen» (Ctrl+Shift+E)"
-        class="toolbar-btn toolbar-btn-callout gap-1 px-2 text-xs font-semibold"
-        [class.is-active]="isActive('examCallout')"
-      >
-        <mat-icon class="!h-4 !w-4 !text-[16px]">warning_amber</mat-icon>
-        <span class="hidden sm:inline">Ojo examen</span>
-      </button>
-      <button
-        type="button"
-        (click)="requestCreateFlashcard()"
-        [matTooltip]="
-          hasSelection()
-            ? 'Crear flashcard desde el texto seleccionado (Ctrl+Shift+F)'
-            : 'Crear flashcard vinculada a este tema (Ctrl+Shift+F)'
-        "
-        class="toolbar-btn gap-1 px-2 text-xs font-semibold"
-        [class.!bg-violet-100]="hasSelection()"
-        [class.!text-violet-700]="hasSelection()"
-        [class.dark:!bg-violet-950/70]="hasSelection()"
-        [class.dark:!text-violet-300]="hasSelection()"
-      >
-        <mat-icon class="!h-4 !w-4 !text-[16px]">style</mat-icon>
-        <span class="hidden sm:inline">Crear flashcard</span>
-      </button>
+      <!-- Undo / Redo -->
+      <div class="flex shrink-0 items-center gap-0.5 pl-1">
+        <button
+          type="button"
+          (click)="undo()"
+          [disabled]="!canUndo()"
+          matTooltip="Deshacer (Ctrl+Z)"
+          aria-label="Deshacer"
+          class="toolbar-btn"
+        >
+          <mat-icon>undo</mat-icon>
+        </button>
+        <button
+          type="button"
+          (click)="redo()"
+          [disabled]="!canRedo()"
+          matTooltip="Rehacer (Ctrl+Shift+Z)"
+          aria-label="Rehacer"
+          class="toolbar-btn"
+        >
+          <mat-icon>redo</mat-icon>
+        </button>
+      </div>
     </div>
-
-    <!-- Undo / Redo -->
-    <div class="flex shrink-0 items-center gap-0.5 pl-1">
-      <button
-        type="button"
-        (click)="undo()"
-        [disabled]="!canUndo()"
-        matTooltip="Deshacer (Ctrl+Z)"
-        aria-label="Deshacer"
-        class="toolbar-btn"
-      >
-        <mat-icon>undo</mat-icon>
-      </button>
-      <button
-        type="button"
-        (click)="redo()"
-        [disabled]="!canRedo()"
-        matTooltip="Rehacer (Ctrl+Shift+Z)"
-        aria-label="Rehacer"
-        class="toolbar-btn"
-      >
-        <mat-icon>redo</mat-icon>
-      </button>
-    </div>
-  </div>
 
     <!-- Contextual Table Toolbar -->
     @if (isInTable()) {
