@@ -1,12 +1,12 @@
-# ARCHITECTURE.md — Arquitectura del Sistema TAI Study
+# ARCHITECTURE.md — Arquitectura del Sistema CrisIsStudent
 
-Este documento describe la arquitectura de software, los patrones de diseño, el flujo de datos y las estrategias de almacenamiento de **TAI Study**.
+Este documento describe la arquitectura de software, los patrones de diseño, el flujo de datos y las estrategias de almacenamiento de **CrisIsStudent**.
 
 ---
 
 ## 🏛️ 1. Visión Arquitectónica General
 
-TAI Study sigue una arquitectura **Clean Client-Side** desacoplada mediante interfaces de repositorio y reactividad pura basada en **Angular Signals**. Toda la lógica de negocio y persistencia se ejecuta en el navegador del usuario (**Local-First**).
+CrisIsStudent sigue una arquitectura **Clean Client-Side** desacoplada mediante interfaces de repositorio y reactividad pura basada en **Angular Signals**. Toda la lógica de negocio y persistencia se ejecuta en el navegador del usuario (**Local-First**).
 
 ```mermaid
 flowchart TD
@@ -15,8 +15,9 @@ flowchart TD
         Dashboard["Dashboard Component"]
         BlockView["BlockView Component\n(Topic List, Drag-Drop & Block Export)"]
         TopicDetail["TopicDetail Component\n(Editor, Metadata, Outline & MD/PDF Export)"]
-        Tests["Tests & INAP PDF Importer\n(pdfjs-dist local worker)"]
+        Tests["Tests & PDF Importer\n(pdfjs-dist local worker)"]
         Flashcards["Flashcards SRS & Gamification"]
+        Guide["GuidePage Component\n(Guía interactiva integrada)"]
     end
 
     subgraph State["Capa de Estado Reactivo"]
@@ -28,7 +29,7 @@ flowchart TD
     subgraph Domain["Capa de Dominio & Abstracción"]
         RepoToken["InjectionToken: STUDY_REPOSITORY"]
         RepoInterface["Interface: StudyRepository"]
-        Models["Domain Models\n(TaiBlock, Topic, Status, Backup)"]
+        Models["Domain Models\n(StudyBlock, Topic, Status, Backup)"]
     end
 
     subgraph Storage["Capa de Persistencia Local"]
@@ -72,7 +73,7 @@ flowchart TD
 
 - **`StudyStoreService`:** Es el único punto de contacto para la UI sobre el estado global de la app.
   - Señales primarias:
-    - `blocks = signal<TaiBlock[]>([])`
+    - `blocks = signal<StudyBlock[]>([])`
     - `topics = signal<Topic[]>([])`
     - `studySessions = signal<StudySession[]>([])`
     - `weeklyPlanItems = signal<WeeklyPlanItem[]>([])`
@@ -81,12 +82,12 @@ flowchart TD
     - `initialized = signal(false)`
   - Señales derivadas (`computed`):
     - `totalTopics`, `masteredTopics`, `totalRoundsCompleted`.
-    - `topicCountByBlock`: mapa de recuento de temas por cada uno de los 4 bloques.
+    - `topicCountByBlock`: mapa de recuento de temas por bloque dinámico.
     - `rustyTopics`: temas oxidados/críticos ordenados por urgencia de repaso.
     - `studyMinutesThisWeek`, `studyMinutesByBlockThisWeek`, `studyMinutesByBlockTotal`.
     - `filteredTopics`: filtrado en memoria por búsqueda sobre título, texto plano o etiquetas.
 - **`PomodoroService`:** Temporizador global con Signals persistente durante la navegación entre vistas; guarda automáticamente `StudySession` al finalizar bloques de enfoque y actualiza `lastReviewedAt`.
-- **`BackupService`:** Orquesta la exportación de la base de datos a un archivo descargable `tai-study-backup-YYYY-MM-DD.json` con `schemaVersion: 2` (retrocompatible con backups `v1`), validando esquemas durante la restauración.
+- **`BackupService`:** Orquesta la exportación de la base de datos a un archivo descargable `crisisstudent-backup-YYYY-MM-DD.json` con `schemaVersion: 5` (retrocompatible con backups anteriores `v1`–`v4` de `tai-study`), validando esquemas durante la restauración.
 - **`ThemeService`:** Persiste y conmuta el modo visual (`light` / `dark`) actualizando la clase CSS en el elemento raíz `<html>`.
 
 ### 2.3. Capa de Repositorio y Dominio (`src/app/core/repositories/` & `src/app/core/models/`)
@@ -95,20 +96,23 @@ flowchart TD
   ```ts
   export interface StudyRepository {
     initialize(): Promise<void>;
-    getBlocks(): Promise<TaiBlock[]>;
-    getTopics(blockId?: TaiBlockId): Promise<Topic[]>;
+    getBlocks(): Promise<StudyBlock[]>;
+    saveBlock(block: StudyBlock): Promise<void>;
+    saveBlocks(blocks: StudyBlock[]): Promise<void>;
+    deleteBlock(id: StudyBlockId): Promise<void>;
+    getTopics(blockId?: StudyBlockId): Promise<Topic[]>;
     getTopicById(id: string): Promise<Topic | undefined>;
     saveTopic(topic: Topic): Promise<void>;
     saveTopics(topics: Topic[]): Promise<void>;
     deleteTopic(id: string): Promise<void>;
-    replaceAllData(blocks: TaiBlock[], topics: Topic[]): Promise<void>;
+    // ... sesiones, planificador, supuestos, preguntas, intentos, flashcards y gamificación
   }
   ```
 - **Injection Token:** `STUDY_REPOSITORY` permite sustituir con facilidad la implementación real por un repositorio en memoria (`MockStudyRepository`) en pruebas unitarias, o un futuro `CloudStudyRepository` para sincronización en la nube (Fase 5).
 
 ### 2.4. Capa de Persistencia (`src/app/core/db/`)
 
-- **Dexie.js (`StudyDatabase`):** Extiende de `Dexie` creando la base de datos `TaiStudyDB`.
+- **Dexie.js (`StudyDatabase`):** Extiende de `Dexie` conservando el nombre de base de datos `TaiStudyDB` para mantener compatibilidad sin pérdida de datos con instalaciones previas.
 - **Esquema Actual (Versión 4):**
   ```ts
   this.version(4).stores({
@@ -123,7 +127,7 @@ flowchart TD
     gamification: 'id',
   });
   ```
-- **Seeding Automático:** Al iniciar la app (`initialize()`), si la tabla `blocks` está vacía, se inyectan automáticamente los **4 Bloques Oficiales TAI** definidos en `tai-seed.ts`.
+- **Bloques Dinámicos:** Las instalaciones nuevas arrancan limpias sin bloques predefinidos para que cada estudiante cree su propia estructura de materias. El borrado de un bloque ejecuta una transacción Dexie en cascada para evitar registros huérfanos.
 - **Persistencia Robusta:** Invoca `navigator.storage.persist()` para pedir al navegador que marque el almacenamiento como persistente, evitando desalojos por baja memoria.
 
 ---
@@ -135,7 +139,7 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Opositor
+    actor User as Estudiante
     participant View as TopicDetail / BlockView
     participant Store as StudyStoreService
     participant Repo as StudyRepository (IndexedDb)
@@ -156,11 +160,11 @@ sequenceDiagram
 
 1. **Service Worker (@angular/service-worker):**
    - Configurado en `ngsw-config.json`.
-   - Estrategia de recursos estáticos: `prefetch` para los bundles JavaScript, CSS, HTML principal e iconos SVG.
+   - Estrategia de recursos estáticos: `prefetch` para los bundles JavaScript, CSS, HTML principal e iconos PNG.
 2. **Web App Manifest (`public/manifest.webmanifest`):**
-   - Nombre: `TAI Study — Oposiciones TAI`
+   - Nombre: `crisisstudent — Espacio de estudio local-first`
    - Modo de visualización: `standalone` (sin barras del navegador).
-   - Color de tema: `#2563eb` (azul primario).
+   - Color de tema: `#0891b2` (cian primario).
    - Totalmente instalable en macOS, Windows, Linux, iOS y Android.
 
 ---

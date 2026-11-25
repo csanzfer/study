@@ -1,6 +1,6 @@
-# Plan de Análisis y Desarrollo — App de Estudio Oposiciones TAI
+# Plan de Análisis y Desarrollo — App de Estudio
 
-> **Objetivo:** Aplicación web **local-first** para estudiar las oposiciones de **Técnicos Auxiliares de Informática (TAI)** de la Administración General del Estado, optimizada para pasar apuntes desde libros físicos/Word, generar esquemas automáticos, planificar vueltas al temario, practicar tests oficiales y retener conceptos clave.
+> **Objetivo:** Aplicación web **local-first** para estudiar, optimizada para pasar apuntes desde libros físicos/Word, generar esquemas automáticos, planificar vueltas al temario, practicar tests oficiales y retener conceptos clave.
 
 ---
 

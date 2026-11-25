@@ -1,0 +1,32 @@
+name: Reportar un bug
+description: Informa sobre un comportamiento inesperado o un error en CrisIsStudent.
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción del problema
+      description: Explica de forma clara qué ha ocurrido y qué esperabas que pasara.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Ir a '...'
+        2. Hacer clic en '...'
+        3. Observar el error
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Navegador y sistema operativo
+      placeholder: 'Ej. Chrome 130 en macOS / Firefox en Linux / PWA en iPad'
+  - type: textarea
+    id: extra
+    attributes:
+      label: Capturas o logs de consola (opcional)
+      description: Adjunta capturas de pantalla o mensajes de la consola del navegador si los hay.

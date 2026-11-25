@@ -1,11 +1,13 @@
 name: PR CI & Gemini Code Review
 
 on:
+  push:
+    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: pr-review-${{ github.event.pull_request.number }}
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -59,7 +61,7 @@ jobs:
   gemini-review:
     name: Gemini AI PR Review
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4

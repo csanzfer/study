@@ -1,6 +1,6 @@
 # CONTRIBUTING.md — Guía de Contribución al Proyecto
 
-¡Gracias por tu interés en contribuir a **TAI Study**! Esta guía establece los estándares de desarrollo, flujos de trabajo en Git y convenciones de código para mantener la calidad y consistencia del proyecto.
+¡Gracias por tu interés en contribuir a **CrisIsStudent**! Esta guía establece los estándares de desarrollo, flujos de trabajo en Git y convenciones de código para mantener la calidad y consistencia del proyecto.
 
 ---
 
@@ -16,7 +16,7 @@
 
 1. Clona el repositorio:
    ```bash
-   git clone <url-del-repositorio>
+   git clone https://github.com/csanzfer/study.git
    cd study
    ```
 2. Instala las dependencias:
@@ -110,4 +110,4 @@ Antes de hacer commit y solicitar revisión de tus cambios, comprueba que:
 - [ ] El proyecto compila sin errores (`npx ng build --configuration development`).
 - [ ] El formato de código respeta Prettier (`npx prettier --check .`).
 - [ ] No se han dejado `console.log()` huérfanos o código comentado no justificado.
-- [ ] Si se han modificado estructuras de datos, se ha actualizado la documentación en `CONTEXT.md` y `ARCHITECTURE.md`.
+- [ ] Si se han modificado estructuras de datos, se ha actualizado la documentación en `docs/CONTEXT.md` y `docs/ARCHITECTURE.md`.

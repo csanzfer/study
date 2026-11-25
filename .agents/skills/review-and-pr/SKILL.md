@@ -57,7 +57,7 @@ Inspecciona los archivos nuevos y modificados en la rama poniendo foco en:
    - Casos límite: listas vacías, entidades eliminadas, validaciones de formularios.
 4. **Tests y documentación:**
    - Cobertura unitaria de la nueva lógica (usando mocks de `STUDY_REPOSITORY`, nunca IndexedDB real).
-   - Actualización coherente de `PLAN.md` (solo checkboxes) y `ARCHITECTURE.md` si aplica.
+   - Actualización coherente de `docs/PLAN.md` (solo checkboxes) y `docs/ARCHITECTURE.md` si aplica.
 
 ---
 

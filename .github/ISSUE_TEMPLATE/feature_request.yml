@@ -1,0 +1,25 @@
+name: Proponer una mejora
+description: Sugiere una nueva funcionalidad o mejora para CrisIsStudent.
+title: '[Feat]: '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: ¿Qué problema o necesidad resuelve?
+      description: Describe el caso de uso o la fricción durante el estudio.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solución propuesta
+      description: Explica cómo te gustaría que funcionase.
+    validations:
+      required: true
+  - type: checkboxes
+    id: local-first
+    attributes:
+      label: Compatibilidad Local-First
+      options:
+        - label: Esta propuesta puede funcionar 100% en local / offline sin depender de un servidor externo.
