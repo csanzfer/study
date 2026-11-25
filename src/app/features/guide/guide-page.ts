@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
   viewChildren,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -80,6 +81,12 @@ export class GuidePage implements AfterViewInit {
 
       const exists = this.allSections.some((section) => section.id === targetId);
       if (exists) {
+        const isVisible = untracked(() =>
+          this.filteredSections().some((section) => section.id === targetId),
+        );
+        if (!isVisible) {
+          this.searchQuery.set('');
+        }
         this.activeSectionId.set(targetId);
         this.scrollToSection(targetId);
       }

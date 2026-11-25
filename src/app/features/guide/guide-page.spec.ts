@@ -1,13 +1,24 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { GuidePage } from './guide-page';
 import { GUIDE_SECTIONS } from './guide-sections.data';
 
 describe('GuidePage', () => {
+  let fragment$: BehaviorSubject<string | null>;
+
   beforeEach(async () => {
+    fragment$ = new BehaviorSubject<string | null>(null);
+
     await TestBed.configureTestingModule({
       imports: [GuidePage],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { fragment: fragment$.asObservable() },
+        },
+      ],
     }).compileComponents();
   });
 
@@ -78,5 +89,28 @@ describe('GuidePage', () => {
     expect(
       (fixture.componentInstance as unknown as { activeSectionId: () => string }).activeSectionId(),
     ).toBe(GUIDE_SECTIONS[3].id);
+
+    const activeNavButtons = fixture.nativeElement.querySelectorAll('nav button[aria-current="location"]');
+    expect(activeNavButtons.length).toBe(2);
+  });
+
+  it('should clear active search filter when navigating to a hidden section fragment', () => {
+    const fixture = TestBed.createComponent(GuidePage);
+    fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[type="search"]');
+    input.value = 'penalizacion';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('article').length).toBe(1);
+
+    fragment$.next('flashcards');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('article').length).toBe(GUIDE_SECTIONS.length);
+    expect(
+      (fixture.componentInstance as unknown as { activeSectionId: () => string }).activeSectionId(),
+    ).toBe('flashcards');
   });
 });

@@ -30,7 +30,6 @@ export interface QuickStartStep {
   number: string;
   title: string;
   description: string;
-  icon: string;
 }
 
 export const QUICK_START_STEPS: QuickStartStep[] = [
@@ -38,19 +37,16 @@ export const QUICK_START_STEPS: QuickStartStep[] = [
     number: '1',
     title: 'Crea tus asignaturas',
     description: 'Agrupa tu temario en bloques o materias y ordénalos a tu gusto.',
-    icon: 'folder_special',
   },
   {
     number: '2',
     title: 'Redacta o importa apuntes',
     description: 'Escribe en el editor o importa documentos de Word (.docx) y Markdown.',
-    icon: 'edit_note',
   },
   {
     number: '3',
     title: 'Estudia y repasa activamente',
     description: 'Genera esquemas automáticos, haz simulacros y repasa con flashcards SM-2.',
-    icon: 'auto_awesome',
   },
 ];
 
