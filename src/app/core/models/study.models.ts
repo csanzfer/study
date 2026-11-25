@@ -58,8 +58,10 @@ export interface BlockColorPreset {
   hex: string;
 }
 
+export const DEFAULT_BLOCK_COLOR = '#0891b2';
+
 export const BLOCK_COLOR_PRESETS: BlockColorPreset[] = [
-  { name: 'Aguamarina', hex: '#0891b2' },
+  { name: 'Aguamarina', hex: DEFAULT_BLOCK_COLOR },
   { name: 'Azul', hex: '#2563eb' },
   { name: 'Turquesa', hex: '#0d9488' },
   { name: 'Violeta', hex: '#7c3aed' },

@@ -12,7 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
-import { TOPIC_STATUS_LABELS, StudyBlock, Topic } from '../../../core/models/study.models';
+import {
+  DEFAULT_BLOCK_COLOR,
+  TOPIC_STATUS_LABELS,
+  StudyBlock,
+  Topic,
+} from '../../../core/models/study.models';
 import { SearchService, TopicSearchResult } from '../../../core/services/search.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 
@@ -35,6 +40,7 @@ export class GlobalSearchDialog implements AfterViewInit {
   private readonly inputRef = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   protected readonly statusLabels = TOPIC_STATUS_LABELS;
+  protected readonly defaultBlockColor = DEFAULT_BLOCK_COLOR;
   protected readonly query = signal('');
   protected readonly activeIndex = signal(0);
 

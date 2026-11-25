@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 import {
   CreateQuestionInput,
+  DEFAULT_BLOCK_COLOR,
   Question,
   StudyBlockId,
 } from '../../../core/models/study.models';
@@ -112,7 +113,7 @@ export class QuestionBank {
   }
 
   protected getBlockColor(blockId: StudyBlockId): string {
-    return this.store.getBlockById(blockId)?.color ?? '#0891b2';
+    return this.store.getBlockById(blockId)?.color ?? DEFAULT_BLOCK_COLOR;
   }
 
   protected async openCreateDialog(): Promise<void> {

@@ -8,6 +8,7 @@ import {
   BLOCK_COLOR_PRESETS,
   BLOCK_ICON_PRESETS,
   CreateBlockInput,
+  DEFAULT_BLOCK_COLOR,
   StudyBlock,
 } from '../../../core/models/study.models';
 
@@ -81,7 +82,7 @@ export class BlockEditorDialog {
       : '',
   );
   protected readonly description = signal(this.data.block?.description ?? '');
-  protected readonly color = signal(this.data.block?.color ?? BLOCK_COLOR_PRESETS[0].hex);
+  protected readonly color = signal(this.data.block?.color ?? DEFAULT_BLOCK_COLOR);
   protected readonly icon = signal(this.data.block?.icon ?? BLOCK_ICON_PRESETS[0].name);
 
   private codeTouched = Boolean(this.data.block);
