@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import {
   CaseStudy,
   CreateCaseStudyInput,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 
@@ -29,14 +29,19 @@ export class CaseStudyDialog {
 
   protected readonly isEdit = Boolean(this.data.caseStudy);
 
-  protected readonly blockId = signal<TaiBlockId>(this.data.caseStudy?.blockId ?? 'B3');
+  protected readonly blockId = signal<StudyBlockId>(
+    this.data.caseStudy?.blockId ?? this.store.defaultBlockId(),
+  );
   protected readonly title = signal(this.data.caseStudy?.title ?? '');
   protected readonly statement = signal(this.data.caseStudy?.statement ?? '');
   protected readonly source = signal(this.data.caseStudy?.source ?? '');
   protected readonly tagsText = signal((this.data.caseStudy?.tags ?? []).join(', '));
 
   protected readonly canSave = computed(
-    () => this.title().trim().length > 0 && this.statement().trim().length > 0,
+    () =>
+      this.blockId().length > 0 &&
+      this.title().trim().length > 0 &&
+      this.statement().trim().length > 0,
   );
 
   protected save(): void {

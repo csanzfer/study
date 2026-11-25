@@ -7,14 +7,14 @@ import {
   CreateQuestionInput,
   Question,
   QuestionOptionIndex,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { OPTION_LETTERS } from '../utils/test-scoring.util';
 
 export interface QuestionEditorDialogData {
   question?: Question;
-  defaultBlockId?: TaiBlockId;
+  defaultBlockId?: StudyBlockId;
   defaultTopicId?: string;
   defaultCaseStudyId?: string;
 }
@@ -32,8 +32,8 @@ export class QuestionEditorDialog {
 
   protected readonly isEdit = Boolean(this.data.question);
 
-  protected readonly blockId = signal<TaiBlockId>(
-    this.data.question?.blockId ?? this.data.defaultBlockId ?? 'B1',
+  protected readonly blockId = signal<StudyBlockId>(
+    this.data.question?.blockId ?? this.data.defaultBlockId ?? this.store.defaultBlockId(),
   );
   protected readonly topicId = signal<string>(
     this.data.question?.topicId ?? this.data.defaultTopicId ?? '',
@@ -61,6 +61,7 @@ export class QuestionEditorDialog {
 
   protected readonly canSave = computed(
     () =>
+      this.blockId().length > 0 &&
       this.prompt().trim().length > 0 &&
       this.optionA().trim().length > 0 &&
       this.optionB().trim().length > 0 &&
@@ -68,7 +69,7 @@ export class QuestionEditorDialog {
       this.optionD().trim().length > 0,
   );
 
-  protected onBlockChange(nextBlock: TaiBlockId): void {
+  protected onBlockChange(nextBlock: StudyBlockId): void {
     this.blockId.set(nextBlock);
     const currentTopic = this.store.getTopicById(this.topicId());
     if (currentTopic && currentTopic.blockId !== nextBlock) {

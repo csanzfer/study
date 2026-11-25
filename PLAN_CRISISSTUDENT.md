@@ -21,7 +21,7 @@
 
 - [x] **Fase 1:** Desacoplar modelo de datos, Dexie y Repositorio (CRUD de bloques)
 - [x] **Fase 2:** Store reactivo dinámico y BackupService compatible
-- [ ] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
+- [x] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
 - [ ] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
 - [ ] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
 
@@ -101,7 +101,7 @@
 
 ### Tareas
 
-- [ ] **Nuevo diálogo `BlockEditorDialog` (`src/app/shared/components/block-editor-dialog/`):**
+- [x] **Nuevo diálogo `BlockEditorDialog` (`src/app/shared/components/block-editor-dialog/`):**
   - Componente standalone (Angular Material Dialog + Tailwind + modo oscuro).
   - Campos:
     - Nombre / Título (obligatorio, ej. *"Historia Contemporánea"*, *"AWS Cloud"*, *"Redes"*).
@@ -111,19 +111,19 @@
     - Selector visual de color (`BLOCK_COLOR_PRESETS`).
     - Selector visual de icono Material (`BLOCK_ICON_PRESETS`).
   - Sirve tanto para **Crear** como para **Editar** un bloque existente.
-- [ ] **Menú lateral (`src/app/shared/components/app-shell/app-shell.html` y `.ts`):**
+- [x] **Menú lateral (`src/app/shared/components/app-shell/app-shell.html` y `.ts`):**
   - Cambiar sección *"Temario TAI"* → *"Asignaturas / Bloques"* (con botón `+` directo para abrir `BlockEditorDialog`).
   - Mostrar estado vacío compacto si aún no hay bloques (botón *"Crear primera asignatura"*).
-- [ ] **Dashboard (`src/app/features/dashboard/dashboard.html` y `.ts`):**
+- [x] **Dashboard (`src/app/features/dashboard/dashboard.html` y `.ts`):**
   - En la sección de bloques/asignaturas:
     - Botón **"+ Nueva asignatura"**.
     - Menú contextual o botones en cada tarjeta para **Editar** y **Eliminar** (con `ConfirmDialog` indicando cuántos temas, preguntas y flashcards se borrarán).
     - Opcional: reordenación por drag & drop (`@angular/cdk/drag-drop`) o botones subir/bajar.
   - Estado vacío acogedor cuando `store.blocks().length === 0`: mensaje de bienvenida a **CrisIsStudent** con botón destacado para crear la primera asignatura o importar un backup `.json`.
-- [ ] **Vista de bloque (`src/app/features/block-view/block-view.ts` y `.html`):**
+- [x] **Vista de bloque (`src/app/features/block-view/block-view.ts` y `.html`):**
   - Botón para editar los datos del bloque actual o eliminarlo (redirigiendo a `/dashboard` tras borrar).
   - Si se navega a un `blockId` inexistente, mostrar mensaje claro con enlace a `/dashboard` en lugar de caer en `'B1'`.
-- [ ] **Eliminar enlaces/fallbacks hardcodeados a `'B1'` o `'B3'`:**
+- [x] **Eliminar enlaces/fallbacks hardcodeados a `'B1'` o `'B3'`:**
   - `src/app/features/notes/topic-detail/topic-detail.ts`
   - `src/app/features/planner/kanban-board/kanban-board.html` (enlazar al primer bloque si existe o a `/dashboard`).
   - `src/app/features/schemas/schemas-index/schemas-index.html` (enlazar al primer bloque si existe o a `/dashboard`).

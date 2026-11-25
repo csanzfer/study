@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { CreateFlashcardInput, TaiBlockId } from '../../../core/models/study.models';
+import { CreateFlashcardInput, StudyBlockId } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import {
   TAI_ACRONYMS_SEED,
@@ -20,7 +20,7 @@ export type FlashcardImportTab = 'batch' | 'extract' | 'acronyms';
 
 export interface FlashcardImportDialogData {
   initialTab?: FlashcardImportTab;
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
   topicId?: string;
 }
 
@@ -43,7 +43,9 @@ export class FlashcardImportDialog {
   );
 
   // Batch tab
-  protected readonly batchBlockId = signal<TaiBlockId>(this.data?.blockId ?? 'B4');
+  protected readonly batchBlockId = signal<StudyBlockId>(
+    this.data?.blockId ?? this.store.defaultBlockId(),
+  );
   protected readonly batchTopicId = signal<string>(this.data?.topicId ?? '');
   protected readonly batchDefaultTags = signal<string>('');
   protected readonly batchRawText = signal<string>('');
@@ -83,7 +85,7 @@ export class FlashcardImportDialog {
   });
 
   // TAI Acronyms Pack tab
-  protected readonly acronymBlockFilter = signal<'ALL' | TaiBlockId>('ALL');
+  protected readonly acronymBlockFilter = signal<'ALL' | StudyBlockId>('ALL');
   protected readonly deselectedAcronyms = signal<Set<string>>(new Set());
 
   private readonly existingFrontKeys = computed(

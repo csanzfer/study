@@ -5,16 +5,16 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatIconModule } from '@angular/material/icon';
 import {
   CreateFlashcardInput,
+  FLASHCARD_SUGGESTED_TAGS,
   Flashcard,
-  TAI_FLASHCARD_SUGGESTED_TAGS,
-  TaiBlockId,
+  StudyBlockId,
 } from '../../../core/models/study.models';
 import { StudyStoreService } from '../../../core/services/study-store.service';
 import { parseSelectedTextToFlashcardDraft } from '../utils/flashcard-import.util';
 
 export interface FlashcardEditorDialogData {
   flashcard?: Flashcard;
-  blockId?: TaiBlockId;
+  blockId?: StudyBlockId;
   topicId?: string;
   selectedText?: string;
   initialTags?: string[];
@@ -34,10 +34,10 @@ export class FlashcardEditorDialog {
   protected readonly store = inject(StudyStoreService);
 
   protected readonly isEditMode = Boolean(this.data?.flashcard);
-  protected readonly suggestedTags = TAI_FLASHCARD_SUGGESTED_TAGS;
+  protected readonly suggestedTags = FLASHCARD_SUGGESTED_TAGS;
 
   protected readonly cardMode = signal<'standard' | 'acronym'>('standard');
-  protected readonly blockId = signal<TaiBlockId>('B1');
+  protected readonly blockId = signal<StudyBlockId>(this.store.defaultBlockId());
   protected readonly topicId = signal<string>('');
   protected readonly front = signal('');
   protected readonly back = signal('');
@@ -50,7 +50,10 @@ export class FlashcardEditorDialog {
   );
 
   protected readonly canSave = computed(
-    () => this.front().trim().length > 0 && this.back().trim().length > 0,
+    () =>
+      this.blockId().length > 0 &&
+      this.front().trim().length > 0 &&
+      this.back().trim().length > 0,
   );
 
   constructor() {
@@ -102,7 +105,7 @@ export class FlashcardEditorDialog {
     }
   }
 
-  protected onBlockChange(nextBlock: TaiBlockId): void {
+  protected onBlockChange(nextBlock: StudyBlockId): void {
     this.blockId.set(nextBlock);
     const validTopics = this.store.getTopicsForBlock(nextBlock);
     if (!validTopics.some((t) => t.id === this.topicId())) {
