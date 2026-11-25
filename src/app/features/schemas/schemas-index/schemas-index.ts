@@ -94,7 +94,7 @@ export class SchemasIndex {
         return {
           topic,
           blockCode: block?.code ?? topic.blockId,
-          blockColor: block?.color ?? '#3b82f6',
+          blockColor: block?.color ?? '#0891b2',
           outline,
           markdown,
           hasSchema: markdown.trim().length > 0,

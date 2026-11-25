@@ -121,7 +121,7 @@ export class TopicExportService {
       color: #475569;
     }
     .print-banner strong {
-      color: #1e40af;
+      color: #0891b2;
       letter-spacing: 0.03em;
     }
     article h1 {
