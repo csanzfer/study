@@ -139,7 +139,7 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Opositor
+    actor User as Estudiante
     participant View as TopicDetail / BlockView
     participant Store as StudyStoreService
     participant Repo as StudyRepository (IndexedDb)
@@ -160,7 +160,7 @@ sequenceDiagram
 
 1. **Service Worker (@angular/service-worker):**
    - Configurado en `ngsw-config.json`.
-   - Estrategia de recursos estáticos: `prefetch` para los bundles JavaScript, CSS, HTML principal e iconos SVG.
+   - Estrategia de recursos estáticos: `prefetch` para los bundles JavaScript, CSS, HTML principal e iconos PNG.
 2. **Web App Manifest (`public/manifest.webmanifest`):**
    - Nombre: `crisisstudent — Espacio de estudio local-first`
    - Modo de visualización: `standalone` (sin barras del navegador).

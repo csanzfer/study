@@ -2,6 +2,7 @@
 
 > Aplicación web **local-first** y **PWA** de estudio activo: organiza cualquier materia o temario con apuntes enriquecidos, mapas mentales automáticos, planificación por vueltas, temporizador Pomodoro, simulacros de examen y tarjetas de repaso espaciado (SM-2), **100% en tu navegador y sin servidor**.
 
+[![CI](https://github.com/csanzfer/study/actions/workflows/pr-review.yml/badge.svg?branch=main)](https://github.com/csanzfer/study/actions/workflows/pr-review.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0891b2?style=flat-square)](./LICENSE)
 ![Angular](https://img.shields.io/badge/Angular-22-dd0031?style=flat-square&logo=angular&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?style=flat-square&logo=typescript&logoColor=white)
@@ -30,8 +31,8 @@
 - **📚 Bloques / Asignaturas Dinámicas:** Crea, personaliza (color e icono), reordena mediante drag-and-drop y gestiona tantos bloques y temas como necesites.
 - **✍️ Editor de Apuntes Enriquecido (TipTap):** Formato completo, tablas, listas de tareas, atajos Markdown, exportación a Markdown/PDF e importación local de archivos `.docx` (Mammoth.js) y `.md`.
 - **🧠 Mapas Mentales Automáticos (Markmap):** Generación interactiva de esquemas a partir de la estructura de encabezados y listas de tus apuntes, con soporte para esquemas personalizados.
-- **🔎 Búsqueda Global Instantánea (MiniSearch):** Búsqueda *full-text* en cliente sobre títulos, etiquetas y contenido de todos tus temas.
-- **📅 Planificador, Kanban y Pomodoro:** Tablero Kanban de progreso por vueltas, mapa de calor (*heatmap*) de temas que necesitan repaso, planificador semanal y temporizador Pomodoro persistente con registro automático de sesiones.
+- **🔎 Búsqueda Global Instantánea (MiniSearch):** Búsqueda _full-text_ en cliente sobre títulos, etiquetas y contenido de todos tus temas.
+- **📅 Planificador, Kanban y Pomodoro:** Tablero Kanban de progreso por vueltas, mapa de calor (_heatmap_) de temas que necesitan repaso, planificador semanal y temporizador Pomodoro persistente con registro automático de sesiones.
 - **📝 Motor de Tests y Simulacros:** Banco de preguntas, importación local desde PDF (`pdfjs-dist`), generador de preguntas desde apuntes, supuestos prácticos, penalizaciones configurables (`0`, `-1/4`, `-1/3`, `-1/2`) y analíticas de rendimiento.
 - **🃏 Flashcards con Repaso Espaciado (SM-2) y Gamificación:** Algoritmo SM-2 para optimizar la retención, misiones diarias, rachas de estudio y mapa de progreso.
 - **🧭 Guía Interactiva Integrada:** Onboarding y guía de uso navegable dentro de la propia aplicación (`/guide`).
@@ -41,15 +42,15 @@
 
 ## 🛠️ Stack Tecnológico
 
-| Capa | Tecnología |
-| :--- | :--- |
-| **Framework** | [Angular 22](https://angular.dev/) (Standalone Components, Signals, `@if`/`@for`, `inject()`) |
-| **Estilos & UI** | [Tailwind CSS v4](https://tailwindcss.com/) + [Angular Material](https://material.angular.io/) + [Angular CDK](https://material.angular.io/cdk/categories) |
-| **Persistencia Local** | [Dexie.js](https://dexie.org/) sobre IndexedDB + `navigator.storage.persist()` |
-| **Editor & Documentos** | [TipTap](https://tiptap.dev/) (ProseMirror), [Mammoth.js](https://github.com/mwilliamson/mammoth.js) (`.docx`), [Marked](https://marked.js.org/), [PDF.js](https://mozilla.github.io/pdf.js/) |
-| **Mapas Mentales & Búsqueda** | [Markmap](https://markmap.js.org/) (`markmap-lib` + `markmap-view`), [MiniSearch](https://lucaong.github.io/minisearch/) |
-| **Offline / PWA** | `@angular/service-worker` + Web App Manifest |
-| **Testing & Calidad** | [Vitest 5](https://vitest.dev/) + jsdom + Prettier + GitHub Actions CI |
+| Capa                          | Tecnología                                                                                                                                                                                    |
+| :---------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Framework**                 | [Angular 22](https://angular.dev/) (Standalone Components, Signals, `@if`/`@for`, `inject()`)                                                                                                 |
+| **Estilos & UI**              | [Tailwind CSS v4](https://tailwindcss.com/) + [Angular Material](https://material.angular.io/) + [Angular CDK](https://material.angular.io/cdk/categories)                                    |
+| **Persistencia Local**        | [Dexie.js](https://dexie.org/) sobre IndexedDB + `navigator.storage.persist()`                                                                                                                |
+| **Editor & Documentos**       | [TipTap](https://tiptap.dev/) (ProseMirror), [Mammoth.js](https://github.com/mwilliamson/mammoth.js) (`.docx`), [Marked](https://marked.js.org/), [PDF.js](https://mozilla.github.io/pdf.js/) |
+| **Mapas Mentales & Búsqueda** | [Markmap](https://markmap.js.org/) (`markmap-lib` + `markmap-view`), [MiniSearch](https://lucaong.github.io/minisearch/)                                                                      |
+| **Offline / PWA**             | `@angular/service-worker` + Web App Manifest                                                                                                                                                  |
+| **Testing & Calidad**         | [Vitest 5](https://vitest.dev/) + jsdom + Prettier + GitHub Actions CI                                                                                                                        |
 
 ---
 
@@ -165,6 +166,7 @@ study/
 - [docs/PLAN_CRISISSTUDENT.md](./docs/PLAN_CRISISSTUDENT.md) — Evolución hacia una plataforma de estudio genérica y multi-materia.
 - [docs/PLAN.md](./docs/PLAN.md) — Plan histórico de análisis funcional y fases originales (Fases 0–4).
 - [docs/CONTEXT.md](./docs/CONTEXT.md) — Contexto de origen del proyecto y decisiones de producto.
+- [CHANGELOG.md](./CHANGELOG.md) — Historial de versiones y novedades.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — Estándares de código, convenciones de commits y checklist de PR.
 - [AGENTS.md](./AGENTS.md) — Reglas y convenciones técnicas para asistentes de IA.
 
