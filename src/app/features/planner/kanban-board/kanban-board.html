@@ -53,7 +53,7 @@
           [ngModel]="filterQuery()"
           (ngModelChange)="filterQuery.set($event)"
           placeholder="Filtrar tema o etiqueta..."
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 outline-none transition focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
       </div>
 
@@ -138,7 +138,7 @@
               >
                 <div
                   *cdkDragPlaceholder
-                  class="h-24 rounded-xl border-2 border-dashed border-blue-400/70 bg-blue-50/40 dark:bg-blue-950/30"
+                  class="h-24 rounded-xl border-2 border-dashed border-cyan-400/70 bg-cyan-50/40 dark:bg-cyan-950/30"
                 ></div>
 
                 <!-- Top metadata row -->
@@ -197,7 +197,7 @@
                 <!-- Title link -->
                 <a
                   [routerLink]="['/blocks', topic.blockId, 'topics', topic.id]"
-                  class="mt-2 block text-sm font-semibold leading-snug text-slate-900 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-400"
+                  class="mt-2 block text-sm font-semibold leading-snug text-slate-900 transition hover:text-cyan-600 dark:text-slate-100 dark:hover:text-cyan-400"
                 >
                   {{ topic.title }}
                 </a>
@@ -225,7 +225,7 @@
                       type="button"
                       (click)="logExtraRound(topic)"
                       matTooltip="Registrar repaso (+1 vuelta)"
-                      class="inline-flex items-center gap-0.5 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-blue-950/60 dark:hover:text-blue-300"
+                      class="inline-flex items-center gap-0.5 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-cyan-950/60 dark:hover:text-cyan-300"
                     >
                       +1
                     </button>

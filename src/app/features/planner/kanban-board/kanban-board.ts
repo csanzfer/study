@@ -42,8 +42,8 @@ const KANBAN_COLUMNS: KanbanColumnMeta[] = [
   {
     status: 'first_round',
     label: TOPIC_STATUS_LABELS.first_round,
-    accentClass: 'border-blue-200/80 dark:border-blue-900/60',
-    dotClass: 'bg-blue-500',
+    accentClass: 'border-cyan-200/80 dark:border-cyan-900/60',
+    dotClass: 'bg-cyan-500',
   },
   {
     status: 'outlined',

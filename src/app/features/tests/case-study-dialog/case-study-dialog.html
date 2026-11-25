@@ -22,7 +22,7 @@
         <select
           [ngModel]="blockId()"
           (ngModelChange)="blockId.set($event)"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         >
           @for (block of store.blocks(); track block.id) {
             <option [value]="block.id">{{ block.code }} — {{ block.shortTitle }}</option>
@@ -39,7 +39,7 @@
           [ngModel]="title()"
           (ngModelChange)="title.set($event)"
           placeholder="Ej.: Supuesto 1 — Migración a microservicios y BBDD"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
       </div>
     </div>
@@ -53,7 +53,7 @@
         [ngModel]="statement()"
         (ngModelChange)="statement.set($event)"
         placeholder="Describe la arquitectura, tablas SQL, requisitos de red, esquema de servidores o escenario del supuesto..."
-        class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
       ></textarea>
     </div>
 
@@ -67,7 +67,7 @@
           [ngModel]="source()"
           (ngModelChange)="source.set($event)"
           placeholder="Ej.: Examen 2025 · Supuesto B"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
       </div>
       <div>
@@ -79,7 +79,7 @@
           [ngModel]="tagsText()"
           (ngModelChange)="tagsText.set($event)"
           placeholder="sql, rest, linux, redes"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
       </div>
     </div>

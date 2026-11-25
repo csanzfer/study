@@ -188,7 +188,7 @@ export class TestRunner {
     const marked = this.runner.reviewMarks().has(q.id);
 
     if (isCurrent) {
-      return 'border-blue-600 bg-blue-600 text-white shadow-xs';
+      return 'border-cyan-600 bg-cyan-600 text-white shadow-xs';
     }
     if (marked) {
       return 'border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-600 dark:bg-amber-950/60 dark:text-amber-300';
@@ -199,7 +199,7 @@ export class TestRunner {
           ? 'border-emerald-400 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
           : 'border-rose-400 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-950/50 dark:text-rose-300';
       }
-      return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300';
+      return 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-300';
     }
     return 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
   }

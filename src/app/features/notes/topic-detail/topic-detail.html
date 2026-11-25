@@ -2,12 +2,12 @@
   <section class="space-y-5">
     <!-- Breadcrumb -->
     <nav class="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-      <a routerLink="/dashboard" class="hover:text-blue-600 dark:hover:text-blue-400">Panel</a>
+      <a routerLink="/dashboard" class="hover:text-cyan-600 dark:hover:text-cyan-400">Panel</a>
       <mat-icon class="!h-4 !w-4 !text-[16px]">chevron_right</mat-icon>
       @if (block(); as currentBlock) {
         <a
           [routerLink]="['/blocks', currentBlock.id]"
-          class="inline-flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400"
+          class="inline-flex items-center gap-1.5 hover:text-cyan-600 dark:hover:text-cyan-400"
         >
           <span
             class="inline-block h-2 w-2 rounded-full"
@@ -38,7 +38,7 @@
             (ngModelChange)="titleDraft.set($event)"
             (blur)="saveTitle()"
             (keydown.enter)="$any($event.target).blur()"
-            class="w-full min-w-0 rounded-xl border border-transparent bg-transparent px-2 py-1 text-xl font-bold text-slate-900 outline-none transition hover:border-slate-200 focus:border-blue-500 focus:bg-slate-50 dark:text-white dark:hover:border-slate-700 dark:focus:bg-slate-800"
+            class="w-full min-w-0 rounded-xl border border-transparent bg-transparent px-2 py-1 text-xl font-bold text-slate-900 outline-none transition hover:border-slate-200 focus:border-cyan-500 focus:bg-slate-50 dark:text-white dark:hover:border-slate-700 dark:focus:bg-slate-800"
           />
         </div>
 
@@ -160,7 +160,7 @@
             aria-label="Estado del tema"
             [ngModel]="currentTopic.status"
             (ngModelChange)="onStatusChange($event)"
-            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             @for (status of statusList; track status) {
               <option [value]="status">{{ statusLabels[status] }}</option>
@@ -176,7 +176,7 @@
               </span>
             }
             @case ('saving') {
-              <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+              <span class="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2.5 py-1 font-medium text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
                 <mat-icon class="!h-3.5 !w-3.5 !text-[14px] animate-spin">sync</mat-icon>
                 Guardando...
               </span>
@@ -206,7 +206,7 @@
               type="button"
               (click)="logExtraRound()"
               matTooltip="Registrar repaso hoy (+1 vuelta)"
-              class="border-l border-slate-200 bg-white px-2.5 py-1 font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-blue-950/50 dark:hover:text-blue-400"
+              class="border-l border-slate-200 bg-white px-2.5 py-1 font-semibold text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-cyan-950/50 dark:hover:text-cyan-400"
             >
               +1 vuelta
             </button>
@@ -258,13 +258,13 @@
       <div class="flex flex-wrap items-center gap-1.5 px-5 py-3">
         <mat-icon class="mr-0.5 !h-4 !w-4 !text-[16px] text-slate-400 dark:text-slate-500">sell</mat-icon>
         @for (tag of currentTopic.tags; track tag) {
-          <span class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+          <span class="inline-flex items-center gap-1 rounded-lg bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
             #{{ tag }}
             <button
               type="button"
               aria-label="Quitar etiqueta"
               (click)="removeTag(tag)"
-              class="flex h-4 w-4 items-center justify-center rounded-full hover:bg-blue-200/70 dark:hover:bg-blue-900"
+              class="flex h-4 w-4 items-center justify-center rounded-full hover:bg-cyan-200/70 dark:hover:bg-cyan-900"
             >
               <mat-icon class="!h-3 !w-3 !text-[12px]">close</mat-icon>
             </button>
@@ -279,7 +279,7 @@
             [ngModel]="newTagInput()"
             (ngModelChange)="newTagInput.set($event)"
             placeholder="+ Añadir etiqueta..."
-            class="w-36 rounded-lg border border-dashed border-slate-300 bg-transparent px-2.5 py-1 text-xs text-slate-700 outline-none focus:border-blue-500 focus:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:focus:bg-slate-800"
+            class="w-36 rounded-lg border border-dashed border-slate-300 bg-transparent px-2.5 py-1 text-xs text-slate-700 outline-none focus:border-cyan-500 focus:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:focus:bg-slate-800"
           />
         </form>
       </div>
@@ -379,12 +379,12 @@
                 </div>
 
                 @if (!customOutlineDraft().trim() && outline().hasStructure) {
-                  <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+                  <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cyan-200 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-800 dark:border-cyan-900/60 dark:bg-cyan-950/40 dark:text-cyan-200">
                     <span>¿No quieres empezar de cero?</span>
                     <button
                       type="button"
                       (click)="copyAutoOutlineToCustom()"
-                      class="rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-blue-700"
+                      class="rounded-lg bg-cyan-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-cyan-700"
                     >
                       Copiar estructura actual del apunte
                     </button>
@@ -398,7 +398,7 @@
                   (keydown)="onCustomOutlineKeydown($event)"
                   [rows]="viewMode() === 'split' ? 10 : 22"
                   placeholder="# Título del tema&#10;## Rama principal&#10;- Punto clave&#10;  - Subdetalle&#10;- ⚠️ Ojo examen: plazo de 10 días"
-                  class="w-full flex-1 resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-800 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:bg-slate-900"
+                  class="w-full flex-1 resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-800 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:bg-slate-900"
                 ></textarea>
               </div>
 

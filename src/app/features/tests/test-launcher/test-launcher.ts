@@ -46,7 +46,7 @@ export class TestLauncher {
       title: 'Práctica por tema o bloque',
       subtitle: 'Corrección inmediata con explicación y referencia.',
       icon: 'school',
-      accentClass: 'text-blue-600 dark:text-blue-400',
+      accentClass: 'text-cyan-600 dark:text-cyan-400',
     },
     {
       id: 'simulation',

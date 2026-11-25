@@ -14,7 +14,7 @@
       type="button"
       (click)="activeTab.set('extract')"
       class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
-      [class.bg-blue-600]="activeTab() === 'extract'"
+      [class.bg-cyan-600]="activeTab() === 'extract'"
       [class.text-white]="activeTab() === 'extract'"
       [class.bg-slate-100]="activeTab() !== 'extract'"
       [class.text-slate-700]="activeTab() !== 'extract'"
@@ -28,7 +28,7 @@
       type="button"
       (click)="activeTab.set('batch')"
       class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
-      [class.bg-blue-600]="activeTab() === 'batch'"
+      [class.bg-cyan-600]="activeTab() === 'batch'"
       [class.text-white]="activeTab() === 'batch'"
       [class.bg-slate-100]="activeTab() !== 'batch'"
       [class.text-slate-700]="activeTab() !== 'batch'"
@@ -51,7 +51,7 @@
           <select
             [ngModel]="extractTopicId()"
             (ngModelChange)="onExtractTopicChange($event)"
-            class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
             @for (topic of store.topics(); track topic.id) {
               <option [value]="topic.id">
@@ -71,7 +71,7 @@
               <label class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
                 <input
                   type="checkbox"
-                  class="mt-0.5 h-4 w-4 accent-blue-600"
+                  class="mt-0.5 h-4 w-4 accent-cyan-600"
                   [checked]="isExtractedSelected(candidate.front)"
                   (change)="toggleExtractedItem(candidate.front)"
                 />
@@ -146,7 +146,7 @@
             [ngModel]="batchRawText()"
             (ngModelChange)="batchRawText.set($event)"
             placeholder="DNS :: Domain Name System :: Puerto 53 :: siglas, redes&#10;Fotosíntesis :: Proceso por el cual las plantas convierten luz en energía :: Cloroplastos :: biología"
-            class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           ></textarea>
         </label>
 

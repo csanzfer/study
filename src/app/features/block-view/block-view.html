@@ -4,7 +4,7 @@
     <div>
       <a
         routerLink="/dashboard"
-        class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+        class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-cyan-600 dark:text-slate-400 dark:hover:text-cyan-400"
       >
         <mat-icon class="!text-[16px] !h-4 !w-4">arrow_back</mat-icon>
         Volver al panel
@@ -88,7 +88,7 @@
           [ngModel]="newTopicTitle()"
           (ngModelChange)="newTopicTitle.set($event)"
           placeholder="Ej. Tema 1: La Constitución Española de 1978"
-          class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <input
           type="text"
@@ -96,7 +96,7 @@
           [ngModel]="newTopicTags()"
           (ngModelChange)="newTopicTags.set($event)"
           placeholder="Etiquetas (ej. leyes, plazos)"
-          class="sm:w-64 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="sm:w-64 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <button
           mat-flat-button
@@ -153,11 +153,11 @@
           <div
             cdkDrag
             [cdkDragDisabled]="isFiltered() || editingTopicId() === topic.id"
-            class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
+            class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors hover:border-cyan-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-700"
           >
             <div
               *cdkDragPlaceholder
-              class="h-20 rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/50 dark:border-blue-600 dark:bg-blue-950/30"
+              class="h-20 rounded-2xl border-2 border-dashed border-cyan-400 bg-cyan-50/50 dark:border-cyan-600 dark:bg-cyan-950/30"
             ></div>
 
             @if (editingTopicId() === topic.id) {
@@ -173,7 +173,7 @@
                       name="editTitle"
                       [ngModel]="editTitle()"
                       (ngModelChange)="editTitle.set($event)"
-                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
                   </div>
                   <div class="md:col-span-4">
@@ -185,7 +185,7 @@
                       name="editTags"
                       [ngModel]="editTags()"
                       (ngModelChange)="editTags.set($event)"
-                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
                   </div>
                   <div class="md:col-span-3">
@@ -196,7 +196,7 @@
                       name="editStatus"
                       [ngModel]="editStatus()"
                       (ngModelChange)="editStatus.set($event)"
-                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     >
                       @for (status of statusList; track status) {
                         <option [value]="status">{{ statusLabels[status] }}</option>
@@ -246,7 +246,7 @@
                   >
                     <div class="flex flex-wrap items-center gap-2">
                       <span class="text-xs font-semibold text-slate-400">#{{ topic.order }}</span>
-                      <h2 class="truncate text-base font-semibold text-slate-900 transition group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                      <h2 class="truncate text-base font-semibold text-slate-900 transition group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-400">
                         {{ topic.title }}
                       </h2>
                       <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -257,7 +257,7 @@
                     <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                       <span>Actualizado: {{ topic.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
                       @for (tag of topic.tags; track tag) {
-                        <span class="rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                        <span class="rounded-md bg-cyan-50 px-2 py-0.5 font-medium text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
                           #{{ tag }}
                         </span>
                       }
@@ -280,7 +280,7 @@
                     aria-label="Editar metadatos del tema"
                     matTooltip="Editar título, etiquetas o estado"
                     (click)="startEdit(topic)"
-                    class="!text-slate-400 hover:!text-blue-600 dark:hover:!text-blue-400"
+                    class="!text-slate-400 hover:!text-cyan-600 dark:hover:!text-cyan-400"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>

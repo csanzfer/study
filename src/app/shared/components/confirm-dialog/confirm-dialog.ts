@@ -27,10 +27,10 @@ export interface ConfirmDialogData {
           [class.text-red-600]="data.danger"
           [class.dark:bg-red-950/60]="data.danger"
           [class.dark:text-red-400]="data.danger"
-          [class.bg-blue-100]="!data.danger"
-          [class.text-blue-600]="!data.danger"
-          [class.dark:bg-blue-950/60]="!data.danger"
-          [class.dark:text-blue-400]="!data.danger"
+          [class.bg-cyan-100]="!data.danger"
+          [class.text-cyan-600]="!data.danger"
+          [class.dark:bg-cyan-950/60]="!data.danger"
+          [class.dark:text-cyan-400]="!data.danger"
         >
           <mat-icon>{{ data.danger ? 'warning_amber' : 'help_outline' }}</mat-icon>
         </div>

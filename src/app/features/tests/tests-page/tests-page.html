@@ -36,7 +36,7 @@
         type="button"
         (click)="selectTab(tab.id)"
         class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition"
-        [class.bg-blue-600]="activeTab() === tab.id"
+        [class.bg-cyan-600]="activeTab() === tab.id"
         [class.text-white]="activeTab() === tab.id"
         [class.shadow-xs]="activeTab() === tab.id"
         [class.bg-white]="activeTab() !== tab.id"
@@ -51,7 +51,7 @@
         @if (tab.id === 'bank') {
           <span
             class="rounded-full px-2 py-0.5 text-[11px]"
-            [class.bg-blue-500]="activeTab() === tab.id"
+            [class.bg-cyan-500]="activeTab() === tab.id"
             [class.text-white]="activeTab() === tab.id"
             [class.bg-slate-100]="activeTab() !== tab.id"
             [class.text-slate-600]="activeTab() !== tab.id"
@@ -64,7 +64,7 @@
         @if (tab.id === 'cases' && store.caseStudies().length > 0) {
           <span
             class="rounded-full px-2 py-0.5 text-[11px]"
-            [class.bg-blue-500]="activeTab() === tab.id"
+            [class.bg-cyan-500]="activeTab() === tab.id"
             [class.text-white]="activeTab() === tab.id"
             [class.bg-slate-100]="activeTab() !== tab.id"
             [class.text-slate-600]="activeTab() !== tab.id"

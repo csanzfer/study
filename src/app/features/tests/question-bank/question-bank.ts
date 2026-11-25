@@ -112,7 +112,7 @@ export class QuestionBank {
   }
 
   protected getBlockColor(blockId: StudyBlockId): string {
-    return this.store.getBlockById(blockId)?.color ?? '#2563eb';
+    return this.store.getBlockById(blockId)?.color ?? '#0891b2';
   }
 
   protected async openCreateDialog(): Promise<void> {
