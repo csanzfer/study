@@ -36,7 +36,7 @@ Este procedimiento guía al agente para analizar a fondo una issue de GitHub de 
 
 Antes de redactar el plan, inspecciona el código afectado para que **ninguna ruta, interfaz, señal o firma sea inventada**:
 
-1. **Reglas y arquitectura:** Ten siempre presentes las restricciones de `AGENTS.md` y `ARCHITECTURE.md`:
+1. **Reglas y arquitectura:** Ten siempre presentes las restricciones de `AGENTS.md` y `docs/ARCHITECTURE.md`:
    - Local-first estricto (Dexie/IndexedDB, sin `HttpClient` ni dependencias cloud).
    - Angular 22 standalone, `inject()`, Signals (`signal`, `computed`, `effect`, `toSignal`), control flow nativo (`@if`, `@for`, `@switch`).
    - Solo `src/app/core/db/` puede importar `dexie`.
@@ -44,7 +44,7 @@ Antes de redactar el plan, inspecciona el código afectado para que **ninguna ru
    - Compatibilidad de `BackupService` y soporte de tema oscuro (`dark:`).
 2. **Capa de datos (si aplica):** Revisa `src/app/core/models/study.models.ts`, `src/app/core/db/study.db.ts`, `src/app/core/repositories/study.repository.ts`, `src/app/core/services/study-store.service.ts` y `src/app/core/services/backup.service.ts`.
 3. **Capa de UI / Feature:** Lee los componentes, servicios, utilidades y archivos `*.spec.ts` relacionados en `src/app/features/` y `src/app/shared/`, además de `src/app/app.routes.ts` si requiere nuevas rutas.
-4. **Referencia funcional:** Si la issue alude a una fase del proyecto, consulta la sección correspondiente de `PLAN.md`.
+4. **Referencia funcional:** Si la issue alude a una fase del proyecto, consulta la sección correspondiente de `docs/PLAN.md` o `docs/PLAN_CRISISSTUDENT.md`.
 
 ---
 

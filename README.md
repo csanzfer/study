@@ -1,63 +1,67 @@
-# TAI Study — Preparador Local-First para Oposiciones TAI
+# CrisIsStudent — Espacio de Estudio Local-First y PWA
 
-> Aplicación web **local-first** y **PWA** diseñada específicamente para la preparación de las oposiciones del cuerpo de **Técnicos Auxiliares de Informática (TAI)** de la Administración General del Estado (AGE, España).
+> Aplicación web **local-first** y **PWA** de estudio activo: organiza cualquier materia o temario con apuntes enriquecidos, mapas mentales automáticos, planificación por vueltas, temporizador Pomodoro, simulacros de examen y tarjetas de repaso espaciado (SM-2), **100% en tu navegador y sin servidor**.
 
-![Angular](https://img.shields.io/badge/Angular-22-dd0031?style=flat-square&logo=angular)
-![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?style=flat-square&logo=typescript)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat-square&logo=tailwindcss)
-![Dexie.js](https://img.shields.io/badge/Dexie.js-IndexedDB-orange?style=flat-square)
-![Vitest](https://img.shields.io/badge/Vitest-5.0-yellow?style=flat-square&logo=vitest)
-![PWA](https://img.shields.io/badge/PWA-Ready-success?style=flat-square)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0891b2?style=flat-square)](./LICENSE)
+![Angular](https://img.shields.io/badge/Angular-22-dd0031?style=flat-square&logo=angular&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6?style=flat-square&logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white)
+![Dexie.js](https://img.shields.io/badge/Dexie.js-IndexedDB-f97316?style=flat-square)
+![Vitest](https://img.shields.io/badge/Vitest-5.0-6e9f18?style=flat-square&logo=vitest&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-10b981?style=flat-square)
 
 ---
 
 ## 📖 Descripción General
 
-**TAI Study** está concebido para resolver el principal problema del opositor: la fricción entre tomar apuntes (de libros físicos, temarios oficiales o documentos de Word) y el estudio activo (generación de esquemas mentales, control de vueltas al temario, práctica de tests oficiales con penalización y memorización espaciada con flashcards).
+**CrisIsStudent** resuelve la fricción habitual entre tomar apuntes y practicar el estudio activo. En lugar de repartir tu temario entre documentos sueltos, hojas de cálculo y apps de pago en la nube, centraliza todo el flujo de estudio en una única aplicación rápida, privada y disponible sin conexión.
 
 ### 💡 Principios Fundamentales
 
-1. **Local-First Real:** Tus datos son 100% tuyos. La aplicación funciona enteramente en el navegador utilizando **IndexedDB (Dexie.js)**. No requiere backend, registros ni conexión a internet continua.
-2. **Cero Doble Trabajo:** Al redactar o importar un apunte, la jerarquía de títulos y listas alimenta automáticamente los mapas mentales e interactúa con el generador de flashcards.
-3. **Respaldo Portable e Inmediato:** Copias de seguridad completas en formato `.json` descargables e importables en cualquier momento.
-4. **Desacoplamiento Arquitectónico:** Capa de datos basada en el patrón Repositorio (`StudyRepository`), lista para soportar sincronización en la nube opcional en el futuro sin modificar la interfaz de usuario.
+1. **Local-First Real:** Tus datos permanecen en tu dispositivo mediante **IndexedDB (Dexie.js)**. No requiere registro, backend ni conexión a internet continua.
+2. **Cero Doble Trabajo:** Los apuntes redactados o importados desde Word/Markdown alimentan automáticamente los mapas mentales interactivos y permiten crear flashcards o preguntas de test desde el propio contenido.
+3. **Respaldo Portable e Inmediato:** Exportación e importación completa en formato `.json` (retrocompatible con backups anteriores v1–v5) para mover o respaldar tu espacio de estudio en cualquier momento.
+4. **Arquitectura Desacoplada:** Persistencia abstraída tras `StudyRepository` (`InjectionToken`), preparada para tests aislados en memoria y para una futura sincronización opcional en la nube sin tocar la UI.
 
 ---
 
-## 🏛️ Los 4 Bloques Oficiales TAI
+## ✨ Funcionalidades Principales
 
-La app viene preconfigurada con la estructura del programa oficial del INAP:
-
-- **Bloque I:** Organización del Estado y Administración Electrónica (Constitución, Ley 39/2015, Ley 40/2015, ENS, RGPD, transparencia...).
-- **Bloque II:** Tecnología Básica (Hardware, sistemas operativos, redes, protocolos TCP/IP, modelos OSI, seguridad física y lógica).
-- **Bloque III:** Desarrollo de Sistemas (Ciclo de vida, metodologías ágiles, bases de datos SQL/NoSQL, desarrollo web, accesibilidad, APIs).
-- **Bloque IV:** Sistemas y Comunicaciones (Virtualización, cloud computing, administración de servidores Linux/Windows, almacenamiento, infraestructura de redes).
-
----
-
-## 🚀 Estado del Proyecto y Fases
-
-Para una visión exhaustiva del análisis funcional y técnico, consulta [PLAN.md](file:///Users/csanzfer/workspace/study/PLAN.md) y [CONTEXT.md](file:///Users/csanzfer/workspace/study/CONTEXT.md).
-
-| Fase             | Alcance                                                                                   | Estado               |
-| :--------------- | :---------------------------------------------------------------------------------------- | :------------------- |
-| **Fase 0**       | Base arquitectónica, Tailwind v4, Material, Dexie DB, PWA, Layout responsive, Backup JSON | ✅ **Completado**    |
-| **Fase 1 (MVP)** | CRUD de temas, reordenación, editor TipTap, esquemas automáticos con Markmap, búsqueda    | 🔄 **En desarrollo** |
-| **Fase 2**       | Tablero Kanban de vueltas, Heatmap de temas oxidados, planificador semanal, Pomodoro      | ⏳ Planificado       |
-| **Fase 3**       | Motor de tests oficiales (penalización `-1/3`), supuestos prácticos, banco de preguntas   | ⏳ Planificado       |
-| **Fase 4**       | Flashcards SRS (algoritmo SM-2), misiones diarias, racha flexible y gamificación          | ⏳ Planificado       |
-| **Fase 5**       | Sincronización cloud opcional y exportación avanzada a PDF/Markdown                       | ⏳ Futuro            |
+- **📚 Bloques / Asignaturas Dinámicas:** Crea, personaliza (color e icono), reordena mediante drag-and-drop y gestiona tantos bloques y temas como necesites.
+- **✍️ Editor de Apuntes Enriquecido (TipTap):** Formato completo, tablas, listas de tareas, atajos Markdown, exportación a Markdown/PDF e importación local de archivos `.docx` (Mammoth.js) y `.md`.
+- **🧠 Mapas Mentales Automáticos (Markmap):** Generación interactiva de esquemas a partir de la estructura de encabezados y listas de tus apuntes, con soporte para esquemas personalizados.
+- **🔎 Búsqueda Global Instantánea (MiniSearch):** Búsqueda *full-text* en cliente sobre títulos, etiquetas y contenido de todos tus temas.
+- **📅 Planificador, Kanban y Pomodoro:** Tablero Kanban de progreso por vueltas, mapa de calor (*heatmap*) de temas que necesitan repaso, planificador semanal y temporizador Pomodoro persistente con registro automático de sesiones.
+- **📝 Motor de Tests y Simulacros:** Banco de preguntas, importación local desde PDF (`pdfjs-dist`), generador de preguntas desde apuntes, supuestos prácticos, penalizaciones configurables (`0`, `-1/4`, `-1/3`, `-1/2`) y analíticas de rendimiento.
+- **🃏 Flashcards con Repaso Espaciado (SM-2) y Gamificación:** Algoritmo SM-2 para optimizar la retención, misiones diarias, rachas de estudio y mapa de progreso.
+- **🧭 Guía Interactiva Integrada:** Onboarding y guía de uso navegable dentro de la propia aplicación (`/guide`).
+- **🌗 Tema Claro / Oscuro y PWA Instalable:** Interfaz responsive adaptable a escritorio, tablet y móvil, instalable como aplicación offline.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-- **Framework:** [Angular 22](https://angular.dev/) (Standalone Components, Signals reactivos, Control Flow `@if`/`@for`, nuevas APIs de inyección).
-- **Estilos & UI:** [Tailwind CSS v4](https://tailwindcss.com/) + [Angular Material](https://material.angular.io/) + [Angular CDK](https://material.angular.io/cdk/categories) (`drag-drop` para reordenación y tableros).
-- **Almacenamiento Local:** [Dexie.js](https://dexie.org/) (envoltura minimalista y tipada sobre IndexedDB del navegador).
-- **Offline / PWA:** `@angular/service-worker` y Web App Manifest integrado.
-- **Testing:** [Vitest](https://vitest.dev/) integrado con el test runner de Angular.
-- **Futuras integraciones (Fase 1):** TipTap (editor enriquecido ProseMirror), Mammoth.js (conversor `.docx` a HTML semántico local), Markmap (mapas mentales interactivos), MiniSearch (búsqueda full-text en cliente).
+| Capa | Tecnología |
+| :--- | :--- |
+| **Framework** | [Angular 22](https://angular.dev/) (Standalone Components, Signals, `@if`/`@for`, `inject()`) |
+| **Estilos & UI** | [Tailwind CSS v4](https://tailwindcss.com/) + [Angular Material](https://material.angular.io/) + [Angular CDK](https://material.angular.io/cdk/categories) |
+| **Persistencia Local** | [Dexie.js](https://dexie.org/) sobre IndexedDB + `navigator.storage.persist()` |
+| **Editor & Documentos** | [TipTap](https://tiptap.dev/) (ProseMirror), [Mammoth.js](https://github.com/mwilliamson/mammoth.js) (`.docx`), [Marked](https://marked.js.org/), [PDF.js](https://mozilla.github.io/pdf.js/) |
+| **Mapas Mentales & Búsqueda** | [Markmap](https://markmap.js.org/) (`markmap-lib` + `markmap-view`), [MiniSearch](https://lucaong.github.io/minisearch/) |
+| **Offline / PWA** | `@angular/service-worker` + Web App Manifest |
+| **Testing & Calidad** | [Vitest 5](https://vitest.dev/) + jsdom + Prettier + GitHub Actions CI |
+
+---
+
+## 🏛️ Arquitectura y Decisiones Técnicas
+
+El proyecto sigue una arquitectura **Clean Client-Side** orientada a funcionalidades:
+
+- **UI sin acoplamiento a IndexedDB:** Los componentes solo interactúan con `StudyStoreService` (Signals reactivos) y nunca importan Dexie directamente (regla verificada automáticamente en CI).
+- **Patrón Repositorio:** `STUDY_REPOSITORY` desacopla el almacenamiento real (`IndexedDbStudyRepository`) de los mocks en memoria usados en pruebas unitarias (`MockStudyRepository`).
+- **Migraciones seguras:** Esquema versionado en Dexie y `BackupService` retrocompatible con versiones `v1`–`v5`.
+
+Para diagramas y detalles técnicos completos, consulta [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
 ---
 
@@ -65,61 +69,53 @@ Para una visión exhaustiva del análisis funcional y técnico, consulta [PLAN.m
 
 ### Requisitos previos
 
-- **Node.js:** `>= 20.x`
+- **Node.js:** `>= 20.x` (recomendado `24.x`, usado en CI)
 - **npm:** `>= 10.x`
 
-### Instalación
+### Instalación y desarrollo
 
 ```bash
 # Clonar el repositorio
-git clone <url-del-repositorio>
+git clone https://github.com/csanzfer/study.git
 cd study
 
 # Instalar dependencias
 npm install
-```
 
-### Servidor de Desarrollo
-
-Inicia el servidor local de desarrollo:
-
-```bash
+# Iniciar el servidor de desarrollo
 npm start
-# o bien:
-npx ng serve
 ```
 
-Abre tu navegador en `http://localhost:4200/`. La aplicación se recarga automáticamente ante cualquier cambio de código.
+Abre `http://localhost:4200/` en tu navegador. La aplicación se recarga automáticamente ante cualquier cambio.
 
 ---
 
-## 🧪 Pruebas y Construcción
+## 🧪 Pruebas y Compilación
 
-### Ejecutar Pruebas Unitarias
-
-El proyecto utiliza Vitest mediante el unit test builder de Angular:
+### Pruebas Unitarias (Vitest)
 
 ```bash
-# Modo interactivo / vigilancia:
+# Modo interactivo / vigilancia
 npm test
 
-# Modo ejecución única (CI):
+# Ejecución única (CI)
 CI=true NG_CLI_ANALYTICS=false npx ng test --watch=false
 ```
 
-### Compilar para Producción
+### Compilación
 
 ```bash
+# Producción (incluye Service Worker PWA)
 npm run build
 ```
 
-Los artefactos compilados se almacenan en el directorio `dist/tai-study/browser`.
+Los artefactos compilados se generan en `dist/tai-study/browser`.
 
 > [!NOTE]
-> En entornos aislados o sin conexión a internet (sandbox/CI offline), la optimización de fuentes web externas de Google Fonts puede omitirse usando:
+> En entornos aislados o sin acceso a internet, puedes omitir la optimización de fuentes externas compilando en modo desarrollo:
 >
 > ```bash
-> npx ng build --configuration development
+> CI=true NG_CLI_ANALYTICS=false npx ng build --configuration development
 > ```
 
 ---
@@ -127,49 +123,53 @@ Los artefactos compilados se almacenan en el directorio `dist/tai-study/browser`
 ## 📁 Estructura del Proyecto
 
 ```text
-tai-study/
-├── public/                 # Favicon, iconos SVG e información de Web App Manifest
+study/
+├── public/                       # Iconos PWA y Web App Manifest
 ├── src/
 │   ├── app/
-│   │   ├── core/           # Núcleo: Base de datos, Repositorios, Servicios y Modelos
-│   │   │   ├── db/         # Esquema Dexie (StudyDatabase), seed inicial de bloques TAI
-│   │   │   ├── models/     # Tipos TypeScript del dominio (TaiBlock, Topic, BackupPayload...)
-│   │   │   ├── repositories/ # Interfaces y adaptadores (StudyRepository, IndexedDbStudyRepository)
-│   │   │   └── services/   # StudyStoreService (Signals), BackupService, ThemeService
-│   │   ├── shared/         # Componentes y utilidades compartidas
-│   │   │   └── components/ # AppShell (sidebar + navbar), ConfirmDialog
-│   │   ├── features/       # Módulos funcionales de la aplicación
-│   │   │   ├── dashboard/  # Panel principal con resumen de avance y métricas
-│   │   │   ├── block-view/ # Vista detallada de un bloque, lista de temas y reordenación
-│   │   │   ├── notes/      # Editor de apuntes y gestión de tema (topic-detail)
-│   │   │   └── coming-soon/# Pantalla para módulos en desarrollo (schemas, planner, tests...)
-│   │   ├── app.config.ts   # Proveedores globales de Angular (Routing, PWA, Material, Repo)
-│   │   ├── app.routes.ts   # Enrutamiento perezoso (Lazy loading)
-│   │   └── app.ts          # Componente raíz con AppShell
-│   ├── styles.scss         # Estilos globales y temas Material
-│   ├── tailwind.css        # Configuración de Tailwind CSS v4
-│   └── main.ts             # Punto de entrada de la aplicación
-├── AGENTS.md               # Directrices, arquitectura y reglas para agentes de IA
-├── ARCHITECTURE.md         # Documento detallado de diseño y arquitectura del sistema
-├── CONTEXT.md              # Contexto de dominio, metodología de estudio y glosario
-├── CONTRIBUTING.md         # Guía de contribución para desarrolladores
-└── PLAN.md                 # Plan maestro de análisis funcional y fases de desarrollo
+│   │   ├── core/                 # Base de datos Dexie, Modelos, Repositorios y Servicios (Store, Backup, Theme, Pomodoro)
+│   │   ├── shared/               # AppShell, diálogos compartidos y utilidades puras (TipTap, SRS, Markdown)
+│   │   ├── features/
+│   │   │   ├── dashboard/        # Panel principal, progreso por bloques y banner de bienvenida
+│   │   │   ├── block-view/       # Lista de temas por bloque, reordenación y exportación
+│   │   │   ├── notes/            # Editor TipTap, detalle de tema, importación Word/MD y exportación
+│   │   │   ├── schemas/          # Visor interactivo de mapas mentales con Markmap
+│   │   │   ├── planner/          # Kanban de vueltas, heatmap, planificador semanal y Pomodoro
+│   │   │   ├── tests/            # Banco de preguntas, importación PDF, supuestos prácticos y simulacros
+│   │   │   ├── flashcards/       # Repaso espaciado SM-2, mazos, misiones y gamificación
+│   │   │   └── guide/            # Guía interactiva de uso integrada en la app
+│   │   ├── app.config.ts         # Proveedores globales (Routing, PWA, Material, Repositorio)
+│   │   ├── app.routes.ts         # Rutas con lazy-loading
+│   │   └── app.ts                # Componente raíz
+│   ├── styles.scss               # Estilos globales y tema Material
+│   └── tailwind.css              # Configuración de Tailwind CSS v4
+├── docs/                         # Documentación de arquitectura, contexto y hojas de ruta
+├── AGENTS.md                     # Directrices técnicas y convenciones para agentes de IA
+├── CONTRIBUTING.md               # Guía de contribución y flujo Git
+└── LICENSE                       # Licencia MIT
 ```
 
 ---
 
-## 🔒 Copias de Seguridad y Privacidad
+## 🔒 Privacidad y Copias de Seguridad
 
-- **100% Privado:** Los apuntes, notas personales y métricas de estudio nunca se envían a servidores de terceros.
-- **Persistencia en navegador:** La aplicación solicita automáticamente `navigator.storage.persist()` para evitar que el navegador limpie la base de datos por falta de espacio en disco.
-- **Descargas JSON:** En la barra superior tienes un botón dedicado a la exportación de backup en formato JSON. Se recomienda descargar copias periódicas de tu avance.
+- **100% Privado:** Tus apuntes, preguntas, flashcards y métricas nunca salen de tu navegador.
+- **Almacenamiento Persistente:** La app solicita `navigator.storage.persist()` para reducir el riesgo de limpieza automática del navegador.
+- **Copias JSON Portables:** Puedes exportar e importar toda tu base de datos en un único archivo `.json` desde la barra superior en cualquier momento.
 
 ---
 
 ## 📚 Documentación Adicional
 
-- [AGENTS.md](file:///Users/csanzfer/workspace/study/AGENTS.md) — Guía de estilo y directrices técnicas para asistentes de IA y agentes.
-- [ARCHITECTURE.md](file:///Users/csanzfer/workspace/study/ARCHITECTURE.md) — Arquitectura de software, flujo de datos y patrones de diseño.
-- [CONTEXT.md](file:///Users/csanzfer/workspace/study/CONTEXT.md) — Contexto del dominio TAI, programa del INAP y decisiones de producto.
-- [CONTRIBUTING.md](file:///Users/csanzfer/workspace/study/CONTRIBUTING.md) — Normas de contribución, git workflow y estándares de código.
-- [PLAN.md](file:///Users/csanzfer/workspace/study/PLAN.md) — Hoja de ruta funcional completa y backlog por fases.
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — Arquitectura de software, flujo de datos y patrones de diseño.
+- [docs/PLAN_CRISISSTUDENT.md](./docs/PLAN_CRISISSTUDENT.md) — Evolución hacia una plataforma de estudio genérica y multi-materia.
+- [docs/PLAN.md](./docs/PLAN.md) — Plan histórico de análisis funcional y fases originales (Fases 0–4).
+- [docs/CONTEXT.md](./docs/CONTEXT.md) — Contexto de origen del proyecto y decisiones de producto.
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — Estándares de código, convenciones de commits y checklist de PR.
+- [AGENTS.md](./AGENTS.md) — Reglas y convenciones técnicas para asistentes de IA.
+
+---
+
+## 📄 Licencia
+
+Este proyecto se distribuye bajo la licencia **MIT**. Consulta el archivo [LICENSE](./LICENSE) para más detalles.

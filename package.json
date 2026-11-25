@@ -1,6 +1,12 @@
 {
   "name": "tai-study",
   "version": "2.0.0",
+  "description": "CrisIsStudent — Aplicación web local-first y PWA de apuntes, esquemas mentales, planificación, tests y flashcards.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/csanzfer/study.git"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

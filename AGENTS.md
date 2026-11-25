@@ -1,12 +1,12 @@
 # AGENTS.md — Directrices para Asistentes y Agentes de IA
 
-Este documento define el contexto, las convenciones de ingeniería, las reglas arquitectónicas y los flujos de trabajo que **cualquier agente de Inteligencia Artificial** (Claude, Gemini, Antigravity, GitHub Copilot, Cursor, etc.) debe seguir rigurosamente al trabajar en el repositorio `tai-study`.
+Este documento define el contexto, las convenciones de ingeniería, las reglas arquitectónicas y los flujos de trabajo que **cualquier agente de Inteligencia Artificial** (Claude, Gemini, Antigravity, GitHub Copilot, Cursor, etc.) debe seguir rigurosamente al trabajar en el repositorio **CrisIsStudent**.
 
 ---
 
 ## 🎯 1. Rol y Misión del Agente
 
-Tu propósito en este proyecto es asistir en la construcción y evolución de **TAI Study**, una aplicación web **local-first** y **PWA** concebida para la preparación integral de las oposiciones a **Técnicos Auxiliares de Informática (TAI)** de la Administración General del Estado (España).
+Tu propósito en este proyecto es asistir en la construcción y evolución de **CrisIsStudent**, una aplicación web **local-first** y **PWA** de estudio activo para organizar cualquier materia o temario (apuntes, mapas mentales, planificación, tests y flashcards).
 
 ### Principios Inviolables
 
@@ -69,8 +69,9 @@ src/app/
     ├── notes/           # Editor TipTap, detalle de tema (topic-detail), importación Word
     ├── schemas/         # Mapas mentales Markmap (Fase 1)
     ├── planner/         # Kanban de vueltas, heatmap, Pomodoro (Fase 2)
-    ├── tests/           # Simulacros INAP, test por temas, penalización -1/3 (Fase 3)
-    └── flashcards/      # Repaso espaciado SM-2 y gamificación (Fase 4)
+    ├── tests/           # Simulacros, test por temas, penalización configurable (Fase 3)
+    ├── flashcards/      # Repaso espaciado SM-2 y gamificación (Fase 4)
+    └── guide/           # Guía interactiva de uso integrada en la aplicación
 ```
 
 ### Patrón Repositorio y Store Central
@@ -121,13 +122,14 @@ _Motivo:_ En producción (`ng build`), el builder intenta optimizar e integrar f
 - ❌ **NO usar directivas estructurales obsoletas:** Prohibido `*ngIf`, `*ngFor`, `*ngSwitch`. Usa `@if`, `@for`, `@switch`.
 - ❌ **NO usar módulos NgModule:** Ningún componente nuevo debe declararse en un módulo.
 - ❌ **NO romper los tests existentes:** Ejecuta siempre la suite de pruebas antes de dar una tarea por completada.
-- ❌ **NO sobreescribir `PLAN.md`:** `PLAN.md` es el documento de referencia histórica y funcional acordado. Puedes actualizar los checkboxes de progreso (`- [x]`), pero respeta su diseño general.
+- ❌ **NO sobreescribir `docs/PLAN.md`:** `docs/PLAN.md` es el documento de referencia histórica y funcional acordado. Puedes actualizar los checkboxes de progreso (`- [x]`), pero respeta su diseño general.
 
 ---
 
 ## 📌 7. Referencias Rápidas
 
-- [README.md](file:///Users/csanzfer/workspace/study/README.md) — Visión general y puesta en marcha del proyecto.
-- [PLAN.md](file:///Users/csanzfer/workspace/study/PLAN.md) — Plan maestro de análisis funcional y backlog por fases.
-- [CONTEXT.md](file:///Users/csanzfer/workspace/study/CONTEXT.md) — Contexto de negocio y programa oficial de las oposiciones TAI.
-- [ARCHITECTURE.md](file:///Users/csanzfer/workspace/study/ARCHITECTURE.md) — Detalles técnicos y arquitectura de componentes.
+- [README.md](./README.md) — Visión general y puesta en marcha del proyecto.
+- [docs/PLAN.md](./docs/PLAN.md) — Plan maestro histórico de análisis funcional y backlog por fases.
+- [docs/PLAN_CRISISSTUDENT.md](./docs/PLAN_CRISISSTUDENT.md) — Hoja de ruta de evolución a app genérica `CrisIsStudent`.
+- [docs/CONTEXT.md](./docs/CONTEXT.md) — Contexto de dominio y decisiones de producto.
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — Detalles técnicos y arquitectura de componentes.
