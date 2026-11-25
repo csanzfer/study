@@ -23,7 +23,7 @@
 - [x] **Fase 2:** Store reactivo dinámico y BackupService compatible
 - [x] **Fase 3:** UI de gestión de bloques/asignaturas y estados vacíos
 - [x] **Fase 4:** Adaptar Tests, Flashcards, Importadores y Gamificación
-- [ ] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
+- [x] **Fase 5:** Rebranding a `CrisIsStudent`, limpieza TAI, tests y verificación final
 
 ---
 
@@ -176,18 +176,18 @@
 
 ### Tareas
 
-- [ ] **Marca y PWA:**
+- [x] **Marca y PWA:**
   - `src/index.html`: `<title>CrisIsStudent — Tu espacio de estudio local-first</title>`, `meta description` y `<noscript>`.
   - `public/manifest.webmanifest`: `name: "CrisIsStudent"`, `short_name: "CrisIsStudent"`, descripción genérica e icono actualizado.
   - `public/icons/`: crear icono SVG nuevo para **CrisIsStudent** (ej. `crisisstudent-icon.svg`) y enlazarlo desde `index.html` y `manifest.webmanifest`.
   - `src/app/shared/components/app-shell/app-shell.html`: logo/monograma y título `CrisIsStudent`, placeholder de búsqueda genérico (*"Buscar temas, etiquetas o apuntes..."*).
-- [ ] **Textos y exportaciones restantes:**
+- [x] **Textos y exportaciones restantes:**
   - `src/app/features/dashboard/dashboard.html`: títulos genéricos (*"Panel de estudio"*, *"Tus asignaturas"*, *"Motor de Tests y Simulacros"*, *"Flashcards SM-2"*).
   - `src/app/features/notes/services/topic-export.service.ts`: encabezados de impresión/PDF con **CrisIsStudent** en lugar de **TAI Study**.
   - `src/app/shared/utils/tiptap-markdown.util.ts` y `src/app/features/schemas/utils/markmap-export.util.ts`: fallbacks de nombre de archivo `'apunte'` y `'esquema'` (en lugar de `'apunte-tai'` / `'esquema-tai'`).
   - `src/app/shared/components/global-search-dialog/global-search-dialog.html`: `aria-label` y estado vacío genéricos.
   - Revisar con `grep -rni "\btai\b\|inap" src/ public/` que no quede ninguna referencia residual no deseada (dejando solo la compatibilidad explícita en `BackupService` y el nombre técnico de IndexedDB `TaiStudyDB`).
-- [ ] **Verificación obligatoria (según `AGENTS.md`):**
+- [x] **Verificación obligatoria (según `AGENTS.md`):**
   - Ejecutar suite completa de tests:
     ```bash
     CI=true NG_CLI_ANALYTICS=false HOME=/tmp npx ng test --watch=false

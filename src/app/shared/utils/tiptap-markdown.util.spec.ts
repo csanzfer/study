@@ -215,6 +215,6 @@ describe('tiptap-markdown.util', () => {
     expect(sanitizeExportFilename('Tema 1: Constitución Española (1978)')).toBe(
       'tema-1-constitucion-espanola-1978',
     );
-    expect(sanitizeExportFilename('   ')).toBe('apunte-tai');
+    expect(sanitizeExportFilename('   ')).toBe('apunte');
   });
 });

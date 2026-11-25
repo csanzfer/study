@@ -8,10 +8,10 @@
     <input
       #searchInput
       type="text"
-      aria-label="Buscar en todo el temario TAI"
+      aria-label="Buscar en todo tu temario"
       [ngModel]="query()"
       (ngModelChange)="query.set($event)"
-      placeholder="Buscar temas, leyes, puertos, comandos o etiquetas..."
+      placeholder="Buscar temas, conceptos, etiquetas o apuntes..."
       class="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
     />
     @if (query()) {
@@ -43,7 +43,7 @@
             Sin resultados para «{{ query() }}»
           </p>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Prueba con otra palabra clave, una etiqueta o parte de una ley (ej. «39/2015», «443»).
+            Prueba con otra palabra clave, un concepto o una etiqueta de tus apuntes.
           </p>
         </div>
       } @else {
@@ -150,7 +150,7 @@
         </div>
       } @else {
         <div class="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-          Aún no tienes temas creados. Crea o importa apuntes en cualquiera de los 4 bloques TAI para buscarlos al instante.
+          Aún no tienes temas creados. Crea una asignatura e importa o redacta apuntes para buscarlos al instante.
         </div>
       }
     }

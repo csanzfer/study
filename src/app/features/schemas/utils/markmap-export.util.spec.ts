@@ -6,7 +6,7 @@ describe('markmap-export.util', () => {
     expect(slugifyExportFilename('Tema 1: Constitución Española (1978)')).toBe(
       'tema-1-constitucion-espanola-1978',
     );
-    expect(slugifyExportFilename('   ')).toBe('esquema-tai');
+    expect(slugifyExportFilename('   ')).toBe('esquema');
   });
 
   it('builds a standalone SVG string with embedded style and themed background rect', () => {

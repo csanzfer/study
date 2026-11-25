@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { marked } from 'marked';
-import { TaiBlock, Topic } from '../../../core/models/study.models';
+import { StudyBlock, Topic } from '../../../core/models/study.models';
 import {
   TopicMarkdownExportOptions,
   buildBlockMarkdownDocument,
@@ -14,7 +14,7 @@ export class TopicExportService {
   private activePrintCleanupTimer: ReturnType<typeof setTimeout> | null = null;
   downloadTopicMarkdown(
     topic: Topic,
-    block?: TaiBlock,
+    block?: StudyBlock,
     options: TopicMarkdownExportOptions = {},
   ): string {
     const markdown = buildTopicMarkdownDocument(topic, block, options);
@@ -25,7 +25,7 @@ export class TopicExportService {
 
   async copyTopicMarkdown(
     topic: Topic,
-    block?: TaiBlock,
+    block?: StudyBlock,
     options: TopicMarkdownExportOptions = {},
   ): Promise<boolean> {
     const markdown = buildTopicMarkdownDocument(topic, block, options);
@@ -37,7 +37,7 @@ export class TopicExportService {
   }
 
   downloadBlockMarkdown(
-    block: TaiBlock,
+    block: StudyBlock,
     topics: Topic[],
     options: TopicMarkdownExportOptions = {},
   ): string {
@@ -49,7 +49,7 @@ export class TopicExportService {
 
   printTopicPdf(
     topic: Topic,
-    block?: TaiBlock,
+    block?: StudyBlock,
     options: TopicMarkdownExportOptions = {},
   ): void {
     const markdown = buildTopicMarkdownDocument(topic, block, options);
@@ -59,7 +59,7 @@ export class TopicExportService {
   }
 
   printBlockPdf(
-    block: TaiBlock,
+    block: StudyBlock,
     topics: Topic[],
     options: TopicMarkdownExportOptions = {},
   ): void {
@@ -90,7 +90,7 @@ export class TopicExportService {
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>${this.escapeHtml(title)} — TAI Study</title>
+  <title>${this.escapeHtml(title)} — crisisstudent</title>
   <style>
     @page {
       size: A4;
@@ -245,7 +245,7 @@ export class TopicExportService {
 </head>
 <body>
   <div class="print-banner">
-    <span><strong>TAI STUDY</strong> · ${this.escapeHtml(subtitle)}</span>
+    <span><strong><span style="color:#2563eb">cris</span><span style="color:#60a5fa">is</span><span style="color:#0f172a">student</span></strong> · ${this.escapeHtml(subtitle)}</span>
     <span>Exportado el ${exportedDate}</span>
   </div>
   <article>

@@ -54,7 +54,8 @@ describe('TopicExportService', () => {
     );
 
     expect(html).toContain('@page');
-    expect(html).toContain('TAI STUDY');
+    expect(html).toContain('— crisisstudent');
+    expect(html).toContain('>cris</span><span');
     expect(html).toContain('class="exam-callout"');
     expect(html).toContain('SRAM no necesita refresco.');
     expect(html).not.toContain('<script>');

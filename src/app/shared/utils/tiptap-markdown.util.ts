@@ -129,7 +129,7 @@ export function buildBlockMarkdownDocument(
   return parts.join('\n\n').trim() + '\n';
 }
 
-export function sanitizeExportFilename(value: string, fallback = 'apunte-tai'): string {
+export function sanitizeExportFilename(value: string, fallback = 'apunte'): string {
   const cleaned = value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

@@ -1,6 +1,6 @@
 const EXPORT_PADDING = 32;
 
-export function slugifyExportFilename(title: string, fallback = 'esquema-tai'): string {
+export function slugifyExportFilename(title: string, fallback = 'esquema'): string {
   const slug = title
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

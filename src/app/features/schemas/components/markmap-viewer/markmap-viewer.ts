@@ -58,7 +58,7 @@ export class MarkmapViewer implements AfterViewInit {
 
   readonly markdown = input<string>('');
   readonly minHeight = input<string>('520px');
-  readonly exportTitle = input<string>('esquema-tai');
+  readonly exportTitle = input<string>('esquema');
   readonly showToolbar = input<boolean>(true);
   readonly showDepthSelector = input<boolean>(false);
   readonly depth = input<OutlineDepth>('full');
