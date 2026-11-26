@@ -158,7 +158,7 @@
           [ngModel]="answerKeyRawText()"
           (ngModelChange)="answerKeyRawText.set($event)"
           placeholder="1 A   2 C   3 D   4 ANULADA   R1 B..."
-          class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-xs text-slate-800 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-xs text-slate-800 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:bg-slate-950"
         ></textarea>
       </div>
 
@@ -407,7 +407,7 @@
               rows="2"
               [ngModel]="q.prompt"
               (ngModelChange)="updateQuestion(q.id, { prompt: $event })"
-              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-xs font-medium text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/70 p-2 text-xs font-medium text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:bg-slate-900"
             ></textarea>
 
             <div class="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">

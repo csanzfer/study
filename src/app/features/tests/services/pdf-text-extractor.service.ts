@@ -11,14 +11,45 @@ export interface PdfExtractionResult {
   pageCount: number;
 }
 
+export interface PdfStructuredLine {
+  text: string;
+  fontSize: number;
+  y: number;
+}
+
+export interface PdfStructuredPage {
+  pageNumber: number;
+  lines: PdfStructuredLine[];
+}
+
+export interface PdfStructuredExtractionResult {
+  pages: PdfStructuredPage[];
+  pageCount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PdfTextExtractorService {
   private workerConfigured = false;
 
   async extractTextFromPdfFile(file: File): Promise<PdfExtractionResult> {
+    const structured = await this.extractStructuredPagesFromPdfFile(file);
+    return {
+      text: structured.pages
+        .map((page) => page.lines.map((line) => line.text).join('\n'))
+        .join('\n\n'),
+      pageCount: structured.pageCount,
+    };
+  }
+
+  async extractStructuredPagesFromPdfFile(
+    file: File,
+  ): Promise<PdfStructuredExtractionResult> {
     const pdfjs = await import('pdfjs-dist');
     if (!this.workerConfigured) {
-      pdfjs.GlobalWorkerOptions.workerSrc = '/assets/pdf.worker.min.mjs';
+      pdfjs.GlobalWorkerOptions.workerSrc =
+        typeof document !== 'undefined' && document.baseURI
+          ? new URL('assets/pdf.worker.min.mjs', document.baseURI).toString()
+          : '/assets/pdf.worker.min.mjs';
       this.workerConfigured = true;
     }
 
@@ -27,7 +58,7 @@ export class PdfTextExtractorService {
     try {
       const pdf = await loadingTask.promise;
 
-      const pageTexts: string[] = [];
+      const pages: PdfStructuredPage[] = [];
       for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
         const page = await pdf.getPage(pageNumber);
         const content = await page.getTextContent();
@@ -41,11 +72,14 @@ export class PdfTextExtractorService {
             });
           }
         }
-        pageTexts.push(this.reconstructLinesFromTextItems(items));
+        pages.push({
+          pageNumber,
+          lines: this.reconstructStructuredLinesFromTextItems(items),
+        });
       }
 
       return {
-        text: pageTexts.join('\n\n'),
+        pages,
         pageCount: pdf.numPages,
       };
     } finally {
@@ -54,13 +88,20 @@ export class PdfTextExtractorService {
   }
 
   reconstructLinesFromTextItems(items: PdfTextItemLike[]): string {
+    return this.reconstructStructuredLinesFromTextItems(items)
+      .map((line) => line.text)
+      .join('\n');
+  }
+
+  reconstructStructuredLinesFromTextItems(items: PdfTextItemLike[]): PdfStructuredLine[] {
     if (items.length === 0) {
-      return '';
+      return [];
     }
 
     interface PositionedChunk {
       x: number;
       y: number;
+      fontSize: number;
       text: string;
       hasEOL: boolean;
     }
@@ -73,11 +114,15 @@ export class PdfTextExtractorService {
       }
       const x = typeof item.transform?.[4] === 'number' ? item.transform[4] : 0;
       const y = typeof item.transform?.[5] === 'number' ? item.transform[5] : 0;
-      chunks.push({ x, y, text, hasEOL: Boolean(item.hasEOL) });
+      const scaleX = typeof item.transform?.[0] === 'number' ? item.transform[0] : 0;
+      const skewY = typeof item.transform?.[1] === 'number' ? item.transform[1] : 0;
+      const scaleY = typeof item.transform?.[3] === 'number' ? item.transform[3] : 0;
+      const fontSize = Math.hypot(scaleX, skewY) || Math.abs(scaleY) || 0;
+      chunks.push({ x, y, fontSize, text, hasEOL: Boolean(item.hasEOL) });
     }
 
     if (chunks.length === 0) {
-      return '';
+      return [];
     }
 
     // Group chunks into visual lines using a Y tolerance of 3pt.
@@ -99,13 +144,17 @@ export class PdfTextExtractorService {
     return lines
       .map((line) => {
         line.items.sort((a, b) => a.x - b.x);
-        return line.items
+        const text = line.items
           .map((item) => item.text)
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
+        const fontSize = line.items.reduce(
+          (maxSize, item) => (item.text.trim() ? Math.max(maxSize, item.fontSize) : maxSize),
+          0,
+        );
+        return { text, fontSize, y: line.y };
       })
-      .filter(Boolean)
-      .join('\n');
+      .filter((line) => Boolean(line.text));
   }
 }
