@@ -1,6 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { DatePipe } from '@angular/common';
-import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -13,17 +13,29 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
-import { CreateBlockInput } from '../../../core/models/study.models';
+import { CreateBlockInput, InitialSyncStrategy } from '../../../core/models/study.models';
 import { BackupService } from '../../../core/services/backup.service';
 import { PomodoroService } from '../../../core/services/pomodoro.service';
 import { SearchService } from '../../../core/services/search.service';
 import { StudyStoreService } from '../../../core/services/study-store.service';
+import { SupabaseAuthService } from '../../../core/services/supabase-auth.service';
+import { SupabaseSyncService } from '../../../core/services/supabase-sync.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import {
   BlockEditorDialog,
   BlockEditorDialogData,
 } from '../block-editor-dialog/block-editor-dialog';
 import { GlobalSearchDialog } from '../global-search-dialog/global-search-dialog';
+import {
+  AuthDialog,
+  AuthDialogData,
+  AuthDialogResult,
+} from '../sync-dialogs/auth-dialog';
+import {
+  InitialSyncDialog,
+  InitialSyncDialogData,
+} from '../sync-dialogs/initial-sync-dialog';
+import { LogoutDialog, LogoutDialogResult } from '../sync-dialogs/logout-dialog';
 
 interface ToolNavItem {
   label: string;
@@ -60,12 +72,42 @@ export class AppShell {
   protected readonly theme = inject(ThemeService);
   protected readonly backup = inject(BackupService);
   protected readonly pomodoro = inject(PomodoroService);
+  protected readonly auth = inject(SupabaseAuthService);
+  protected readonly sync = inject(SupabaseSyncService);
   private readonly searchService = inject(SearchService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   private activeSearchDialogRef: MatDialogRef<GlobalSearchDialog> | null = null;
+  private passwordSetupDialogOpen = false;
+
+  protected readonly syncStatusLabel = computed(() => {
+    if (!this.auth.isAuthenticated()) {
+      return 'Local-First · Offline';
+    }
+    switch (this.sync.status()) {
+      case 'syncing':
+        return 'Sincronizando...';
+      case 'offline_pending':
+        return this.sync.pendingCount() > 0
+          ? `Offline · ${this.sync.pendingCount()} pend.`
+          : 'Sin conexión · Offline';
+      case 'error':
+        return 'Error de sincronización';
+      default:
+        return 'Sincronizado en la nube';
+    }
+  });
+
+  constructor() {
+    effect(() => {
+      if (this.auth.needsPasswordSetup() && !this.passwordSetupDialogOpen) {
+        this.passwordSetupDialogOpen = true;
+        void this.openPasswordSetupDialog();
+      }
+    });
+  }
   protected readonly shortcutHint =
     typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)
       ? '⌘K'
@@ -191,6 +233,127 @@ export class AppShell {
       const message =
         err instanceof Error ? err.message : 'Error al importar el archivo de backup.';
       this.snackBar.open(message, 'Cerrar', { duration: 5000 });
+    }
+  }
+
+  protected async openLoginDialog(): Promise<void> {
+    const dialogRef = this.dialog.open<AuthDialog, AuthDialogData, AuthDialogResult>(AuthDialog, {
+      width: '440px',
+      maxWidth: '94vw',
+      data: { initialMode: 'login' },
+    });
+
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (result?.authenticated) {
+      await this.runPostLoginSync();
+    }
+  }
+
+  protected async openPasswordSetupDialog(): Promise<void> {
+    try {
+      const dialogRef = this.dialog.open<AuthDialog, AuthDialogData, AuthDialogResult>(AuthDialog, {
+        width: '440px',
+        maxWidth: '94vw',
+        data: { initialMode: 'set_password' },
+      });
+
+      const result = await firstValueFrom(dialogRef.afterClosed());
+      if (result?.passwordUpdated) {
+        this.snackBar.open('Contraseña actualizada correctamente.', 'Cerrar', { duration: 3500 });
+        if (this.auth.isAuthenticated()) {
+          await this.runPostLoginSync();
+        }
+      }
+    } finally {
+      this.passwordSetupDialogOpen = false;
+    }
+  }
+
+  protected async triggerManualSync(): Promise<void> {
+    const ok = await this.sync.syncNow();
+    if (ok) {
+      this.snackBar.open('Datos sincronizados correctamente.', 'Cerrar', { duration: 2500 });
+    } else if (this.sync.lastError()) {
+      this.snackBar.open(`Error al sincronizar: ${this.sync.lastError()}`, 'Cerrar', {
+        duration: 4500,
+      });
+    } else if (!this.sync.isOnline()) {
+      this.snackBar.open('Sin conexión. Tus cambios se subirán al volver a estar online.', 'Cerrar', {
+        duration: 3500,
+      });
+    }
+  }
+
+  protected async openLogoutDialog(): Promise<void> {
+    const dialogRef = this.dialog.open<LogoutDialog, unknown, LogoutDialogResult>(LogoutDialog, {
+      width: '460px',
+      maxWidth: '94vw',
+    });
+
+    const choice = await firstValueFrom(dialogRef.afterClosed());
+    if (!choice) {
+      return;
+    }
+
+    await this.sync.signOutAndCleanup(choice === 'clear_local');
+    this.snackBar.open(
+      choice === 'clear_local'
+        ? 'Sesión cerrada y datos locales borrados.'
+        : 'Sesión cerrada. Conservas tus datos en modo local.',
+      'Cerrar',
+      { duration: 3500 },
+    );
+  }
+
+  private async runPostLoginSync(): Promise<void> {
+    const userId = this.auth.userId();
+    const userEmail = this.auth.userEmail() ?? '';
+    if (!userId) {
+      return;
+    }
+
+    try {
+      const assessment = await this.sync.assessInitialSync(userId);
+      let strategy: InitialSyncStrategy | undefined;
+
+      if (assessment.isDifferentUser || (assessment.hasLocalData && assessment.hasCloudData)) {
+        const dialogRef = this.dialog.open<
+          InitialSyncDialog,
+          InitialSyncDialogData,
+          InitialSyncStrategy | undefined
+        >(InitialSyncDialog, {
+          width: '500px',
+          maxWidth: '94vw',
+          disableClose: true,
+          data: { assessment, userEmail },
+        });
+        strategy = await firstValueFrom(dialogRef.afterClosed());
+      } else if (assessment.hasCloudData && !assessment.hasLocalData) {
+        strategy = 'use_cloud';
+      } else if (assessment.hasLocalData && !assessment.hasCloudData) {
+        strategy = 'upload_local';
+      } else {
+        strategy = 'merge';
+      }
+
+      if (!strategy) {
+        return;
+      }
+
+      const ok = await this.sync.executeInitialSync(strategy);
+      if (ok) {
+        this.snackBar.open('Sincronización completada con tu cuenta.', 'Cerrar', { duration: 3000 });
+      } else {
+        this.snackBar.open(
+          this.sync.lastError() ?? 'No se pudo completar la sincronización inicial.',
+          'Cerrar',
+          { duration: 4500 },
+        );
+      }
+    } catch {
+      this.snackBar.open('Error al comprobar el estado de sincronización.', 'Cerrar', {
+        duration: 4500,
+      });
     }
   }
 }

@@ -52,6 +52,7 @@
 - **📝 Motor de Tests y Simulacros:** Banco de preguntas, importación local desde PDF (`pdfjs-dist`), generador de preguntas desde apuntes, supuestos prácticos, penalizaciones configurables (`0`, `-1/4`, `-1/3`, `-1/2`) y analíticas de rendimiento.
 - **🃏 Flashcards con Repaso Espaciado (SM-2) y Gamificación:** Algoritmo SM-2 para optimizar la retención, misiones diarias, rachas de estudio y mapa de progreso.
 - **🧭 Guía Interactiva Integrada:** Onboarding y guía de uso navegable dentro de la propia aplicación (`/guide`).
+- **☁️ Sincronización Multidispositivo Opcional (Supabase):** Sincronización incremental *local-first* entre dispositivos con autenticación por invitación (Email + Contraseña + PKCE) y aislamiento estricto por usuario mediante Row Level Security (RLS).
 - **🌗 Tema Claro / Oscuro y PWA Instalable:** Interfaz responsive adaptable a escritorio, tablet y móvil, instalable como aplicación offline.
 
 ---
@@ -168,17 +169,35 @@ study/
 
 ---
 
-## 🔒 Privacidad y Copias de Seguridad
+## 🔒 Privacidad, Copias de Seguridad y Base de Datos (Supabase)
 
-- **100% Privado:** Tus apuntes, preguntas, flashcards y métricas nunca salen de tu navegador.
+- **100 % Local-First por defecto:** Sin configurar Supabase ni iniciar sesión, tus apuntes, preguntas, flashcards y métricas nunca salen de tu navegador.
 - **Almacenamiento Persistente:** La app solicita `navigator.storage.persist()` para reducir el riesgo de limpieza automática del navegador.
 - **Copias JSON Portables:** Puedes exportar e importar toda tu base de datos en un único archivo `.json` desde la barra superior en cualquier momento.
+
+### ☁️ Cómo configurar tu propia base de datos con Supabase (Opcional)
+
+Si despliegas tu propia instancia o quieres activar la sincronización multidispositivo en local o GitHub Pages:
+
+1. **Crear tablas y políticas RLS:** Crea un proyecto en [Supabase](https://supabase.com/) y ejecuta el script [supabase/migrations/20261126000001_initial_schema.sql](./supabase/migrations/20261126000001_initial_schema.sql) en el **SQL Editor**. Esto crea las 9 tablas de dominio + `profiles`, índices, triggers de `server_updated_at`, permisos `GRANT` para `authenticated` y políticas **RLS** estrictas (acceso denegado a `anon`).
+2. **Configurar Auth (acceso por invitación):**
+   - En *Authentication → Providers → Email*, desactiva **Allow new users to sign up**.
+   - En *Authentication → URL Configuration*, configura **Site URL** (ej. `https://tu-usuario.github.io/study/`) y añade `http://localhost:4200/**` y `https://tu-usuario.github.io/study/**` en **Redirect URLs**.
+   - Da de alta usuarios desde *Authentication → Users → Invite user*.
+3. **Conectar en desarrollo local:**
+   - Copia `src/environments/environment.local.example.ts` a `src/environments/environment.local.ts` (ignorado por Git) y rellena tu `Project URL` (`https://<id>.supabase.co`, sin `/rest/v1/`) y tu clave pública (`Publishable` o `anon` — **nunca** `service_role`).
+   - Ejecuta `npm run env:local && npm start`. *(Antes de hacer commit, restaura `src/environments/environment.ts` con `git checkout -- src/environments/environment.ts`.)*
+4. **Conectar en GitHub Pages:**
+   - En tu repositorio → *Settings → Secrets and variables → Actions → Variables*, crea `SUPABASE_URL` y `SUPABASE_ANON_KEY`. El workflow [deploy-pages.yml](./.github/workflows/deploy-pages.yml) los inyecta automáticamente en el build.
+
+Para más detalles técnicos, arquitectura de conflictos y seguridad, consulta [docs/PLAN_SUPABASE.md](./docs/PLAN_SUPABASE.md).
 
 ---
 
 ## 📚 Documentación Adicional
 
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — Arquitectura de software, flujo de datos y patrones de diseño.
+- [docs/PLAN_SUPABASE.md](./docs/PLAN_SUPABASE.md) — Diseño técnico, seguridad RLS y flujo de sincronización multidispositivo con Supabase.
 - [docs/PLAN_CRISISSTUDENT.md](./docs/PLAN_CRISISSTUDENT.md) — Evolución hacia una plataforma de estudio genérica y multi-materia.
 - [docs/PLAN.md](./docs/PLAN.md) — Plan histórico de análisis funcional y fases originales (Fases 0–4).
 - [docs/CONTEXT.md](./docs/CONTEXT.md) — Contexto de origen del proyecto y decisiones de producto.

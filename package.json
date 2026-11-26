@@ -1,6 +1,6 @@
 {
   "name": "tai-study",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "CrisIsStudent — Aplicación web local-first y PWA de apuntes, esquemas mentales, planificación, tests y flashcards.",
   "license": "MIT",
   "repository": {
@@ -13,6 +13,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "env:local": "node scripts/write-supabase-env.mjs --from-local",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -28,6 +29,7 @@
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
     "@angular/service-worker": "^22.3.0",
+    "@supabase/supabase-js": "^2.119.2",
     "@tailwindcss/postcss": "^4.3.5",
     "@tiptap/core": "^3.35.0",
     "@tiptap/extension-placeholder": "^3.35.0",

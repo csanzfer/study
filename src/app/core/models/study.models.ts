@@ -32,6 +32,7 @@ export interface StudyBlock {
   color: string;
   icon: string;
   order: number;
+  updatedAt?: string;
 }
 
 export interface CreateBlockInput {
@@ -159,6 +160,7 @@ export interface StudySession {
   durationMinutes: number;
   type: StudySessionType;
   notes?: string;
+  updatedAt?: string;
 }
 
 export interface CreateStudySessionInput {
@@ -183,6 +185,7 @@ export interface WeeklyPlanItem {
   completed: boolean;
   completedAt?: string;
   targetPomodoros?: number;
+  updatedAt?: string;
 }
 
 export interface CreateWeeklyPlanItemInput {
@@ -339,6 +342,7 @@ export interface ExamAttempt {
   maxScore: number;
   scoreOn10: number;
   durationSec: number;
+  updatedAt?: string;
 }
 
 export interface CreateExamAttemptInput {
@@ -468,3 +472,40 @@ export interface BackupPayload {
   flashcards?: Flashcard[];
   gamificationProfile?: GamificationProfile;
 }
+
+// --- Fase 5: Sincronización multidispositivo (Supabase) ---
+
+export type SyncEntityType =
+  | 'blocks'
+  | 'topics'
+  | 'studySessions'
+  | 'weeklyPlanItems'
+  | 'caseStudies'
+  | 'questions'
+  | 'examAttempts'
+  | 'flashcards'
+  | 'gamification';
+
+export type SyncOperation = 'upsert' | 'delete';
+
+export interface SyncOutboxEntry {
+  key: string; // `${entityType}:${entityId}` para deduplicar cambios sobre la misma entidad
+  entityType: SyncEntityType;
+  entityId: string;
+  operation: SyncOperation;
+  updatedAt: string;
+}
+
+export interface SyncMetaEntry {
+  key: string;
+  value: string;
+}
+
+export type SyncStatus =
+  | 'local_only'
+  | 'idle'
+  | 'syncing'
+  | 'offline_pending'
+  | 'error';
+
+export type InitialSyncStrategy = 'merge' | 'use_cloud' | 'upload_local';
