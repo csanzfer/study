@@ -56,10 +56,18 @@ export function isRemoteNewer(localUpdatedAt?: string, remoteUpdatedAt?: string)
   if (!remoteUpdatedAt) {
     return false;
   }
+  const remoteTime = Date.parse(remoteUpdatedAt);
+  if (Number.isNaN(remoteTime)) {
+    return false;
+  }
   if (!localUpdatedAt) {
     return true;
   }
-  return Date.parse(remoteUpdatedAt) >= Date.parse(localUpdatedAt);
+  const localTime = Date.parse(localUpdatedAt);
+  if (Number.isNaN(localTime)) {
+    return true;
+  }
+  return remoteTime >= localTime;
 }
 
 export function blockToRow(userId: string, block: StudyBlock, nowIso: string): SupabaseSyncRow {

@@ -39,6 +39,8 @@ describe('supabase-sync-mapper.util', () => {
   it('evaluates isRemoteNewer with pure LWW semantics', () => {
     expect(isRemoteNewer(undefined, now)).toBe(true);
     expect(isRemoteNewer(now, undefined)).toBe(false);
+    expect(isRemoteNewer(now, 'not-a-date')).toBe(false);
+    expect(isRemoteNewer('not-a-date', now)).toBe(true);
     expect(isRemoteNewer('2026-11-26T10:00:00.000Z', '2026-11-26T12:00:00.000Z')).toBe(true);
     expect(isRemoteNewer('2026-11-26T12:00:00.000Z', '2026-11-26T12:00:00.000Z')).toBe(true);
     expect(isRemoteNewer('2026-11-26T14:00:00.000Z', '2026-11-26T12:00:00.000Z')).toBe(false);

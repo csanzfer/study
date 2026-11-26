@@ -43,6 +43,7 @@ const META_USER_ID = 'userId';
 const META_INITIAL_SYNCED = 'initialSyncedUserId';
 const PUSH_DEBOUNCE_MS = 1500;
 const BATCH_SIZE = 100;
+const PAGE_SIZE = 500;
 
 export interface InitialSyncAssessment {
   isDifferentUser: boolean;
@@ -143,6 +144,11 @@ export class SupabaseSyncService {
     }
   }
 
+  async hasCompletedInitialSync(userId: string): Promise<boolean> {
+    const syncedUserId = await this.getMeta(META_INITIAL_SYNCED);
+    return syncedUserId === userId;
+  }
+
   async assessInitialSync(userId: string): Promise<InitialSyncAssessment> {
     const client = this.supabase.client;
     const previousUserId = await this.getMeta(META_USER_ID);
@@ -154,12 +160,18 @@ export class SupabaseSyncService {
       localQuestionCount,
       localFlashcardCount,
       localSessionCount,
+      localCaseStudyCount,
+      localWeeklyPlanCount,
+      localExamAttemptCount,
     ] = await Promise.all([
       this.db.blocks.count(),
       this.db.topics.count(),
       this.db.questions.count(),
       this.db.flashcards.count(),
       this.db.studySessions.count(),
+      this.db.caseStudies.count(),
+      this.db.weeklyPlanItems.count(),
+      this.db.examAttempts.count(),
     ]);
 
     const hasLocalData =
@@ -167,7 +179,10 @@ export class SupabaseSyncService {
         localTopicCount +
         localQuestionCount +
         localFlashcardCount +
-        localSessionCount >
+        localSessionCount +
+        localCaseStudyCount +
+        localWeeklyPlanCount +
+        localExamAttemptCount >
       0;
 
     let cloudBlockCount = 0;
@@ -175,7 +190,16 @@ export class SupabaseSyncService {
     let cloudOtherCount = 0;
 
     if (client) {
-      const [blocksRes, topicsRes, questionsRes, flashcardsRes] = await Promise.all([
+      const [
+        blocksRes,
+        topicsRes,
+        questionsRes,
+        flashcardsRes,
+        sessionsRes,
+        caseStudiesRes,
+        weeklyPlanRes,
+        examAttemptsRes,
+      ] = await Promise.all([
         client
           .from('study_blocks')
           .select('id', { count: 'exact', head: true })
@@ -196,14 +220,50 @@ export class SupabaseSyncService {
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId)
           .is('deleted_at', null),
+        client
+          .from('study_sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .is('deleted_at', null),
+        client
+          .from('case_studies')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .is('deleted_at', null),
+        client
+          .from('weekly_plan_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .is('deleted_at', null),
+        client
+          .from('exam_attempts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .is('deleted_at', null),
       ]);
 
-      if (blocksRes.error) throw blocksRes.error;
-      if (topicsRes.error) throw topicsRes.error;
+      for (const res of [
+        blocksRes,
+        topicsRes,
+        questionsRes,
+        flashcardsRes,
+        sessionsRes,
+        caseStudiesRes,
+        weeklyPlanRes,
+        examAttemptsRes,
+      ]) {
+        if (res.error) throw res.error;
+      }
 
       cloudBlockCount = blocksRes.count ?? 0;
       cloudTopicCount = topicsRes.count ?? 0;
-      cloudOtherCount = (questionsRes.count ?? 0) + (flashcardsRes.count ?? 0);
+      cloudOtherCount =
+        (questionsRes.count ?? 0) +
+        (flashcardsRes.count ?? 0) +
+        (sessionsRes.count ?? 0) +
+        (caseStudiesRes.count ?? 0) +
+        (weeklyPlanRes.count ?? 0) +
+        (examAttemptsRes.count ?? 0);
     }
 
     return {
@@ -225,6 +285,29 @@ export class SupabaseSyncService {
       return false;
     }
 
+    if (this.pushTimer) {
+      clearTimeout(this.pushTimer);
+      this.pushTimer = null;
+    }
+
+    if (this.syncInFlight) {
+      await this.syncInFlight.catch(() => false);
+    }
+
+    const run = this.runInitialSyncInternal(client, userId, strategy).finally(() => {
+      if (this.syncInFlight === run) {
+        this.syncInFlight = null;
+      }
+    });
+    this.syncInFlight = run;
+    return run;
+  }
+
+  private async runInitialSyncInternal(
+    client: SupabaseClient,
+    userId: string,
+    strategy: InitialSyncStrategy,
+  ): Promise<boolean> {
     this.status.set('syncing');
     this.lastError.set(null);
 
@@ -253,17 +336,19 @@ export class SupabaseSyncService {
         this.lastSyncedAt.set(new Date().toISOString());
         await this.store.refresh();
       } else if (strategy === 'upload_local') {
-        await this.db.syncOutbox.clear();
+        const snapshotOutbox = await this.db.syncOutbox.toArray();
         await this.deleteMeta(META_LAST_PULLED_AT);
         await this.softDeleteAllCloudData(client, userId);
         await this.pushAllLocalData(client, userId);
+        await this.deleteUnchangedOutboxEntries(snapshotOutbox);
         await this.setMeta(META_INITIAL_SYNCED, userId);
         this.lastSyncedAt.set(new Date().toISOString());
       } else {
         // merge (Last-Write-Wins): primero bajamos deltas de la nube (LWW) y luego subimos todo local
-        await this.db.syncOutbox.clear();
+        const snapshotOutbox = await this.db.syncOutbox.toArray();
         const maxServerTs = await this.pullFromCloud(client, userId, null);
         await this.pushAllLocalData(client, userId);
+        await this.deleteUnchangedOutboxEntries(snapshotOutbox);
         if (maxServerTs) {
           await this.setMeta(META_LAST_PULLED_AT, maxServerTs);
         }
@@ -273,6 +358,9 @@ export class SupabaseSyncService {
       }
 
       await this.refreshPendingCount();
+      if (this.pendingCount() > 0 && this.isOnline()) {
+        this.schedulePush();
+      }
       this.status.set('idle');
       return true;
     } catch (err) {
@@ -362,15 +450,25 @@ export class SupabaseSyncService {
     this.lastError.set(null);
 
     try {
+      const previousUserId = await this.getMeta(META_USER_ID);
+      if (previousUserId && previousUserId !== userId) {
+        this.lastError.set(
+          'Los datos locales pertenecen a otra cuenta anterior. Cierra sesión y vuelve a iniciar sesión para elegir cómo sincronizar.',
+        );
+        this.status.set('error');
+        return false;
+      }
+
       await this.setMeta(META_USER_ID, userId);
 
       const initialSyncedUserId = await this.getMeta(META_INITIAL_SYNCED);
       if (initialSyncedUserId !== userId) {
-        // Autorrecuperación: si nunca se completó la sincronización inicial,
-        // hacemos pull completo LWW + subida completa de los datos locales.
+        // Autorrecuperación: si nunca se completó la sincronización inicial para esta misma cuenta,
+        // hacemos pull completo LWW + subida completa de los datos locales sin perder ediciones en vuelo.
+        const snapshotOutbox = await this.db.syncOutbox.toArray();
         const { maxServerUpdatedAt, appliedCount } = await this.pullDelta(client, userId, null);
         await this.pushAllLocalData(client, userId);
-        await this.db.syncOutbox.clear();
+        await this.deleteUnchangedOutboxEntries(snapshotOutbox);
         if (maxServerUpdatedAt) {
           await this.setMeta(META_LAST_PULLED_AT, maxServerUpdatedAt);
         }
@@ -400,6 +498,9 @@ export class SupabaseSyncService {
       }
 
       await this.refreshPendingCount();
+      if (this.pendingCount() > 0 && this.isOnline()) {
+        this.schedulePush();
+      }
       this.status.set(this.pendingCount() > 0 && !this.isOnline() ? 'offline_pending' : 'idle');
       return true;
     } catch (err) {
@@ -454,8 +555,31 @@ export class SupabaseSyncService {
         }
       }
 
-      await this.db.syncOutbox.bulkDelete(entityEntries.map((e) => e.key));
+      await this.deleteUnchangedOutboxEntries(entityEntries);
     }
+  }
+
+  private async deleteUnchangedOutboxEntries(snapshotEntries: SyncOutboxEntry[]): Promise<void> {
+    if (snapshotEntries.length === 0) {
+      return;
+    }
+
+    await this.db.transaction('rw', this.db.syncOutbox, async () => {
+      const currentEntries = await this.db.syncOutbox.bulkGet(snapshotEntries.map((e) => e.key));
+      const keysToDelete: string[] = [];
+
+      for (let i = 0; i < snapshotEntries.length; i++) {
+        const snapshot = snapshotEntries[i];
+        const current = currentEntries[i];
+        if (current && current.updatedAt === snapshot.updatedAt && current.operation === snapshot.operation) {
+          keysToDelete.push(snapshot.key);
+        }
+      }
+
+      if (keysToDelete.length > 0) {
+        await this.db.syncOutbox.bulkDelete(keysToDelete);
+      }
+    });
   }
 
   private async pushAllLocalData(client: SupabaseClient, userId: string): Promise<void> {
@@ -550,27 +674,43 @@ export class SupabaseSyncService {
 
     for (const entityType of ALL_SYNC_ENTITY_TYPES) {
       const tableName = SYNC_ENTITY_TABLE_MAP[entityType];
-      let query = client.from(tableName).select('*').eq('user_id', userId);
-      if (sinceIso) {
-        query = query.gt('server_updated_at', sinceIso);
-      }
+      let from = 0;
 
-      const { data, error } = await query;
-      if (error) throw error;
+      while (true) {
+        let query = client
+          .from(tableName)
+          .select('*')
+          .eq('user_id', userId)
+          .order('server_updated_at', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
 
-      const rows = (data ?? []) as SupabaseSyncRow[];
-      if (rows.length === 0) {
-        continue;
-      }
-
-      for (const row of rows) {
-        const serverTs = typeof row.server_updated_at === 'string' ? row.server_updated_at : null;
-        if (serverTs && (!maxServerUpdatedAt || serverTs > maxServerUpdatedAt)) {
-          maxServerUpdatedAt = serverTs;
+        if (sinceIso) {
+          query = query.gt('server_updated_at', sinceIso);
         }
-      }
 
-      appliedCount += await this.applyRemoteRowsLww(entityType, rows);
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const rows = (data ?? []) as SupabaseSyncRow[];
+        if (rows.length === 0) {
+          break;
+        }
+
+        for (const row of rows) {
+          const serverTs =
+            typeof row.server_updated_at === 'string' ? row.server_updated_at : null;
+          if (serverTs && (!maxServerUpdatedAt || serverTs > maxServerUpdatedAt)) {
+            maxServerUpdatedAt = serverTs;
+          }
+        }
+
+        appliedCount += await this.applyRemoteRowsLww(entityType, rows);
+
+        if (rows.length < PAGE_SIZE) {
+          break;
+        }
+        from += PAGE_SIZE;
+      }
     }
 
     return { maxServerUpdatedAt, appliedCount };

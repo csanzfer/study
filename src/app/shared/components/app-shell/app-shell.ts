@@ -104,7 +104,7 @@ export class AppShell {
     effect(() => {
       if (this.auth.needsPasswordSetup() && !this.passwordSetupDialogOpen) {
         this.passwordSetupDialogOpen = true;
-        void this.openPasswordSetupDialog();
+        void this.openPasswordSetupDialog(true);
       }
     });
   }
@@ -249,7 +249,7 @@ export class AppShell {
     }
   }
 
-  protected async openPasswordSetupDialog(): Promise<void> {
+  protected async openPasswordSetupDialog(runPostSyncAfter = false): Promise<void> {
     try {
       const dialogRef = this.dialog.open<AuthDialog, AuthDialogData, AuthDialogResult>(AuthDialog, {
         width: '440px',
@@ -260,7 +260,7 @@ export class AppShell {
       const result = await firstValueFrom(dialogRef.afterClosed());
       if (result?.passwordUpdated) {
         this.snackBar.open('Contraseña actualizada correctamente.', 'Cerrar', { duration: 3500 });
-        if (this.auth.isAuthenticated()) {
+        if (runPostSyncAfter && this.auth.isAuthenticated()) {
           await this.runPostLoginSync();
         }
       }
@@ -313,6 +313,11 @@ export class AppShell {
     }
 
     try {
+      if (await this.sync.hasCompletedInitialSync(userId)) {
+        await this.sync.syncNow();
+        return;
+      }
+
       const assessment = await this.sync.assessInitialSync(userId);
       let strategy: InitialSyncStrategy | undefined;
 
