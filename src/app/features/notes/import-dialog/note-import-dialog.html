@@ -8,16 +8,16 @@
       <div>
         <h2 class="text-base font-bold text-slate-900 dark:text-white">
           @if (data.mode === 'create-topics') {
-            Importar apuntes (.docx / .md)
+            Importar apuntes (.docx, .md, .pdf, .pptx)
           } @else {
             Importar contenido al tema
           }
         </h2>
         <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
           @if (data.mode === 'create-topics') {
-            Sube uno o varios archivos Word o Markdown para crear temas en {{ data.blockLabel ?? 'este bloque' }}. Todo se procesa en local.
+            Sube uno o varios archivos Word, Markdown, PDF o PowerPoint para crear temas en {{ data.blockLabel ?? 'este bloque' }}. Todo se procesa en local.
           } @else {
-            Importa un archivo <code>.docx</code> o <code>.md</code> dentro de «{{ data.topicTitle }}».
+            Importa un archivo <code>.docx</code>, <code>.md</code>, <code>.pdf</code> o <code>.pptx</code> dentro de «{{ data.topicTitle }}».
           }
         </p>
       </div>
@@ -55,13 +55,13 @@
       @if (parsing()) {
         Procesando archivos en local...
       } @else if (allowMultiple()) {
-        Arrastra aquí tus archivos <code>.docx</code> o <code>.md</code>
+        Arrastra aquí tus archivos <code>.docx</code>, <code>.md</code>, <code>.pdf</code> o <code>.pptx</code>
       } @else {
-        Arrastra aquí un archivo <code>.docx</code> o <code>.md</code>
+        Arrastra aquí un archivo <code>.docx</code>, <code>.md</code>, <code>.pdf</code> o <code>.pptx</code>
       }
     </p>
     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-      Se conservan encabezados H1–H4, listas, checklists, tablas, código y bloques «Ojo examen».
+      Se extraen títulos, párrafos, listas, tablas, notas de diapositivas y bloques «Ojo examen».
     </p>
 
     <label
@@ -72,7 +72,7 @@
       <input
         type="file"
         class="hidden"
-        accept=".docx,.md,.markdown"
+        accept=".docx,.md,.markdown,.pdf,.pptx"
         [attr.multiple]="allowMultiple() ? '' : null"
         (change)="onFileSelected($event)"
       />
@@ -104,6 +104,14 @@
                 [class.text-emerald-700]="entry.format === 'md'"
                 [class.dark:bg-emerald-950]="entry.format === 'md'"
                 [class.dark:text-emerald-300]="entry.format === 'md'"
+                [class.bg-rose-100]="entry.format === 'pdf'"
+                [class.text-rose-700]="entry.format === 'pdf'"
+                [class.dark:bg-rose-950]="entry.format === 'pdf'"
+                [class.dark:text-rose-300]="entry.format === 'pdf'"
+                [class.bg-amber-100]="entry.format === 'pptx'"
+                [class.text-amber-700]="entry.format === 'pptx'"
+                [class.dark:bg-amber-950]="entry.format === 'pptx'"
+                [class.dark:text-amber-300]="entry.format === 'pptx'"
               >
                 .{{ entry.format }}
               </span>
@@ -135,7 +143,7 @@
                   type="text"
                   [ngModel]="entry.title"
                   (ngModelChange)="updateEntryTitle(entry.id, $event)"
-                  class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                  class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:bg-slate-950"
                 />
               </div>
               <div class="sm:col-span-5">
@@ -147,7 +155,7 @@
                   [ngModel]="entry.tagsText"
                   (ngModelChange)="updateEntryTags(entry.id, $event)"
                   placeholder="leyes, plazos..."
-                  class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                  class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:bg-slate-950"
                 />
               </div>
             </div>
@@ -156,7 +164,7 @@
           @if (entry.warnings.length > 0) {
             <details class="mt-2.5 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-[11px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
               <summary class="cursor-pointer font-medium">
-                {{ entry.warnings.length }} aviso(s) de conversión de Word
+                {{ entry.warnings.length }} aviso(s) de importación
               </summary>
               <ul class="mt-1 list-disc space-y-0.5 pl-4">
                 @for (warn of entry.warnings; track $index) {

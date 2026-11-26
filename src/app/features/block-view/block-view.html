@@ -88,7 +88,7 @@
           [ngModel]="newTopicTitle()"
           (ngModelChange)="newTopicTitle.set($event)"
           placeholder="Ej. Tema 1: La Constitución Española de 1978"
-          class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
         />
         <input
           type="text"
@@ -96,7 +96,7 @@
           [ngModel]="newTopicTags()"
           (ngModelChange)="newTopicTags.set($event)"
           placeholder="Etiquetas (ej. leyes, plazos)"
-          class="sm:w-64 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="sm:w-64 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
         />
         <button
           mat-flat-button
@@ -111,10 +111,11 @@
           mat-stroked-button
           type="button"
           (click)="openImportDialog()"
+          matTooltip="Importar archivos .docx, .md, .pdf o .pptx"
           class="!rounded-xl !px-4"
         >
           <mat-icon>upload_file</mat-icon>
-          Importar .docx / .md
+          Importar archivos
         </button>
       </div>
       <p class="mt-2.5 text-xs text-slate-500 dark:text-slate-400">
@@ -173,7 +174,7 @@
                       name="editTitle"
                       [ngModel]="editTitle()"
                       (ngModelChange)="editTitle.set($event)"
-                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                     />
                   </div>
                   <div class="md:col-span-4">
@@ -185,7 +186,7 @@
                       name="editTags"
                       [ngModel]="editTags()"
                       (ngModelChange)="editTags.set($event)"
-                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                     />
                   </div>
                   <div class="md:col-span-3">
@@ -196,7 +197,7 @@
                       name="editStatus"
                       [ngModel]="editStatus()"
                       (ngModelChange)="editStatus.set($event)"
-                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                     >
                       @for (status of statusList; track status) {
                         <option [value]="status">{{ statusLabels[status] }}</option>

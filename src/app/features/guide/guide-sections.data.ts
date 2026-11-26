@@ -41,7 +41,7 @@ export const QUICK_START_STEPS: QuickStartStep[] = [
   {
     number: '2',
     title: 'Redacta o importa apuntes',
-    description: 'Escribe en el editor o importa documentos de Word (.docx) y Markdown.',
+    description: 'Escribe en el editor o importa documentos de Word (.docx), Markdown, PDF o PowerPoint (.pptx).',
   },
   {
     number: '3',
@@ -118,9 +118,9 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           'Añade títulos (H1, H2, H3), listas, tablas, bloques de código, resaltados y etiquetas para localizar cada concepto rápido.',
       },
       {
-        title: 'Importación desde Word y Markdown',
+        title: 'Importación desde Word, Markdown, PDF y PowerPoint',
         description:
-          'Dentro de cualquier tema o asignatura puedes importar apuntes que ya tengas en .docx o .md sin tener que reescribirlos.',
+          'Dentro de cualquier tema o asignatura puedes importar apuntes que ya tengas en .docx, .md, .pdf o .pptx sin tener que reescribirlos.',
       },
       {
         title: 'Exportación de temas',
@@ -143,6 +143,9 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       'word',
       'docx',
       'markdown',
+      'pdf',
+      'pptx',
+      'powerpoint',
       'importar',
       'exportar',
       'etiquetas',
