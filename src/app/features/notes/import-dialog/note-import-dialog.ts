@@ -95,6 +95,10 @@ export class NoteImportDialog {
     event.stopPropagation();
     this.isDragging.set(false);
 
+    if (this.parsing()) {
+      return;
+    }
+
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
       await this.processFiles(Array.from(files));
@@ -103,6 +107,11 @@ export class NoteImportDialog {
 
   protected async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
+    if (this.parsing()) {
+      input.value = '';
+      return;
+    }
+
     const files = input.files;
     if (files && files.length > 0) {
       await this.processFiles(Array.from(files));

@@ -23,4 +23,21 @@ describe('PdfTextExtractorService', () => {
 
     expect(service.reconstructLinesFromTextItems([])).toBe('');
   });
+
+  it('reconstructs structured lines with font size and Y coordinate', () => {
+    TestBed.configureTestingModule({});
+    const service = TestBed.inject(PdfTextExtractorService);
+
+    const lines = service.reconstructStructuredLinesFromTextItems([
+      { str: 'Título principal', transform: [18, 0, 0, 18, 50, 780] },
+      { str: '   ', transform: [24, 0, 0, 24, 200, 780] },
+      { str: 'Párrafo rotado', transform: [6, 8, -8, 6, 50, 720] },
+      { str: 'continuación', transform: [12, 0, 0, 12, 160, 721] },
+    ]);
+
+    expect(lines).toEqual([
+      { text: 'Título principal', fontSize: 18, y: 780 },
+      { text: 'Párrafo rotado continuación', fontSize: 12, y: 720 },
+    ]);
+  });
 });

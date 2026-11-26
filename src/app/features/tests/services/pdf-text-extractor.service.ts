@@ -46,7 +46,10 @@ export class PdfTextExtractorService {
   ): Promise<PdfStructuredExtractionResult> {
     const pdfjs = await import('pdfjs-dist');
     if (!this.workerConfigured) {
-      pdfjs.GlobalWorkerOptions.workerSrc = '/assets/pdf.worker.min.mjs';
+      pdfjs.GlobalWorkerOptions.workerSrc =
+        typeof document !== 'undefined' && document.baseURI
+          ? new URL('assets/pdf.worker.min.mjs', document.baseURI).toString()
+          : '/assets/pdf.worker.min.mjs';
       this.workerConfigured = true;
     }
 

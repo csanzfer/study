@@ -129,13 +129,7 @@ export class NoteImportService {
     const JSZip = jszipModule.default ?? jszipModule;
     const zip = await JSZip.loadAsync(arrayBuffer);
 
-    const slideEntries = Object.keys(zip.files)
-      .map((path) => {
-        const match = path.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
-        return match ? { path, number: Number(match[1]) } : null;
-      })
-      .filter((entry): entry is { path: string; number: number } => entry !== null)
-      .sort((a, b) => a.number - b.number);
+    const slideEntries = await this.resolvePptxSlideEntries(zip);
 
     if (slideEntries.length === 0) {
       throw new Error(
@@ -154,7 +148,7 @@ export class NoteImportService {
       }
 
       const slideXml = await slideFile.async('string');
-      const notesXml = await this.readSlideNotesXml(zip, entry.number);
+      const notesXml = await this.readSlideNotesXml(zip, entry.path, entry.number);
       const slideHtml = this.parsePptxSlideXml(slideXml, index + 1, notesXml);
 
       if (slideHtml.trim()) {
@@ -645,12 +639,91 @@ export class NoteImportService {
     return blocks.join('\n');
   }
 
+  private async resolvePptxSlideEntries(zip: {
+    files: Record<string, unknown>;
+    file: (path: string) => { async: (type: 'string') => Promise<string> } | null;
+  }): Promise<Array<{ path: string; number: number | null }>> {
+    if (typeof DOMParser !== 'undefined') {
+      const presFile = zip.file('ppt/presentation.xml');
+      const relsFile = zip.file('ppt/_rels/presentation.xml.rels');
+
+      if (presFile && relsFile) {
+        try {
+          const [presXml, relsXml] = await Promise.all([
+            presFile.async('string'),
+            relsFile.async('string'),
+          ]);
+          const parser = new DOMParser();
+          const relsDoc = parser.parseFromString(relsXml, 'application/xml');
+          const relTargets = new Map<string, string>();
+          for (const rel of this.getDescendantsByLocalName(relsDoc.documentElement, 'Relationship')) {
+            const id = rel.getAttribute('Id');
+            const target = rel.getAttribute('Target');
+            if (id && target) {
+              const normalizedPath = target.startsWith('/')
+                ? target.slice(1)
+                : target.startsWith('ppt/')
+                  ? target
+                  : `ppt/${target.replace(/^\.\//, '')}`;
+              relTargets.set(id, normalizedPath);
+            }
+          }
+
+          const presDoc = parser.parseFromString(presXml, 'application/xml');
+          const sldIds = this.getDescendantsByLocalName(presDoc.documentElement, 'sldId');
+          const orderedEntries: Array<{ path: string; number: number | null }> = [];
+          const seen = new Set<string>();
+
+          for (const sldId of sldIds) {
+            const rId =
+              sldId.getAttribute('r:id') ??
+              sldId.getAttributeNS(
+                'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+                'id',
+              );
+            if (!rId) {
+              continue;
+            }
+            const targetPath = relTargets.get(rId);
+            if (!targetPath || seen.has(targetPath) || !zip.file(targetPath)) {
+              continue;
+            }
+            seen.add(targetPath);
+            const numMatch = targetPath.match(/slide(\d+)\.xml$/i);
+            orderedEntries.push({
+              path: targetPath,
+              number: numMatch ? Number(numMatch[1]) : null,
+            });
+          }
+
+          if (orderedEntries.length > 0) {
+            return orderedEntries;
+          }
+        } catch {
+          // Fallback to filename-based ordering below
+        }
+      }
+    }
+
+    return Object.keys(zip.files)
+      .map((path) => {
+        const match = path.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
+        return match ? { path, number: Number(match[1]) } : null;
+      })
+      .filter((entry): entry is { path: string; number: number } => entry !== null)
+      .sort((a, b) => a.number - b.number);
+  }
+
   private async readSlideNotesXml(
     zip: { file: (path: string) => { async: (type: 'string') => Promise<string> } | null },
-    slideNumber: number,
+    slidePath: string,
+    slideNumber: number | null,
   ): Promise<string | null> {
-    const relsFile = zip.file(`ppt/slides/_rels/slide${slideNumber}.xml.rels`);
-    if (relsFile) {
+    const lastSlash = slidePath.lastIndexOf('/');
+    const slideDir = lastSlash >= 0 ? slidePath.slice(0, lastSlash) : 'ppt/slides';
+    const slideBaseName = lastSlash >= 0 ? slidePath.slice(lastSlash + 1) : slidePath;
+    const relsFile = zip.file(`${slideDir}/_rels/${slideBaseName}.rels`);
+    if (relsFile && typeof DOMParser !== 'undefined') {
       try {
         const relsXml = await relsFile.async('string');
         const parser = new DOMParser();
@@ -664,7 +737,7 @@ export class NoteImportService {
               ? `ppt/${target.slice(3)}`
               : target.startsWith('/')
                 ? target.slice(1)
-                : `ppt/slides/${target}`;
+                : `${slideDir}/${target.replace(/^\.\//, '')}`;
             const notesFile = zip.file(normalizedPath);
             if (notesFile) {
               return await notesFile.async('string');
@@ -676,9 +749,11 @@ export class NoteImportService {
       }
     }
 
-    const fallbackFile = zip.file(`ppt/notesSlides/notesSlide${slideNumber}.xml`);
-    if (fallbackFile) {
-      return await fallbackFile.async('string');
+    if (slideNumber !== null) {
+      const fallbackFile = zip.file(`ppt/notesSlides/notesSlide${slideNumber}.xml`);
+      if (fallbackFile) {
+        return await fallbackFile.async('string');
+      }
     }
 
     return null;
