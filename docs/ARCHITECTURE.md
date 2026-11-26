@@ -108,14 +108,14 @@ flowchart TD
     // ... sesiones, planificador, supuestos, preguntas, intentos, flashcards y gamificación
   }
   ```
-- **Injection Token:** `STUDY_REPOSITORY` permite sustituir con facilidad la implementación real por un repositorio en memoria (`MockStudyRepository`) en pruebas unitarias, o un futuro `CloudStudyRepository` para sincronización en la nube (Fase 5).
+- **Injection Token:** `STUDY_REPOSITORY` desacopla la persistencia: en ejecución normal se provee `SyncingStudyRepository` (decorador *local-first* sobre `IndexedDbStudyRepository` que encola cambios en `syncOutbox` solo cuando hay sesión activa de Supabase) y en tests unitarios se inyecta `MockStudyRepository` en memoria.
 
-### 2.4. Capa de Persistencia (`src/app/core/db/`)
+### 2.4. Capa de Persistencia (`src/app/core/db/`) y Sincronización Opcional
 
 - **Dexie.js (`StudyDatabase`):** Extiende de `Dexie` conservando el nombre de base de datos `TaiStudyDB` para mantener compatibilidad sin pérdida de datos con instalaciones previas.
-- **Esquema Actual (Versión 4):**
+- **Esquema Actual (Versión 5):**
   ```ts
-  this.version(4).stores({
+  this.version(5).stores({
     blocks: 'id, order',
     topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
     studySessions: 'id, topicId, blockId, startedAt, type',
@@ -125,8 +125,13 @@ flowchart TD
     examAttempts: 'id, date, mode, caseStudyId',
     flashcards: 'id, blockId, topicId, srs.dueDate, updatedAt, *tags',
     gamification: 'id',
+    syncOutbox: 'key, entityType, updatedAt',
+    syncMeta: 'key',
   });
   ```
+- **Sincronización Multidispositivo (Opcional con Supabase):**
+  - `SupabaseClientService` y `SupabaseAuthService`: gestionan el cliente PKCE y la sesión de usuario; si no hay credenciales configuradas, la app arranca en modo 100 % local sin peticiones de red.
+  - `SupabaseSyncService`: sube cambios pendientes de `syncOutbox` con debounce (1.5 s) y descarga deltas incrementales por `server_updated_at` con resolución *Last-Write-Wins* (LWW) y soporte de borrado lógico (`deleted_at`). Consulta [PLAN_SUPABASE.md](./PLAN_SUPABASE.md) para el detalle completo.
 - **Bloques Dinámicos:** Las instalaciones nuevas arrancan limpias sin bloques predefinidos para que cada estudiante cree su propia estructura de materias. El borrado de un bloque ejecuta una transacción Dexie en cascada para evitar registros huérfanos.
 - **Persistencia Robusta:** Invoca `navigator.storage.persist()` para pedir al navegador que marque el almacenamiento como persistente, evitando desalojos por baja memoria.
 

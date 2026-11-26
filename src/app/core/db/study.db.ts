@@ -9,6 +9,8 @@ import {
   StudyBlock,
   StudyBlockId,
   StudySession,
+  SyncMetaEntry,
+  SyncOutboxEntry,
   Topic,
   WeeklyPlanItem,
 } from '../models/study.models';
@@ -24,6 +26,8 @@ export class StudyDatabase extends Dexie {
   examAttempts!: Table<ExamAttempt, string>;
   flashcards!: Table<Flashcard, string>;
   gamification!: Table<GamificationProfile, 'local-user'>;
+  syncOutbox!: Table<SyncOutboxEntry, string>;
+  syncMeta!: Table<SyncMetaEntry, string>;
 
   constructor() {
     super('TaiStudyDB');
@@ -61,6 +65,56 @@ export class StudyDatabase extends Dexie {
       flashcards: 'id, blockId, topicId, srs.dueDate, updatedAt, *tags',
       gamification: 'id',
     });
+
+    this.version(5)
+      .stores({
+        blocks: 'id, order',
+        topics: 'id, blockId, order, status, updatedAt, lastReviewedAt, *tags',
+        studySessions: 'id, topicId, blockId, startedAt, type',
+        weeklyPlanItems: 'id, weekStartDate, [weekStartDate+dayOfWeek], topicId, blockId',
+        caseStudies: 'id, blockId, updatedAt, *tags',
+        questions: 'id, blockId, topicId, caseStudyId, flagged, updatedAt, *tags',
+        examAttempts: 'id, date, mode, caseStudyId',
+        flashcards: 'id, blockId, topicId, srs.dueDate, updatedAt, *tags',
+        gamification: 'id',
+        syncOutbox: 'key, entityType, updatedAt',
+        syncMeta: 'key',
+      })
+      .upgrade(async (tx) => {
+        const now = new Date().toISOString();
+        await tx
+          .table<StudyBlock>('blocks')
+          .toCollection()
+          .modify((block) => {
+            if (!block.updatedAt) {
+              block.updatedAt = now;
+            }
+          });
+        await tx
+          .table<StudySession>('studySessions')
+          .toCollection()
+          .modify((session) => {
+            if (!session.updatedAt) {
+              session.updatedAt = session.endedAt || session.startedAt || now;
+            }
+          });
+        await tx
+          .table<WeeklyPlanItem>('weeklyPlanItems')
+          .toCollection()
+          .modify((item) => {
+            if (!item.updatedAt) {
+              item.updatedAt = item.completedAt || now;
+            }
+          });
+        await tx
+          .table<ExamAttempt>('examAttempts')
+          .toCollection()
+          .modify((attempt) => {
+            if (!attempt.updatedAt) {
+              attempt.updatedAt = attempt.date || now;
+            }
+          });
+      });
   }
 
   async ensureSeeded(): Promise<void> {

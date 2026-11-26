@@ -146,16 +146,17 @@ export class IndexedDbStudyRepository implements StudyRepository {
       async () => {
         await this.db.topics.delete(id);
         await this.db.weeklyPlanItems.where('topicId').equals(id).delete();
+        const now = new Date().toISOString();
         const linkedQuestions = await this.db.questions.where('topicId').equals(id).toArray();
         if (linkedQuestions.length > 0) {
           await this.db.questions.bulkPut(
-            linkedQuestions.map((q) => ({ ...q, topicId: undefined })),
+            linkedQuestions.map((q) => ({ ...q, topicId: undefined, updatedAt: now })),
           );
         }
         const linkedFlashcards = await this.db.flashcards.where('topicId').equals(id).toArray();
         if (linkedFlashcards.length > 0) {
           await this.db.flashcards.bulkPut(
-            linkedFlashcards.map((f) => ({ ...f, topicId: undefined })),
+            linkedFlashcards.map((f) => ({ ...f, topicId: undefined, updatedAt: now })),
           );
         }
       },
@@ -219,8 +220,9 @@ export class IndexedDbStudyRepository implements StudyRepository {
       await this.db.caseStudies.delete(id);
       const linkedQuestions = await this.db.questions.where('caseStudyId').equals(id).toArray();
       if (linkedQuestions.length > 0) {
+        const now = new Date().toISOString();
         await this.db.questions.bulkPut(
-          linkedQuestions.map((q) => ({ ...q, caseStudyId: undefined })),
+          linkedQuestions.map((q) => ({ ...q, caseStudyId: undefined, updatedAt: now })),
         );
       }
     });

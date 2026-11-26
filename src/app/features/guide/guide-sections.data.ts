@@ -98,6 +98,59 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
+    id: 'cloud-sync',
+    title: 'Sincronización multidispositivo (Supabase)',
+    shortTitle: 'Sincronización Nube',
+    icon: 'cloud_sync',
+    badgeBgClass: 'bg-teal-50 dark:bg-teal-950/50',
+    badgeTextClass: 'text-teal-600 dark:text-teal-400',
+    summary:
+      'Si tu instancia tiene conectada una base de datos de Supabase, puedes sincronizar asignaturas, apuntes, tests y flashcards entre todos tus dispositivos sin perder el modo offline.',
+    items: [
+      {
+        title: 'Alta por invitación e inicio de sesión',
+        description:
+          'El acceso es por invitación. Tras recibir el correo de alta, pulsa "Sincronizar" en la barra superior para iniciar sesión o usa "¿Olvidaste o aún no tienes contraseña?" para fijar tu contraseña.',
+      },
+      {
+        title: 'Primera sincronización sin perder datos',
+        description:
+          'Si el navegador está vacío, descargará tus datos de la nube automáticamente; si solo hay datos locales, los subirá. Si hay datos en ambos lados, podrás descargar un backup .json previo y elegir entre Fusionar, Usar nube o Subir local.',
+      },
+      {
+        title: 'Sincronización automática, offline y manual',
+        description:
+          'Cada cambio se guarda al instante en tu dispositivo y se sube en segundo plano al haber conexión. Al abrir la app, volver a la pestaña o pulsar "Nube → Sincronizar ahora", se descargan los cambios del resto de tus dispositivos.',
+      },
+      {
+        title: 'Cierre de sesión seguro en equipos compartidos',
+        description:
+          'Desde "Nube → Cerrar sesión" puedes elegir si mantener una copia local offline en ese navegador o borrar los datos locales (tus datos en la nube permanecen intactos).',
+      },
+    ],
+    tip: 'Tus datos están aislados por usuario mediante Row Level Security (RLS) en Supabase. Si editas el mismo elemento sin conexión en dos dispositivos, al sincronizar prevalecerá la modificación más reciente.',
+    action: {
+      label: 'Ir al Panel principal',
+      route: '/dashboard',
+      icon: 'cloud_done',
+    },
+    keywords: [
+      'supabase',
+      'nube',
+      'cloud',
+      'sincronizar',
+      'sincronizacion',
+      'multidispositivo',
+      'cuenta',
+      'login',
+      'sesion',
+      'contrasena',
+      'invitacion',
+      'base de datos',
+      'rls',
+    ],
+  },
+  {
     id: 'blocks-notes',
     title: 'Asignaturas y apuntes',
     shortTitle: 'Asignaturas y Apuntes',

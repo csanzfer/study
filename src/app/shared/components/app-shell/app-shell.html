@@ -14,8 +14,14 @@
             <span class="text-cyan-600 dark:text-cyan-400">cris</span><span class="text-cyan-400 dark:text-cyan-300/75">is</span><span class="text-slate-900 dark:text-white">student</span>
           </div>
           <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>
-            <span class="truncate">Local-First · Offline</span>
+            <span
+              class="h-2 w-2 shrink-0 rounded-full"
+              [class.bg-emerald-500]="!auth.isAuthenticated() || sync.status() === 'idle'"
+              [class.bg-cyan-500]="sync.status() === 'syncing'"
+              [class.animate-pulse]="sync.status() === 'syncing'"
+              [class.bg-amber-500]="sync.status() === 'offline_pending'"
+              [class.bg-rose-500]="sync.status() === 'error'"></span>
+            <span class="truncate">{{ syncStatusLabel() }}</span>
           </div>
         </div>
       </div>
@@ -185,11 +191,76 @@
           <span class="hidden sm:inline">Guía</span>
         </a>
 
+        @if (auth.isConfigured()) {
+          @if (auth.isAuthenticated()) {
+            <button
+              mat-stroked-button
+              type="button"
+              [matMenuTriggerFor]="syncMenu"
+              [matTooltip]="syncStatusLabel()"
+              class="!rounded-xl">
+              @switch (sync.status()) {
+                @case ('syncing') {
+                  <mat-icon class="animate-spin text-cyan-600 dark:text-cyan-400">sync</mat-icon>
+                }
+                @case ('offline_pending') {
+                  <mat-icon class="text-amber-600 dark:text-amber-400">cloud_off</mat-icon>
+                }
+                @case ('error') {
+                  <mat-icon class="text-rose-600 dark:text-rose-400">cloud_alert</mat-icon>
+                }
+                @default {
+                  <mat-icon class="text-emerald-600 dark:text-emerald-400">cloud_done</mat-icon>
+                }
+              }
+              <span class="hidden md:inline">Nube</span>
+            </button>
+
+            <mat-menu #syncMenu="matMenu">
+              <div class="px-4 py-2 text-xs">
+                <div class="font-semibold text-slate-800 dark:text-slate-100">
+                  {{ auth.userEmail() }}
+                </div>
+                <div class="mt-0.5 text-slate-500 dark:text-slate-400">
+                  @if (sync.lastSyncedAt(); as syncedAt) {
+                    Última sync: {{ syncedAt | date: 'dd/MM HH:mm' }}
+                  } @else {
+                    {{ syncStatusLabel() }}
+                  }
+                </div>
+              </div>
+              <mat-divider />
+              <button mat-menu-item type="button" (click)="triggerManualSync()" [disabled]="sync.status() === 'syncing'">
+                <mat-icon>sync</mat-icon>
+                <span>Sincronizar ahora</span>
+              </button>
+              <button mat-menu-item type="button" (click)="openPasswordSetupDialog(false)">
+                <mat-icon>vpn_key</mat-icon>
+                <span>Cambiar contraseña</span>
+              </button>
+              <button mat-menu-item type="button" (click)="openLogoutDialog()">
+                <mat-icon>logout</mat-icon>
+                <span>Cerrar sesión</span>
+              </button>
+            </mat-menu>
+          } @else {
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="openLoginDialog()"
+              matTooltip="Iniciar sesión para sincronizar entre dispositivos"
+              class="!rounded-xl">
+              <mat-icon>cloud_sync</mat-icon>
+              <span class="hidden md:inline">Sincronizar</span>
+            </button>
+          }
+        }
+
         <input #backupFileInput type="file" accept=".json,application/json" class="hidden"
           (change)="onBackupFileSelected($event)" />
 
         <button mat-stroked-button type="button" [matMenuTriggerFor]="backupMenu" class="!rounded-xl">
-          <mat-icon>cloud_done</mat-icon>
+          <mat-icon>save</mat-icon>
           <span class="hidden sm:inline">Backup</span>
         </button>
 
