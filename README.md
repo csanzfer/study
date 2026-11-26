@@ -30,6 +30,18 @@
 
 ---
 
+## 📸 Capturas de Pantalla
+
+|                Panel de Estudio (Modo Claro)                |                      Editor TipTap + Mapa Mental Markmap                      |
+| :---------------------------------------------------------: | :---------------------------------------------------------------------------: |
+| ![Panel de Estudio](./docs/screenshots/dashboard-light.png) | ![Editor TipTap y Mapa Mental Markmap](./docs/screenshots/editor-markmap.png) |
+
+|                Planificador Kanban de Vueltas (Modo Oscuro)                |            Flashcards con Repaso Espaciado SM-2 (Modo Oscuro)             |
+| :------------------------------------------------------------------------: | :-----------------------------------------------------------------------: |
+| ![Planificador Kanban en modo oscuro](./docs/screenshots/planner-dark.png) | ![Flashcards SM-2 en modo oscuro](./docs/screenshots/flashcards-dark.png) |
+
+---
+
 ## ✨ Funcionalidades Principales
 
 - **📚 Bloques / Asignaturas Dinámicas:** Crea, personaliza (color e icono), reordena mediante drag-and-drop y gestiona tantos bloques y temas como necesites.
